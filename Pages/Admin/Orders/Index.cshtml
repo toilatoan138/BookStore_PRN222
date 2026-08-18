@@ -1,0 +1,102 @@
+﻿@page
+@model BookStore.Pages.Admin.Orders.IndexModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Quản lý Đơn hàng";
+    ViewData["Subtitle"] = "Theo dõi tiến độ giao vận, duyệt đơn và quản trị trạng thái bán hàng";
+}
+
+<div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+    <!-- SEARCH & STATUS TABS -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <form method="get" class="d-flex gap-2" style="max-width: 400px;">
+            <input type="hidden" name="status" value="@Model.Status" />
+            <input asp-for="Keyword" type="text" class="form-control form-control-sm" placeholder="Tìm theo mã đơn, tên khách, SĐT..." />
+            <button type="submit" class="btn btn-sm btn-danger px-3">
+                <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
+        </form>
+
+        <!-- STATUS TABS -->
+        <div class="d-flex gap-1 overflow-auto">
+            <a asp-page="/Admin/Orders/Index" asp-route-keyword="@Model.Keyword"
+               class="btn btn-sm rounded-pill px-3 @(!Model.Status.HasValue ? "btn-danger fw-bold" : "btn-light text-dark border")">
+                Tất cả (@Model.Orders.Count)
+            </a>
+            <a asp-page="/Admin/Orders/Index" asp-route-status="Pending" asp-route-keyword="@Model.Keyword"
+               class="btn btn-sm rounded-pill px-3 @(Model.Status == Models.Enums.OrderStatus.Pending ? "btn-danger fw-bold" : "btn-light text-dark border")">
+                Chờ duyệt
+            </a>
+            <a asp-page="/Admin/Orders/Index" asp-route-status="Processing" asp-route-keyword="@Model.Keyword"
+               class="btn btn-sm rounded-pill px-3 @(Model.Status == Models.Enums.OrderStatus.Processing ? "btn-danger fw-bold" : "btn-light text-dark border")">
+                Đang chuẩn bị
+            </a>
+            <a asp-page="/Admin/Orders/Index" asp-route-status="Shipping" asp-route-keyword="@Model.Keyword"
+               class="btn btn-sm rounded-pill px-3 @(Model.Status == Models.Enums.OrderStatus.Shipping ? "btn-danger fw-bold" : "btn-light text-dark border")">
+                Đang giao
+            </a>
+            <a asp-page="/Admin/Orders/Index" asp-route-status="Delivered" asp-route-keyword="@Model.Keyword"
+               class="btn btn-sm rounded-pill px-3 @(Model.Status == Models.Enums.OrderStatus.Delivered ? "btn-danger fw-bold" : "btn-light text-dark border")">
+                Đã giao
+            </a>
+            <a asp-page="/Admin/Orders/Index" asp-route-status="Cancelled" asp-route-keyword="@Model.Keyword"
+               class="btn btn-sm rounded-pill px-3 @(Model.Status == Models.Enums.OrderStatus.Cancelled ? "btn-danger fw-bold" : "btn-light text-dark border")">
+                Đã hủy
+            </a>
+        </div>
+    </div>
+
+    <!-- ORDERS TABLE -->
+    <div class="table-responsive">
+        <table class="table table-hover align-middle small">
+            <thead class="table-light">
+                <tr>
+                    <th>Mã</th>
+                    <th>Ngày đặt</th>
+                    <th>Khách hàng</th>
+                    <th>Số sản phẩm</th>
+                    <th>Tổng tiền</th>
+                    <th>Thanh toán</th>
+                    <th>Trạng thái</th>
+                    <th class="text-end">Tác vụ</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var o in Model.Orders)
+                {
+                    <tr>
+                        <td class="fw-bold">#@o.Id</td>
+                        <td>@o.OrderDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>
+                            <div class="fw-semibold text-dark">@o.FullName</div>
+                            <small class="text-muted">@o.PhoneNumber</small>
+                        </td>
+                        <td>@o.Details.Sum(d => d.Quantity) quyển</td>
+                        <td class="fw-bold text-danger">@o.TotalAmount.ToString("N0")đ</td>
+                        <td>
+                            <span class="badge @(o.PaymentMethod == "VNPAY" ? "bg-primary-subtle text-primary border" : o.PaymentMethod == "WALLET" ? "bg-success-subtle text-success border" : "bg-light text-dark border")">
+                                @o.PaymentMethod
+                            </span>
+                        </td>
+                        <td>
+                            <form method="post" asp-page-handler="UpdateStatus" class="d-inline">
+                                <input type="hidden" name="orderId" value="@o.Id" />
+                                <select name="newStatus" class="form-select form-select-sm rounded-pill d-inline-block w-auto" onchange="this.form.submit()">
+                                    @foreach (Models.Enums.OrderStatus s in Enum.GetValues(typeof(Models.Enums.OrderStatus)))
+                                    {
+                                        <option value="@s" selected="@(o.Status == s)">@s</option>
+                                    }
+                                </select>
+                            </form>
+                        </td>
+                        <td class="text-end">
+                            <a asp-page="/Admin/Orders/Detail" asp-route-id="@o.Id" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                                Chi tiết
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

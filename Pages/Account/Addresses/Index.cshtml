@@ -1,0 +1,204 @@
+﻿@page
+@model BookStore.Pages.Account.Addresses.IndexModel
+@{
+    ViewData["Title"] = "Sổ địa chỉ";
+}
+
+<div class="container py-4">
+    <div class="row g-4">
+        <!-- SIDEBAR -->
+        <div class="col-lg-3">
+            <partial name="_SidebarPartial" />
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="col-lg-9">
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h4 class="fw-bold mb-1 text-dark">Sổ địa chỉ nhận hàng</h4>
+                        <p class="text-muted small mb-0">Quản lý các địa chỉ giao nhận của bạn</p>
+                    </div>
+                    <button class="btn btn-danger rounded-3 fw-bold" data-bs-toggle="modal" data-bs-target="#addAddressModal">
+                        <i class="fa-solid fa-plus me-1"></i>Thêm địa chỉ mới
+                    </button>
+                </div>
+
+                @if (!Model.Addresses.Any())
+                {
+                    <div class="text-center py-5 bg-light rounded-4">
+                        <i class="fa-solid fa-location-dot fa-3x text-muted mb-3"></i>
+                        <h5 class="fw-bold text-dark">Chưa có địa chỉ nào</h5>
+                        <p class="text-muted small">Hãy thêm địa chỉ giao hàng để thuận tiện khi đặt sách.</p>
+                        <button class="btn btn-danger mt-2 rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#addAddressModal">
+                            Thêm địa chỉ ngay
+                        </button>
+                    </div>
+                }
+                else
+                {
+                    <div class="row g-3">
+                        @foreach (var addr in Model.Addresses)
+                        {
+                            <div class="col-md-6">
+                                <div class="card h-100 border rounded-3 p-3 position-relative @(addr.IsDefaultShipping ? "border-danger bg-light" : "")">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h6 class="fw-bold mb-0 text-dark">@addr.FullName</h6>
+                                        @if (addr.IsDefaultShipping)
+                                        {
+                                            <span class="badge bg-danger">Mặc định</span>
+                                        }
+                                    </div>
+                                    <div class="text-muted small mb-2">
+                                        <i class="fa-solid fa-phone me-1"></i>@addr.Phone
+                                    </div>
+                                    <p class="text-secondary small mb-3 flex-grow-1">
+                                        <i class="fa-solid fa-location-dot me-1"></i>@addr.AddressDetail, @addr.Ward, @addr.District, @addr.City
+                                    </p>
+
+                                    <div class="d-flex gap-2 border-top pt-2 mt-auto">
+                                        @if (!addr.IsDefaultShipping)
+                                        {
+                                            <form method="post" asp-page-handler="SetDefault" asp-route-addressId="@addr.Id" class="d-inline">
+                                                <button type="submit" class="btn btn-sm btn-link text-danger p-0 text-decoration-none small">
+                                                    Đặt mặc định
+                                                </button>
+                                            </form>
+                                            <span class="text-muted">|</span>
+                                        }
+                                        <button type="button" class="btn btn-sm btn-link text-primary p-0 text-decoration-none small"
+                                                onclick="openEditModal(@addr.Id, '@addr.FullName', '@addr.Phone', '@addr.City', '@addr.District', '@addr.Ward', '@addr.AddressDetail', @addr.IsDefaultShipping.ToString().ToLower())">
+                                            Chỉnh sửa
+                                        </button>
+                                        <span class="text-muted">|</span>
+                                        <form method="post" asp-page-handler="Delete" asp-route-addressId="@addr.Id" class="d-inline" onsubmit="return confirm('Bạn có chắc muốn xóa địa chỉ này?');">
+                                            <button type="submit" class="btn btn-sm btn-link text-danger p-0 text-decoration-none small">
+                                                Xóa
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ======================== ADD ADDRESS MODAL ======================== -->
+<div class="modal fade" id="addAddressModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-location-dot me-2"></i>Thêm địa chỉ mới</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-page-handler="Add">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label asp-for="Input.FullName" class="form-label fw-semibold">Họ và tên người nhận</label>
+                        <input asp-for="Input.FullName" class="form-control" placeholder="VD: Nguyễn Văn A" required />
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Input.Phone" class="form-label fw-semibold">Số điện thoại</label>
+                        <input asp-for="Input.Phone" class="form-control" placeholder="0901234567" required />
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="Input.City" class="form-label fw-semibold">Tỉnh / TP</label>
+                            <input asp-for="Input.City" class="form-control" placeholder="Hà Nội" required />
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="Input.District" class="form-label fw-semibold">Quận / Huyện</label>
+                            <input asp-for="Input.District" class="form-control" placeholder="Cầu Giấy" required />
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="Input.Ward" class="form-label fw-semibold">Phường / Xã</label>
+                            <input asp-for="Input.Ward" class="form-control" placeholder="Dịch Vọng" required />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Input.AddressDetail" class="form-label fw-semibold">Địa chỉ chi tiết</label>
+                        <input asp-for="Input.AddressDetail" class="form-control" placeholder="Số 123 Đường Cầu Giấy..." required />
+                    </div>
+                    <div class="form-check">
+                        <input asp-for="Input.IsDefaultShipping" class="form-check-input" />
+                        <label asp-for="Input.IsDefaultShipping" class="form-check-label small text-muted">Đặt làm địa chỉ giao hàng mặc định</label>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-danger rounded-3 fw-bold px-4">Lưu địa chỉ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ======================== EDIT ADDRESS MODAL ======================== -->
+<div class="modal fade" id="editAddressModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-pen-to-square me-2"></i>Chỉnh sửa địa chỉ</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-page-handler="Edit">
+                <input type="hidden" id="editId" name="Input.Id" />
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Họ và tên người nhận</label>
+                        <input id="editFullName" name="Input.FullName" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Số điện thoại</label>
+                        <input id="editPhone" name="Input.Phone" class="form-control" required />
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-semibold">Tỉnh / TP</label>
+                            <input id="editCity" name="Input.City" class="form-control" required />
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-semibold">Quận / Huyện</label>
+                            <input id="editDistrict" name="Input.District" class="form-control" required />
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-semibold">Phường / Xã</label>
+                            <input id="editWard" name="Input.Ward" class="form-control" required />
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Địa chỉ chi tiết</label>
+                        <input id="editAddressDetail" name="Input.AddressDetail" class="form-control" required />
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" id="editIsDefault" name="Input.IsDefaultShipping" value="true" class="form-check-input" />
+                        <label for="editIsDefault" class="form-check-label small text-muted">Đặt làm địa chỉ giao hàng mặc định</label>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary rounded-3 fw-bold px-4">Cập nhật</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openEditModal(id, fullName, phone, city, district, ward, detail, isDefault) {
+        document.getElementById('editId').value = id;
+        document.getElementById('editFullName').value = fullName;
+        document.getElementById('editPhone').value = phone;
+        document.getElementById('editCity').value = city;
+        document.getElementById('editDistrict').value = district;
+        document.getElementById('editWard').value = ward;
+        document.getElementById('editAddressDetail').value = detail;
+        document.getElementById('editIsDefault').checked = isDefault;
+
+        new bootstrap.Modal(document.getElementById('editAddressModal')).show();
+    }
+</script>

@@ -1,0 +1,73 @@
+﻿@page
+@model BookStore.Pages.Notifications.IndexModel
+@{
+    ViewData["Title"] = "Thông báo của tôi";
+}
+
+<div class="container py-4">
+    <div class="row g-4">
+        <!-- SIDEBAR -->
+        <div class="col-lg-3">
+            <partial name="_SidebarPartial" />
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="col-lg-9">
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+                    <div>
+                        <h4 class="fw-bold mb-1 text-dark"><i class="fa-regular fa-bell text-danger me-2"></i>Thông báo của tôi</h4>
+                        <p class="text-muted small mb-0">Cập nhật trạng thái đơn hàng và các tin tức ưu đãi mới nhất</p>
+                    </div>
+                    @if (Model.Notifications.Any(n => !n.IsRead))
+                    {
+                        <form method="post" asp-page-handler="MarkAllRead">
+                            <button type="submit" class="btn btn-outline-secondary btn-sm rounded-pill">
+                                <i class="fa-solid fa-check-double me-1"></i>Đọc tất cả
+                            </button>
+                        </form>
+                    }
+                </div>
+
+                @if (!Model.Notifications.Any())
+                {
+                    <div class="text-center py-5 bg-light rounded-4">
+                        <i class="fa-regular fa-bell-slash fa-4x text-muted mb-3"></i>
+                        <h5 class="fw-bold text-dark">Chưa có thông báo nào</h5>
+                        <p class="text-muted small">Mọi cập nhật về đơn hàng của bạn sẽ hiển thị tại đây.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="d-flex flex-column gap-2">
+                        @foreach (var notif in Model.Notifications)
+                        {
+                            <div class="p-3 border rounded-3 d-flex justify-content-between align-items-center @(!notif.IsRead ? "bg-danger-subtle border-danger-subtle" : "bg-white")">
+                                <div class="d-flex align-items-start gap-3">
+                                    <div class="p-2 rounded-circle @(!notif.IsRead ? "bg-danger text-white" : "bg-light text-muted")">
+                                        <i class="fa-solid fa-bell"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-semibold text-dark small mb-1">@notif.Message</div>
+                                        <small class="text-muted">@notif.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")</small>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex gap-2">
+                                    @if (!string.IsNullOrEmpty(notif.Link))
+                                    {
+                                        <form method="post" asp-page-handler="MarkRead" asp-route-id="@notif.Id" asp-route-link="@notif.Link">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                                                Xem chi tiết
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,49 @@
+﻿@page
+@model BookStore.Pages.Account.VerifyOtpModel
+@{
+    ViewData["Title"] = "Xác thực mã OTP";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden text-center">
+                <div class="card-header bg-danger text-white py-4">
+                    <i class="fa-solid fa-shield-halved fa-3x mb-2"></i>
+                    <h4 class="fw-bold mb-1">Xác thực tài khoản</h4>
+                    <p class="mb-0 text-white-50">Nhập mã OTP 6 số đã được gửi qua email</p>
+                </div>
+                <div class="card-body p-4 p-md-5 bg-white">
+                    <p class="text-muted small mb-4">
+                        Chúng tôi đã gửi mã xác thực gồm 6 chữ số đến địa chỉ:<br />
+                        <strong class="text-danger">@Model.TargetEmail</strong>
+                    </p>
+
+                    <form method="post">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 mb-3" role="alert"></div>
+
+                        <div class="mb-4">
+                            <input asp-for="Input.OtpCode"
+                                   class="form-control form-control-lg text-center fw-bold fs-3 letter-spacing-lg"
+                                   maxlength="6"
+                                   placeholder="● ● ● ● ● ●"
+                                   autofocus
+                                   style="letter-spacing: 12px; font-family: monospace;" />
+                            <span asp-validation-for="Input.OtpCode" class="text-danger small"></span>
+                        </div>
+
+                        <button type="submit" class="btn btn-danger w-100 py-2 fw-bold rounded-3 shadow-sm mb-3">
+                            <i class="fa-solid fa-check-circle me-2"></i>Xác nhận & Hoàn tất
+                        </button>
+                    </form>
+
+                    <form method="post" asp-page-handler="Resend">
+                        <button type="submit" class="btn btn-link text-muted small text-decoration-none">
+                            <i class="fa-solid fa-rotate-right me-1"></i>Chưa nhận được mã? <strong>Gửi lại OTP</strong>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

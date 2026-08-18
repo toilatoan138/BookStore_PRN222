@@ -1,0 +1,117 @@
+﻿@page
+@model BookStore.Pages.Warehouse.PurchaseOrders.CreateModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Tạo Đề Xuất Đơn Nhập Hàng (PO)";
+    ViewData["Subtitle"] = "Chọn nhà cung cấp và lập danh sách sách cần nhập kèm số lượng & giá nhập";
+}
+
+<div class="card border-0 shadow-sm rounded-4 p-4 bg-white" style="max-width: 1000px;">
+    <form method="post">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 mb-3" role="alert"></div>
+
+        <!-- SUPPLIER PICKER -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <label asp-for="Input.SupplierId" class="form-label fw-semibold">Nhà cung cấp / Nhà xuất bản</label>
+                <select asp-for="Input.SupplierId" class="form-select" required>
+                    <option value="">-- Chọn Nhà cung cấp --</option>
+                    @foreach (var s in Model.Suppliers)
+                    {
+                        <option value="@s.Id">@s.Name (@(s.ContactPerson ?? s.Phone ?? "N/A"))</option>
+                    }
+                </select>
+                <span asp-validation-for="Input.SupplierId" class="text-danger small"></span>
+            </div>
+        </div>
+
+        <!-- ITEMS TABLE -->
+        <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-list text-primary me-2"></i>Danh sách sách đề xuất nhập</h6>
+        <div class="table-responsive mb-3">
+            <table class="table table-bordered align-middle small" id="poItemsTable">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 45%;">Sản phẩm (Sách)</th>
+                        <th style="width: 20%;">Số lượng nhập</th>
+                        <th style="width: 25%;">Đơn giá nhập (VNĐ)</th>
+                        <th style="width: 10%;" class="text-center">Xóa</th>
+                    </tr>
+                </thead>
+                <tbody id="poItemsBody">
+                    <!-- INITIAL 3 ROWS -->
+                    @for (int i = 0; i < 3; i++)
+                    {
+                        <tr>
+                            <td>
+                                <select name="Input.Items[@i].BookId" class="form-select form-select-sm">
+                                    <option value="0">-- Chọn sách --</option>
+                                    @foreach (var b in Model.Books)
+                                    {
+                                        <option value="@b.Id">@b.Title (Tồn: @b.StockQuantity)</option>
+                                    }
+                                </select>
+                            </td>
+                            <td>
+                                <input type="number" name="Input.Items[@i].Quantity" min="1" class="form-control form-control-sm" placeholder="SL" value="10" />
+                            </td>
+                            <td>
+                                <input type="number" name="Input.Items[@i].UnitPrice" step="1000" min="0" class="form-control form-control-sm" placeholder="Giá nhập" value="50000" />
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="this.closest('tr').remove()">
+                                    <i class="fa-regular fa-trash-can"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mb-4">
+            <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="addRow()">
+                <i class="fa-solid fa-plus me-1"></i>Thêm dòng sách khác
+            </button>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary px-4 py-2 rounded-pill fw-bold">
+                <i class="fa-solid fa-paper-plane me-1"></i>Gửi đề xuất PO tới Admin
+            </button>
+            <a asp-page="/Warehouse/PurchaseOrders/Index" class="btn btn-outline-secondary px-4 py-2 rounded-pill">
+                Hủy
+            </a>
+        </div>
+    </form>
+</div>
+
+<script>
+    let rowIndex = 3;
+    const booksOptions = `@Html.Raw(string.Join("", Model.Books.Select(b => $"<option value='{b.Id}'>{b.Title} (Tồn: {b.StockQuantity})</option>")))`;
+
+    function addRow() {
+        const tbody = document.getElementById('poItemsBody');
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>
+                <select name="Input.Items[${rowIndex}].BookId" class="form-select form-select-sm">
+                    <option value="0">-- Chọn sách --</option>
+                    ${booksOptions}
+                </select>
+            </td>
+            <td>
+                <input type="number" name="Input.Items[${rowIndex}].Quantity" min="1" class="form-control form-control-sm" placeholder="SL" value="10" />
+            </td>
+            <td>
+                <input type="number" name="Input.Items[${rowIndex}].UnitPrice" step="1000" min="0" class="form-control form-control-sm" placeholder="Giá nhập" value="50000" />
+            </td>
+            <td class="text-center">
+                <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="this.closest('tr').remove()">
+                    <i class="fa-regular fa-trash-can"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+        rowIndex++;
+    }
+</script>

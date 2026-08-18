@@ -1,0 +1,61 @@
+@{
+    string currentPage = ViewContext.RouteData.Values["page"]?.ToString() ?? "";
+}
+
+<div class="admin-sidebar" style="background: #7f1d1d;">
+    <div class="sidebar-brand" style="border-color: #991b1b;">
+        <i class="fa-solid fa-shield-halved text-danger me-2"></i>ADMIN PANEL
+    </div>
+    <ul class="nav flex-column mt-3">
+        <li class="nav-item">
+            <a asp-page="/Admin/Index" class="nav-link @(currentPage == "/Admin/Index" ? "active" : "")">
+                <i class="fa-solid fa-chart-line fa-fw"></i> Tổng quan
+            </a>
+        </li>
+        <li class="nav-item">
+            <a asp-page="/Admin/Products/Index" class="nav-link @(currentPage.Contains("/Admin/Products") ? "active" : "")">
+                <i class="fa-solid fa-book fa-fw"></i> Quản lý sách
+            </a>
+        </li>
+        <li class="nav-item">
+            <a asp-page="/Admin/Categories/Index" class="nav-link @(currentPage.Contains("/Admin/Categories") ? "active" : "")">
+                <i class="fa-solid fa-layer-group fa-fw"></i> Danh mục
+            </a>
+        </li>
+        <li class="nav-item">
+            <a asp-page="/Admin/Orders/Index" class="nav-link @(currentPage.Contains("/Admin/Orders") ? "active" : "")">
+                <i class="fa-solid fa-receipt fa-fw"></i> Quản lý đơn hàng
+            </a>
+        </li>
+        <li class="nav-item">
+            <a asp-page="/Admin/Users/Index" class="nav-link @(currentPage.Contains("/Admin/Users") ? "active" : "")">
+                <i class="fa-solid fa-users-gear fa-fw"></i> Người dùng
+            </a>
+        </li>
+        <li class="nav-item">
+            <a asp-page="/Admin/Vouchers/Index" class="nav-link @(currentPage.Contains("/Admin/Vouchers") ? "active" : "")">
+                <i class="fa-solid fa-ticket fa-fw"></i> Quản lý Voucher
+            </a>
+        </li>
+        <li class="nav-item">
+            <a asp-page="/Admin/PurchaseOrders/Index" class="nav-link @(currentPage.Contains("/Admin/PurchaseOrders") ? "active" : "")">
+                <i class="fa-solid fa-file-invoice-dollar fa-fw"></i> Duyệt Đơn Nhập (PO)
+            </a>
+        </li>
+        <li class="nav-item">
+            <a asp-page="/Admin/Returns/Index" class="nav-link @(currentPage.Contains("/Admin/Returns") ? "active" : "")">
+                <i class="fa-solid fa-arrow-rotate-left fa-fw"></i> Yêu cầu trả hàng
+            </a>
+        </li>
+        <li class="nav-item">
+            <a asp-page="/Admin/Reports/Index" class="nav-link @(currentPage.Contains("/Admin/Reports") ? "active" : "")">
+                <i class="fa-solid fa-chart-pie fa-fw"></i> Báo cáo thống kê
+            </a>
+        </li>
+        <li class="nav-item mt-4 pt-3 border-top border-secondary">
+            <a asp-page="/Index" class="nav-link text-warning">
+                <i class="fa-solid fa-arrow-left fa-fw"></i> Về cửa hàng
+            </a>
+        </li>
+    </ul>
+</div>

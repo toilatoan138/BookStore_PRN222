@@ -1,0 +1,66 @@
+@{
+    string currentPage = ViewContext.RouteData.Values["page"]?.ToString() ?? "";
+}
+
+<div class="admin-sidebar" style="background: #14532d;">
+    <div class="sidebar-brand" style="border-color: #166534;">
+        <i class="fa-solid fa-users text-success me-2"></i>STAFF PANEL
+    </div>
+    <ul class="nav flex-column mt-3">
+        <li class="nav-item">
+            <a asp-page="/Staff/Index" class="nav-link @(currentPage == "/Staff/Index" ? "active" : "")">
+                <i class="fa-solid fa-chart-line fa-fw"></i> Tổng quan ca trực
+            </a>
+        </li>
+        <li class="nav-item">
+            <a asp-page="/Staff/Orders/Index" class="nav-link @(currentPage.Contains("/Staff/Orders") ? "active" : "")">
+                <i class="fa-solid fa-list-check fa-fw"></i> Quản lý đơn hàng
+            </a>
+        </li>
+        <li class="nav-item">
+            <a asp-page="/Staff/Vouchers/Index" class="nav-link @(currentPage.Contains("/Staff/Vouchers") ? "active" : "")">
+                <i class="fa-solid fa-ticket fa-fw"></i> Quản lý mã giảm giá
+            </a>
+        </li>
+        <li class="nav-item">
+            <a asp-page="/Staff/Customers/Index" class="nav-link @(currentPage.Contains("/Staff/Customers") ? "active" : "")">
+                <i class="fa-solid fa-users-viewfinder fa-fw"></i> Khách hàng & CRM
+            </a>
+        </li>
+        <li class="nav-item">
+            <a asp-page="/Staff/FPoints/Index" class="nav-link @(currentPage.Contains("/Staff/FPoints") ? "active" : "")">
+                <i class="fa-solid fa-coins fa-fw"></i> Quản lý F-Points
+            </a>
+        </li>
+        <li class="nav-item">
+            <a asp-page="/Staff/Promotions/Index" class="nav-link @(currentPage.Contains("/Staff/Promotions") ? "active" : "")">
+                <i class="fa-solid fa-bolt fa-fw text-warning"></i> Quản lý Flash Sale
+            </a>
+        </li>
+        <li class="nav-item">
+            <a asp-page="/Staff/Reviews/Index" class="nav-link @(currentPage.Contains("/Staff/Reviews") ? "active" : "")">
+                <i class="fa-solid fa-comments fa-fw"></i> Đánh giá & Nhận xét
+            </a>
+        </li>
+        <li class="nav-item">
+            <a asp-page="/Staff/Tickets/Index" class="nav-link @(currentPage.Contains("/Staff/Tickets") ? "active" : "")">
+                <i class="fa-solid fa-headset fa-fw"></i> Khiếu nại & Trả hàng
+            </a>
+        </li>
+        <li class="nav-item">
+            <a asp-page="/Staff/Chat" class="nav-link @(currentPage.Contains("/Staff/Chat") ? "active" : "")">
+                <i class="fa-brands fa-rocketchat fa-fw"></i> Live Chat CSKH
+            </a>
+        </li>
+        <li class="nav-item">
+            <a asp-page="/Staff/Reports/Index" class="nav-link @(currentPage.Contains("/Staff/Reports") ? "active" : "")">
+                <i class="fa-solid fa-chart-pie fa-fw"></i> Báo cáo doanh thu
+            </a>
+        </li>
+        <li class="nav-item mt-4 pt-3 border-top border-success">
+            <a asp-page="/Index" class="nav-link text-warning">
+                <i class="fa-solid fa-arrow-left fa-fw"></i> Về cửa hàng
+            </a>
+        </li>
+    </ul>
+</div>

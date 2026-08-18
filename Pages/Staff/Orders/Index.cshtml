@@ -1,0 +1,248 @@
+﻿@page
+@model BookStore.Pages.Staff.Orders.IndexModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Quản lý Đơn Hàng - Staff";
+    ViewData["Subtitle"] = "Xác nhận, duyệt đơn hàng và chuyển tiếp xuống kho xử lý";
+}
+
+<div class="container-fluid px-0">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center gap-3">
+            <a asp-page="/Staff/Index" class="btn btn-outline-secondary btn-sm shadow-sm">
+                <i class="fa-solid fa-chart-line me-1"></i> Dashboard
+            </a>
+            <div class="border-start ps-3">
+                <h4 class="fw-bold text-info m-0">
+                    <i class="fa-solid fa-list-check me-2"></i>
+                    QUẢN LÝ ĐƠN HÀNG
+                </h4>
+                <small class="text-muted">Kiểm tra thông tin và duyệt đơn cho khách hàng</small>
+            </div>
+        </div>
+
+        <a asp-page="/Index" class="btn btn-outline-secondary btn-sm shadow-sm">
+            <i class="fa-solid fa-store me-1"></i> Về Cửa hàng
+        </a>
+    </div>
+
+    <!-- FILTER -->
+    <div class="bg-white p-4 rounded-4 shadow-sm mb-4">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label small fw-bold text-muted">Tìm kiếm Đơn hàng</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                    <input type="text" asp-for="Keyword" class="form-control" placeholder="Nhập mã đơn, tên khách hoặc SĐT..." />
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label small fw-bold text-muted">Trạng thái đơn hàng</label>
+                <select asp-for="Status" class="form-select">
+                    <option value="0">-- Tất cả trạng thái --</option>
+                    <option value="1">Pending (Chờ duyệt)</option>
+                    <option value="2">Processing (Đang xử lý / Soạn kho)</option>
+                    <option value="3">Packed (Đã soạn xong)</option>
+                    <option value="4">Shipping (Đang giao hàng)</option>
+                    <option value="5">Delivered (Đã giao thành công)</option>
+                    <option value="6">Cancelled (Đã hủy)</option>
+                    <option value="7">ReturnRequested (Yêu cầu trả hàng)</option>
+                </select>
+            </div>
+
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-info text-white w-50 fw-semibold">Lọc</button>
+                <a asp-page="/Staff/Orders/Index" class="btn btn-secondary w-50">Làm mới</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- TABLE -->
+    <div class="bg-white p-4 rounded-4 shadow-sm mb-4">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle w-100 mb-0">
+                <thead class="table-dark">
+                    <tr class="text-center">
+                        <th style="width: 5%;">STT</th>
+                        <th style="width: 10%;">Mã Đơn</th>
+                        <th style="width: 20%;" class="text-start">Khách Hàng</th>
+                        <th style="width: 20%;" class="text-start">Địa Chỉ Nhận</th>
+                        <th style="width: 14%;">Ngày Đặt</th>
+                        <th style="width: 12%;">Tổng Tiền</th>
+                        <th style="width: 10%;">Trạng Thái</th>
+                        <th style="width: 12%;">Thao Tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Orders.Any())
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-4">Không có đơn hàng nào phù hợp điều kiện lọc.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        int index = 0;
+                        foreach (var o in Model.Orders)
+                        {
+                            index++;
+                            <tr>
+                                <td class="text-center fw-bold text-muted">@index</td>
+                                <td class="text-center fw-bold font-monospace text-primary">#ORD-@o.Id</td>
+                                <td class="text-start">
+                                    <strong class="text-dark d-block">@(o.FullName ?? o.User?.FullName ?? "Khách hàng")</strong>
+                                    <small class="text-muted"><i class="fa-solid fa-phone me-1"></i>@o.PhoneNumber</small>
+                                </td>
+                                <td class="text-start small">@o.ShippingAddress</td>
+                                <td class="text-center small">@o.OrderDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                <td class="text-end fw-bold text-danger fs-6">@o.TotalAmount.ToString("N0")đ</td>
+                                <td class="text-center">
+                                    @switch (o.Status)
+                                    {
+                                        case BookStore.Models.Enums.OrderStatus.Pending:
+                                            <span class="badge bg-warning text-dark px-2 py-1">Chờ duyệt</span>
+                                            break;
+                                        case BookStore.Models.Enums.OrderStatus.Processing:
+                                            <span class="badge bg-primary px-2 py-1">Đang xử lý</span>
+                                            break;
+                                        case BookStore.Models.Enums.OrderStatus.Packed:
+                                            <span class="badge bg-info text-dark px-2 py-1">Đã soạn xong</span>
+                                            break;
+                                        case BookStore.Models.Enums.OrderStatus.Shipping:
+                                            <span class="badge bg-primary px-2 py-1">Đang giao</span>
+                                            break;
+                                        case BookStore.Models.Enums.OrderStatus.Delivered:
+                                            <span class="badge bg-success px-2 py-1">Đã giao</span>
+                                            break;
+                                        case BookStore.Models.Enums.OrderStatus.Cancelled:
+                                            <span class="badge bg-secondary px-2 py-1">Đã hủy</span>
+                                            break;
+                                        default:
+                                            <span class="badge bg-light text-dark border px-2 py-1">@o.Status</span>
+                                            break;
+                                    }
+                                </td>
+                                <td class="text-center text-nowrap">
+                                    <button type="button" class="btn btn-sm btn-outline-info rounded-pill px-2 me-1"
+                                            title="Chi tiết"
+                                            data-bs-toggle="modal" data-bs-target="#orderDetailModal-@o.Id">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </button>
+
+                                    @if (o.Status == BookStore.Models.Enums.OrderStatus.Pending)
+                                    {
+                                        <form method="post" asp-page-handler="Approve" asp-route-orderId="@o.Id" class="d-inline"
+                                              onsubmit="return confirm('Xác nhận duyệt đơn hàng và chuyển xuống kho soạn hàng?');">
+                                            <button type="submit" class="btn btn-sm btn-success rounded-pill px-2 fw-semibold" title="Duyệt đơn">
+                                                <i class="fa-solid fa-check"></i>
+                                            </button>
+                                        </form>
+
+                                        <form method="post" asp-page-handler="Cancel" asp-route-orderId="@o.Id" class="d-inline"
+                                              onsubmit="return confirm('Bạn có chắc muốn hủy đơn hàng này?');">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2" title="Hủy đơn">
+                                                <i class="fa-solid fa-xmark"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL CHI TIẾT ĐƠN HÀNG -->
+@foreach (var o in Model.Orders)
+{
+    <div class="modal fade" id="orderDetailModal-@o.Id" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title fw-bold">
+                        <i class="fa-solid fa-receipt me-2"></i>Chi Tiết Đơn Hàng #ORD-@o.Id
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row g-3 mb-4 bg-light p-3 rounded-3 mx-0 border">
+                        <div class="col-6">
+                            <small class="text-muted d-block">Khách nhận:</small>
+                            <strong class="text-dark">@(o.FullName ?? o.User?.FullName ?? "Khách hàng")</strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted d-block">Số điện thoại:</small>
+                            <strong class="text-dark">@o.PhoneNumber</strong>
+                        </div>
+                        <div class="col-12">
+                            <small class="text-muted d-block">Địa chỉ:</small>
+                            <strong class="text-dark">@o.ShippingAddress</strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted d-block">Ngày đặt:</small>
+                            <strong class="text-dark">@o.OrderDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted d-block">Thanh toán:</small>
+                            <span class="badge bg-secondary">@(o.PaymentMethod ?? "COD")</span>
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold mb-3"><i class="fa-solid fa-list me-2 text-info"></i>Mặt Hàng Đã Đặt</h6>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-sm align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>STT</th>
+                                    <th>Tên sách</th>
+                                    <th class="text-center">Số lượng</th>
+                                    <th class="text-end">Đơn giá</th>
+                                    <th class="text-end">Thành tiền</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{
+                                    int dIdx = 0;
+                                    foreach (var d in o.Details)
+                                    {
+                                        dIdx++;
+                                        <tr>
+                                            <td class="text-center fw-bold text-muted">@dIdx</td>
+                                            <td class="fw-semibold">@(d.Book?.Title ?? "Sách #" + d.BookId)</td>
+                                            <td class="text-center fw-bold">@d.Quantity</td>
+                                            <td class="text-end">@d.Price.ToString("N0")đ</td>
+                                            <td class="text-end fw-bold">@((d.Quantity * d.Price).ToString("N0"))đ</td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <th colspan="4" class="text-end fw-bold">TỔNG TIỀN:</th>
+                                    <th class="text-end text-danger fw-bold fs-6">@o.TotalAmount.ToString("N0")đ</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    @if (o.Status == BookStore.Models.Enums.OrderStatus.Pending)
+                    {
+                        <form method="post" asp-page-handler="Approve" asp-route-orderId="@o.Id">
+                            <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold">
+                                <i class="fa-solid fa-check me-1"></i>Duyệt Đơn Này
+                            </button>
+                        </form>
+                    }
+                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}

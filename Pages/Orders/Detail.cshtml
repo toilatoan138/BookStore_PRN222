@@ -1,0 +1,326 @@
+﻿@page "{id:int}"
+@model BookStore.Pages.Orders.DetailModel
+@{
+    ViewData["Title"] = $"Chi tiết đơn hàng #{Model.Order.Id}";
+}
+
+<div class="container py-4">
+    <!-- BREADCRUMB -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb small">
+            <li class="breadcrumb-item"><a asp-page="/Index" class="text-danger text-decoration-none">Trang chủ</a></li>
+            <li class="breadcrumb-item"><a asp-page="/Orders/Index" class="text-danger text-decoration-none">Đơn hàng của tôi</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Đơn hàng #@Model.Order.Id</li>
+        </ol>
+    </nav>
+
+    <div class="row g-4">
+        <!-- SIDEBAR -->
+        <div class="col-lg-3">
+            <partial name="_SidebarPartial" />
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="col-lg-9">
+            <!-- ORDER HEADER & STATUS STEP BAR -->
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+                <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 pb-3 border-bottom">
+                    <div>
+                        <h4 class="fw-bold text-dark mb-1">Đơn hàng #@Model.Order.Id</h4>
+                        <span class="text-muted small">Ngày đặt: @Model.Order.OrderDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")</span>
+                    </div>
+                    <div>
+                        @switch (Model.Order.Status)
+                        {
+                            case Models.Enums.OrderStatus.Pending:
+                                <span class="badge bg-warning text-dark fs-6 px-3 py-2"><i class="fa-solid fa-clock me-1"></i>Chờ xác nhận</span>
+                                break;
+                            case Models.Enums.OrderStatus.Processing:
+                                <span class="badge bg-info text-dark fs-6 px-3 py-2"><i class="fa-solid fa-boxes-packing me-1"></i>Đang chuẩn bị hàng</span>
+                                break;
+                            case Models.Enums.OrderStatus.Shipping:
+                                <span class="badge bg-primary fs-6 px-3 py-2"><i class="fa-solid fa-truck me-1"></i>Đang giao hàng</span>
+                                break;
+                            case Models.Enums.OrderStatus.Delivered:
+                                <span class="badge bg-success fs-6 px-3 py-2"><i class="fa-solid fa-circle-check me-1"></i>Đã giao thành công</span>
+                                break;
+                            case Models.Enums.OrderStatus.Cancelled:
+                                <span class="badge bg-secondary fs-6 px-3 py-2"><i class="fa-solid fa-ban me-1"></i>Đã hủy</span>
+                                break;
+                            case Models.Enums.OrderStatus.ReturnRequested:
+                                <span class="badge bg-danger fs-6 px-3 py-2"><i class="fa-solid fa-arrow-rotate-left me-1"></i>Yêu cầu trả hàng</span>
+                                break;
+                            default:
+                                <span class="badge bg-dark fs-6 px-3 py-2">@Model.Order.Status</span>
+                                break;
+                        }
+                    </div>
+                </div>
+
+                <!-- PROGRESS BAR -->
+                @if (Model.Order.Status != Models.Enums.OrderStatus.Cancelled)
+                {
+                    <div class="row text-center mb-4 g-2">
+                        <div class="col-3">
+                            <div class="p-2 rounded @(Model.Order.Status >= Models.Enums.OrderStatus.Pending ? "bg-danger text-white fw-bold" : "bg-light text-muted") small">
+                                <i class="fa-solid fa-receipt d-block mb-1"></i>1. Đặt đơn
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="p-2 rounded @(Model.Order.Status >= Models.Enums.OrderStatus.Processing ? "bg-danger text-white fw-bold" : "bg-light text-muted") small">
+                                <i class="fa-solid fa-boxes-packing d-block mb-1"></i>2. Chuẩn bị
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="p-2 rounded @(Model.Order.Status >= Models.Enums.OrderStatus.Shipping ? "bg-danger text-white fw-bold" : "bg-light text-muted") small">
+                                <i class="fa-solid fa-truck d-block mb-1"></i>3. Giao hàng
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="p-2 rounded @(Model.Order.Status == Models.Enums.OrderStatus.Delivered ? "bg-success text-white fw-bold" : "bg-light text-muted") small">
+                                <i class="fa-solid fa-circle-check d-block mb-1"></i>4. Hoàn tất
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(Model.Order.StatusNote))
+                {
+                    <div class="alert alert-info py-2 small mb-0">
+                        <i class="fa-solid fa-circle-info me-1"></i><strong>Ghi chú:</strong> @Model.Order.StatusNote
+                    </div>
+                }
+            </div>
+
+            <!-- SHIPPING & PAYMENT DETAILS -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+                        <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-location-dot text-danger me-2"></i>Địa chỉ nhận hàng</h6>
+                        <div class="small text-secondary">
+                            <div><strong>Người nhận:</strong> @Model.Order.FullName</div>
+                            <div><strong>Số điện thoại:</strong> @Model.Order.PhoneNumber</div>
+                            <div><strong>Địa chỉ:</strong> @Model.Order.ShippingAddress</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100">
+                        <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-wallet text-danger me-2"></i>Hình thức thanh toán</h6>
+                        <div class="small text-secondary">
+                            <div><strong>Phương thức:</strong> @Model.Order.PaymentMethod</div>
+                            <div class="mt-1">
+                                @if (Model.Order.PaymentMethod == "COD")
+                                {
+                                    <span class="badge bg-secondary-subtle text-secondary border">Thanh toán khi nhận hàng</span>
+                                }
+                                else if (Model.Order.PaymentMethod == "VNPAY")
+                                {
+                                    <span class="badge bg-primary-subtle text-primary border">Đã thanh toán qua VNPay</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success-subtle text-success border">Đã trừ ví BookStore</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ORDER ITEMS RECEIPT -->
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+                <h5 class="fw-bold mb-3 text-dark"><i class="fa-solid fa-box-open text-danger me-2"></i>Chi tiết sản phẩm</h5>
+
+                <div class="table-responsive mb-3">
+                    <table class="table align-middle">
+                        <thead class="table-light small">
+                            <tr>
+                                <th>Sản phẩm</th>
+                                <th class="text-center">Đơn giá</th>
+                                <th class="text-center">Số lượng</th>
+                                <th class="text-end">Tạm tính</th>
+                                @if (Model.Order.Status == Models.Enums.OrderStatus.Delivered)
+                                {
+                                    <th class="text-center">Tác vụ</th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.Order.Details)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-3">
+                                            <img src="@(string.IsNullOrEmpty(item.Book.ImageUrl) ? "https://via.placeholder.com/50x70" : item.Book.ImageUrl)"
+                                                 alt="@item.Book.Title" class="rounded border" style="width: 45px; height: 60px; object-fit: cover;" />
+                                            <div>
+                                                <a asp-page="/Products/Detail" asp-route-id="@item.BookId" class="fw-semibold text-dark text-decoration-none small">
+                                                    @item.Book.Title
+                                                </a>
+                                                <div class="text-muted small">Tác giả: @item.Book.Author</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center small">@item.Price.ToString("N0")đ</td>
+                                    <td class="text-center small">x@item.Quantity</td>
+                                    <td class="text-end fw-bold text-danger">@((item.Quantity * item.Price).ToString("N0"))đ</td>
+                                    @if (Model.Order.Status == Models.Enums.OrderStatus.Delivered)
+                                    {
+                                        <td class="text-center">
+                                            <button type="button" class="btn btn-sm btn-outline-danger rounded-pill"
+                                                    onclick="openReturnModal(@item.BookId, '@item.Book.Title', @item.Quantity)">
+                                                Yêu cầu trả hàng
+                                            </button>
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- TOTAL CALCULATION -->
+                <div class="row justify-content-end">
+                    <div class="col-md-5">
+                        <div class="d-flex justify-content-between mb-2 small text-muted">
+                            <span>Phí vận chuyển:</span>
+                            <span class="fw-semibold text-dark">@(Model.Order.ShippingFee == 0 ? "Miễn phí" : $"{Model.Order.ShippingFee:N0}đ")</span>
+                        </div>
+                        @if (Model.Order.DiscountAmount > 0)
+                        {
+                            <div class="d-flex justify-content-between mb-2 small text-success">
+                                <span>Giảm giá (Voucher / F-Points):</span>
+                                <span class="fw-bold">-@Model.Order.DiscountAmount.ToString("N0")đ</span>
+                            </div>
+                        }
+                        <hr />
+                        <div class="d-flex justify-content-between align-items-baseline">
+                            <span class="fw-bold fs-6">Tổng thanh toán:</span>
+                            <span class="fs-4 fw-bold text-danger">@Model.Order.TotalAmount.ToString("N0")đ</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RETURN REQUESTS LIST (IF ANY) -->
+            @if (Model.ExistingReturns.Any())
+            {
+                <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+                    <h5 class="fw-bold mb-3 text-dark"><i class="fa-solid fa-arrow-rotate-left text-danger me-2"></i>Yêu cầu trả hàng cho đơn này</h5>
+                    <div class="d-flex flex-column gap-3">
+                        @foreach (var ret in Model.ExistingReturns)
+                        {
+                            <div class="p-3 border rounded-3 bg-light">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <strong>@ret.Book.Title (x@ret.Quantity)</strong>
+                                    <span class="badge @(ret.Status == 0 ? "bg-warning text-dark" : ret.Status == 1 ? "bg-info" : ret.Status == 3 ? "bg-success" : "bg-danger")">
+                                        @(ret.Status == 0 ? "Chờ duyệt" : ret.Status == 1 ? "Đã duyệt trả" : ret.Status == 3 ? "Hoàn tất" : "Từ chối")
+                                    </span>
+                                </div>
+                                <div class="small text-muted mb-1">Lý do: @ret.CustomerReason</div>
+                                @if (!string.IsNullOrEmpty(ret.AdminNote))
+                                {
+                                    <div class="small text-danger">Phản hồi từ MindBook: @ret.AdminNote</div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- ACTIONS -->
+            <div class="d-flex justify-content-between align-items-center">
+                <a asp-page="/Orders/Index" class="btn btn-outline-secondary rounded-pill px-4">
+                    <i class="fa-solid fa-arrow-left me-1"></i>Quay lại danh sách đơn
+                </a>
+
+                @if (Model.Order.Status == Models.Enums.OrderStatus.Pending || Model.Order.Status == Models.Enums.OrderStatus.Processing)
+                {
+                    <button type="button" class="btn btn-danger rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#cancelModal">
+                        <i class="fa-solid fa-ban me-1"></i>Hủy đơn hàng
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CANCEL MODAL -->
+<div class="modal fade" id="cancelModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title fw-bold">Hủy đơn hàng #@Model.Order.Id</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-page-handler="Cancel" asp-route-id="@Model.Order.Id">
+                <div class="modal-body p-4">
+                    <p class="small text-muted mb-3">Vui lòng nhập lý do bạn muốn hủy đơn hàng này:</p>
+                    <textarea name="reason" class="form-control" rows="3" placeholder="Lý do hủy đơn..." required></textarea>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-danger rounded-3 fw-bold px-4">Xác nhận hủy</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- RETURN REQUEST MODAL -->
+<div class="modal fade" id="returnModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-arrow-rotate-left me-2"></i>Yêu cầu trả hàng & hoàn tiền</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-page-handler="ReturnRequest" asp-route-id="@Model.Order.Id">
+                <input type="hidden" id="returnBookId" asp-for="ReturnInput.BookId" />
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Sản phẩm trả lại</label>
+                        <input type="text" id="returnBookTitle" class="form-control bg-light" readonly />
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="ReturnInput.Quantity" class="form-label fw-semibold">Số lượng trả</label>
+                        <input asp-for="ReturnInput.Quantity" type="number" id="returnQty" min="1" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="ReturnInput.CustomerReason" class="form-label fw-semibold">Lý do trả hàng</label>
+                        <textarea asp-for="ReturnInput.CustomerReason" class="form-control" rows="3" placeholder="Mô tả tình trạng sách (hư hỏng, rách, in nhầm...)" required></textarea>
+                    </div>
+
+                    <h6 class="fw-bold text-dark mt-4 mb-2">Thông tin tài khoản nhận tiền hoàn (Nếu COD)</h6>
+                    <div class="row g-2">
+                        <div class="col-md-6 mb-2">
+                            <input asp-for="ReturnInput.BankName" class="form-control form-control-sm" placeholder="Tên ngân hàng (VD: Vietcombank)" />
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <input asp-for="ReturnInput.AccountNumber" class="form-control form-control-sm" placeholder="Số tài khoản" />
+                        </div>
+                        <div class="col-12">
+                            <input asp-for="ReturnInput.AccountOwner" class="form-control form-control-sm" placeholder="Tên chủ tài khoản" />
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-danger rounded-3 fw-bold px-4">Gửi yêu cầu trả hàng</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openReturnModal(bookId, title, maxQty) {
+        document.getElementById('returnBookId').value = bookId;
+        document.getElementById('returnBookTitle').value = title;
+        document.getElementById('returnQty').max = maxQty;
+        document.getElementById('returnQty').value = 1;
+        new bootstrap.Modal(document.getElementById('returnModal')).show();
+    }
+</script>

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="@(ViewData["Description"] ?? "MindBook - Nhà sách trực tuyến uy tín, cung cấp hàng nghìn đầu sách chất lượng với giá tốt nhất.")" />
+    <title>@(ViewData["Title"] != null ? $"{ViewData["Title"]} - MindBook" : "MindBook | Nhà Sách Trực Tuyến")</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+    <!-- Global site CSS -->
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+    <partial name="_HeaderPartial" />
+
+    <main class="main-content">
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert-toast alert-toast-success" id="globalToast">
+                <i class="fa-solid fa-circle-check me-2"></i>@TempData["SuccessMessage"]
+            </div>
+        }
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert-toast alert-toast-error" id="globalToast">
+                <i class="fa-solid fa-circle-exclamation me-2"></i>@TempData["ErrorMessage"]
+            </div>
+        }
+        @RenderBody()
+    </main>
+
+    <partial name="_FooterPartial" />
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Auto-dismiss toast
+        const toast = document.getElementById('globalToast');
+        if (toast) {
+            setTimeout(() => toast.classList.add('toast-hide'), 3500);
+            setTimeout(() => toast.remove(), 4000);
+        }
+        // Header scroll hide/show
+        let lastScrollY = window.scrollY;
+        const header = document.querySelector('.site-header');
+        window.addEventListener('scroll', () => {
+            if (header) {
+                if (window.scrollY > lastScrollY && window.scrollY > 80) header.classList.add('header-hidden');
+                else header.classList.remove('header-hidden');
+                lastScrollY = window.scrollY;
+            }
+        });
+    </script>
+
+    <!-- FLOATING LIVE CHAT WIDGET -->
+    <div id="liveChatWidget" style="position: fixed; bottom: 24px; right: 24px; z-index: 1050;">
+        <!-- CHAT TOGGLE BUTTON -->
+        <button id="chatToggleBtn" class="btn btn-danger rounded-circle shadow-lg d-flex align-items-center justify-content-center"
+                style="width: 56px; height: 56px;" onclick="toggleChatWindow()">
+            <i class="fa-solid fa-comments fs-4"></i>
+        </button>
+
+        <!-- CHAT DRAWER -->
+        <div id="chatDrawer" class="card border-0 shadow-lg rounded-4 overflow-hidden"
+             style="display: none; width: 340px; height: 450px; position: absolute; bottom: 70px; right: 0; background: #fff;">
+            <!-- CHAT DRAWER HEADER -->
+            <div class="p-3 bg-danger text-white d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="p-1 bg-white text-danger rounded-circle" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fa-solid fa-headset" style="font-size: 14px;"></i>
+                    </div>
+                    <div>
+                        <strong class="small d-block">Hỗ trợ trực tuyến MindBook</strong>
+                        <small style="font-size: 11px; opacity: 0.85;">Tư vấn viên sẵn sàng giải đáp</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" onclick="toggleChatWindow()"></button>
+            </div>
+
+            <!-- CHAT MESSAGES BODY -->
+            <div id="customerChatBody" class="p-3 overflow-auto flex-grow-1 d-flex flex-column gap-2" style="background: #f8fafc;">
+                <div class="d-flex flex-column align-items-start">
+                    <div class="p-2 px-3 rounded-4 bg-white border small shadow-sm">
+                        Chào bạn! Nhà sách MindBook có thể giúp gì cho bạn hôm nay?
+                    </div>
+                    <small class="text-muted mt-1" style="font-size: 10px;">Tư vấn viên MindBook</small>
+                </div>
+            </div>
+
+            <!-- CHAT INPUT FORM -->
+            <div class="p-2 border-top bg-white">
+                <form id="customerChatForm" class="d-flex gap-2">
+                    <input type="text" id="customerChatInput" class="form-control form-control-sm rounded-pill px-3" placeholder="Nhập câu hỏi..." autocomplete="off" required />
+                    <button type="submit" class="btn btn-sm btn-danger rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                        <i class="fa-solid fa-paper-plane" style="font-size: 11px;"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <script>
+        const customerName = '@(User.Identity?.IsAuthenticated == true ? User.Identity.Name : "Khách_Chưa_Đăng_Nhập")';
+        let chatOpen = false;
+        let customerHub = null;
+
+        function toggleChatWindow() {
+            chatOpen = !chatOpen;
+            document.getElementById('chatDrawer').style.display = chatOpen ? 'flex' : 'none';
+            if (chatOpen && !customerHub) {
+                initCustomerChat();
+            }
+        }
+
+        function initCustomerChat() {
+            customerHub = new signalR.HubConnectionBuilder()
+                .withUrl("/chatHub")
+                .withAutomaticReconnect()
+                .build();
+
+            customerHub.on("LoadHistory", (history) => {
+                const body = document.getElementById('customerChatBody');
+                history.forEach(m => appendCustomerMsg(m));
+            });
+
+            customerHub.on("ReceiveStaffMessage", (msgItem) => {
+                appendCustomerMsg(msgItem);
+            });
+
+            customerHub.on("MessageSent", (msgItem) => {
+                appendCustomerMsg(msgItem);
+            });
+
+            customerHub.start().then(() => {
+                customerHub.invoke("RegisterCustomer", customerName);
+            }).catch(err => console.error(err.toString()));
+        }
+
+        function appendCustomerMsg(m) {
+            const body = document.getElementById('customerChatBody');
+            const isMe = m.sender === "Customer";
+
+            const div = document.createElement("div");
+            div.className = `d-flex flex-column ${isMe ? "align-items-end" : "align-items-start"}`;
+            div.innerHTML = `
+                <div class="p-2 px-3 rounded-4 small shadow-sm ${isMe ? "bg-danger text-white" : "bg-white text-dark border"}" style="max-width: 80%;">
+                    ${m.content}
+                </div>
+                <small class="text-muted mt-1" style="font-size: 10px;">${isMe ? "Bạn" : (m.senderName || "Tư vấn viên")}</small>
+            `;
+            body.appendChild(div);
+            body.scrollTop = body.scrollHeight;
+        }
+
+        document.getElementById('customerChatForm').onsubmit = function (e) {
+            e.preventDefault();
+            const input = document.getElementById('customerChatInput');
+            const text = input.value.trim();
+            if (!text || !customerHub) return;
+
+            customerHub.invoke("SendMessageFromCustomer", customerName, text)
+                .then(() => {
+                    input.value = "";
+                })
+                .catch(err => console.error(err.toString()));
+        };
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+    <partial name="_ValidationScriptsPartial" />
+</body>
+</html>

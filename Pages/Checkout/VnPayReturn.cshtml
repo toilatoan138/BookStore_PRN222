@@ -1,0 +1,82 @@
+﻿@page
+@model BookStore.Pages.Checkout.VnPayReturnModel
+@{
+    ViewData["Title"] = Model.IsSuccess ? "Thanh toán thành công" : "Thanh toán không thành công";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7 col-lg-6">
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden text-center">
+                @if (Model.IsSuccess)
+                {
+                    <div class="card-header bg-success text-white py-4">
+                        <i class="fa-solid fa-circle-check fa-4x mb-2"></i>
+                        <h4 class="fw-bold mb-0">Thanh toán thành công!</h4>
+                        <p class="mb-0 text-white-50">Cảm ơn bạn đã mua hàng tại MindBook</p>
+                    </div>
+                    <div class="card-body p-4 p-md-5 bg-white">
+                        <div class="p-3 bg-light rounded-3 mb-4 text-start small">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Mã tham chiếu GD:</span>
+                                <strong class="text-dark">@Model.OrderInfo</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Mã giao dịch VNPay:</span>
+                                <strong class="text-dark">@Model.TransactionNo</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-muted">Số tiền thanh toán:</span>
+                                <strong class="text-danger fs-6">@Model.Amount.ToString("N0")đ</strong>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted">Phương thức:</span>
+                                <span class="badge bg-primary">VNPAY Online</span>
+                            </div>
+                        </div>
+
+                        <div class="d-flex flex-column gap-2">
+                            @if (Model.CreatedOrderId > 0)
+                            {
+                                <a asp-page="/Orders/Detail" asp-route-id="@Model.CreatedOrderId" class="btn btn-danger py-2 rounded-pill fw-bold">
+                                    <i class="fa-solid fa-receipt me-2"></i>Xem chi tiết đơn hàng #@Model.CreatedOrderId
+                                </a>
+                            }
+                            else
+                            {
+                                <a asp-page="/Orders/Index" class="btn btn-danger py-2 rounded-pill fw-bold">
+                                    <i class="fa-solid fa-receipt me-2"></i>Xem danh sách đơn hàng
+                                </a>
+                            }
+                            <a asp-page="/Index" class="btn btn-outline-secondary py-2 rounded-pill">
+                                Tiếp tục mua sắm
+                            </a>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="card-header bg-danger text-white py-4">
+                        <i class="fa-solid fa-circle-xmark fa-4x mb-2"></i>
+                        <h4 class="fw-bold mb-0">Giao dịch không thành công</h4>
+                        <p class="mb-0 text-white-50">Thanh toán qua cổng VNPay đã bị hủy hoặc thất bại</p>
+                    </div>
+                    <div class="card-body p-4 p-md-5 bg-white">
+                        <p class="text-muted small mb-4">
+                            Lý do: @(string.IsNullOrEmpty(Model.ErrorMessage) ? "Giao dịch bị gián đoạn hoặc khách hàng hủy thanh toán." : Model.ErrorMessage)
+                        </p>
+
+                        <div class="d-flex flex-column gap-2">
+                            <a asp-page="/Cart/Index" class="btn btn-danger py-2 rounded-pill fw-bold">
+                                <i class="fa-solid fa-rotate-right me-2"></i>Quay lại giỏ hàng và thử lại
+                            </a>
+                            <a asp-page="/Index" class="btn btn-outline-secondary py-2 rounded-pill">
+                                Về trang chủ
+                            </a>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

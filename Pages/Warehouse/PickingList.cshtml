@@ -1,0 +1,76 @@
+﻿@page
+@model BookStore.Pages.Warehouse.PickingListModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Danh Sách Soạn Hàng (Picking & Packing List)";
+    ViewData["Subtitle"] = "Tổng hợp danh mục sách cần lấy theo vị trí kệ kho cho các đơn hàng đang chờ xử lý";
+}
+
+<div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-dolly text-primary me-2"></i>Đơn hàng cần gom sách xuất kho (@Model.Orders.Count đơn)</h5>
+        <button class="btn btn-outline-secondary btn-sm rounded-pill px-3" onclick="window.print()">
+            <i class="fa-solid fa-print me-1"></i>In phiếu gom hàng
+        </button>
+    </div>
+
+    @if (!Model.Orders.Any())
+    {
+        <div class="text-center py-5 bg-light rounded-4">
+            <i class="fa-solid fa-circle-check fa-4x text-success mb-3"></i>
+            <h5 class="fw-bold text-dark">Tất cả đơn hàng đã được soạn xong!</h5>
+            <p class="text-muted small">Hiện không có đơn hàng nào ở trạng thái chờ chuẩn bị.</p>
+        </div>
+    }
+    else
+    {
+        <div class="d-flex flex-column gap-4">
+            @foreach (var o in Model.Orders)
+            {
+                <div class="card border rounded-3 p-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                        <div>
+                            <span class="badge bg-primary fs-6 me-2">Đơn #@o.Id</span>
+                            <strong class="text-dark">@o.FullName</strong> - @o.PhoneNumber
+                            <span class="text-muted small ms-2">(@o.ShippingAddress)</span>
+                        </div>
+                        <span class="badge bg-warning text-dark">@o.Status</span>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-sm align-middle mb-0 small">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 25%;">Vị trí Kệ Kho</th>
+                                    <th>Tên sách</th>
+                                    <th class="text-center" style="width: 15%;">Số lượng lấy</th>
+                                    <th class="text-center" style="width: 15%;">Đã lấy</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in o.Details)
+                                {
+                                    <tr>
+                                        <td>
+                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle fs-6 fw-bold">
+                                                <i class="fa-solid fa-location-dot me-1"></i>@(item.Book?.LocationCode ?? "A-01-01")
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <strong>@item.Book?.Title</strong>
+                                            <div class="text-muted" style="font-size: 11px;">Mã sách: #@item.BookId</div>
+                                        </td>
+                                        <td class="text-center fw-bold fs-6 text-danger">x@item.Quantity</td>
+                                        <td class="text-center">
+                                            <input type="checkbox" class="form-check-input" style="width: 20px; height: 20px;" />
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

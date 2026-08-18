@@ -1,0 +1,82 @@
+﻿@page
+@model BookStore.Pages.Account.MyCommentsModel
+@{
+    ViewData["Title"] = "Bình luận & Đánh giá của tôi";
+}
+
+<div class="container py-4">
+    <div class="row g-4">
+        <!-- SIDEBAR -->
+        <div class="col-lg-3">
+            <partial name="_SidebarPartial" />
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="col-lg-9">
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+                <h4 class="fw-bold mb-1 text-dark"><i class="fa-regular fa-comment-dots text-danger me-2"></i>Bình luận & Đánh giá của tôi</h4>
+                <p class="text-muted small mb-4">Danh sách nhận xét sản phẩm bạn đã gửi trên MindBook</p>
+
+                @if (!Model.Reviews.Any())
+                {
+                    <div class="text-center py-5 bg-light rounded-4">
+                        <i class="fa-regular fa-comments fa-3x text-muted mb-2"></i>
+                        <p class="text-muted small mb-0">Bạn chưa có đánh giá hoặc bình luận nào.</p>
+                        <a asp-page="/Orders/Index" class="btn btn-outline-danger btn-sm mt-3 rounded-pill">
+                            Xem đơn hàng để đánh giá sách
+                        </a>
+                    </div>
+                }
+                else
+                {
+                    <div class="d-flex flex-column gap-3">
+                        @foreach (var review in Model.Reviews)
+                        {
+                            <div class="card border rounded-3 p-3">
+                                <div class="row g-3">
+                                    <div class="col-auto" style="width: 80px;">
+                                        <img src="@(string.IsNullOrEmpty(review.Book?.ImageUrl) ? "https://via.placeholder.com/80x110" : review.Book.ImageUrl)"
+                                             alt="@(review.Book?.Title ?? "Sách")" class="img-fluid rounded" style="max-height: 110px; object-fit: cover;" />
+                                    </div>
+                                    <div class="col">
+                                        <h6 class="fw-bold mb-1">
+                                            <a asp-page="/Products/Detail" asp-route-id="@review.BookId" class="text-dark text-decoration-none">
+                                                @(review.Book?.Title ?? "Sách #" + review.BookId)
+                                            </a>
+                                        </h6>
+                                        <div class="text-warning mb-2">
+                                            @for (int i = 1; i <= 5; i++)
+                                            {
+                                                if (i <= review.Rating)
+                                                {
+                                                    <i class="fa-solid fa-star"></i>
+                                                }
+                                                else
+                                                {
+                                                    <i class="fa-regular fa-star"></i>
+                                                }
+                                            }
+                                            <span class="text-muted small ms-2">@review.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
+                                        </div>
+
+                                        <p class="text-secondary small mb-2 bg-light p-2 rounded">
+                                            @review.Comment
+                                        </p>
+
+                                        @if (!string.IsNullOrEmpty(review.StaffReply))
+                                        {
+                                            <div class="p-2 rounded bg-danger-subtle border-start border-danger border-3 small">
+                                                <strong class="text-danger"><i class="fa-solid fa-headset me-1"></i>Phản hồi từ MindBook:</strong>
+                                                <div class="text-dark mt-1">@review.StaffReply</div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

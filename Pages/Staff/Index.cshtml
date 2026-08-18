@@ -1,0 +1,251 @@
+﻿@page
+@model BookStore.Pages.Staff.IndexModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Staff Dashboard - MindBook Portal";
+    ViewData["Subtitle"] = "Báo cáo ca làm việc hôm nay và các chức năng nghiệp vụ chăm sóc khách hàng";
+}
+
+<div class="container-fluid px-0">
+
+    <!-- ======================== SHIFT REPORT (HÔM NAY) ======================== -->
+    <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-calendar-day text-primary me-2"></i>Báo Cáo Ca Làm Việc (Hôm Nay)</h5>
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white d-flex flex-row align-items-center gap-3">
+                <div class="p-3 rounded-circle bg-primary-subtle text-primary">
+                    <i class="fa-solid fa-cart-shopping fs-3"></i>
+                </div>
+                <div>
+                    <h2 class="fw-bold text-dark mb-0">@Model.TodayTotalOrders</h2>
+                    <span class="text-muted small">Tổng đơn hôm nay</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white d-flex flex-row align-items-center gap-3">
+                <div class="p-3 rounded-circle bg-warning-subtle text-warning">
+                    <i class="fa-solid fa-clock fs-3"></i>
+                </div>
+                <div>
+                    <h2 class="fw-bold text-dark mb-0">@Model.TodayPendingOrders</h2>
+                    <span class="text-warning small fw-semibold">Đơn đang chờ xử lý</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white d-flex flex-row align-items-center gap-3">
+                <div class="p-3 rounded-circle bg-success-subtle text-success">
+                    <i class="fa-solid fa-money-bill-wave fs-3"></i>
+                </div>
+                <div>
+                    <h2 class="fw-bold text-success mb-0">@Model.TodayRevenue.ToString("N0")đ</h2>
+                    <span class="text-muted small">Doanh thu thực tế ca hôm nay</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================== 9 CHỨC NĂNG NGHIỆP VỤ STAFF ======================== -->
+    <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-briefcase text-success me-2"></i>Chức Năng Nghiệp Vụ</h5>
+    <div class="row g-4 mb-4">
+        <div class="col-md-4 col-lg-4">
+            <a asp-page="/Staff/Orders/Index" class="card border-0 shadow-sm rounded-4 p-4 bg-white text-decoration-none h-100 text-dark border-top border-4 border-info">
+                <div class="d-flex align-items-center gap-3 mb-2">
+                    <div class="p-2 rounded-3 bg-info-subtle text-info">
+                        <i class="fa-solid fa-list-check fs-4"></i>
+                    </div>
+                    <h5 class="fw-bold mb-0 text-dark">Quản lý Đơn hàng</h5>
+                </div>
+                <p class="small text-muted mb-0">Xem danh sách, duyệt đơn và cập nhật trạng thái giao hàng</p>
+            </a>
+        </div>
+
+        <div class="col-md-4 col-lg-4">
+            <a asp-page="/Staff/Vouchers/Index" class="card border-0 shadow-sm rounded-4 p-4 bg-white text-decoration-none h-100 text-dark border-top border-4" style="border-top-color: #e83e8c !important;">
+                <div class="d-flex align-items-center gap-3 mb-2">
+                    <div class="p-2 rounded-3 text-white" style="background-color: #e83e8c;">
+                        <i class="fa-solid fa-ticket fs-4"></i>
+                    </div>
+                    <h5 class="fw-bold mb-0 text-dark">Quản lý Mã giảm giá</h5>
+                </div>
+                <p class="small text-muted mb-0">Tạo mới, theo dõi trạng thái và quản lý các mã khuyến mãi</p>
+            </a>
+        </div>
+
+        <div class="col-md-4 col-lg-4">
+            <a asp-page="/Staff/Reports/Index" class="card border-0 shadow-sm rounded-4 p-4 bg-white text-decoration-none h-100 text-dark border-top border-4" style="border-top-color: #6f42c1 !important;">
+                <div class="d-flex align-items-center gap-3 mb-2">
+                    <div class="p-2 rounded-3 text-white" style="background-color: #6f42c1;">
+                        <i class="fa-solid fa-chart-pie fs-4"></i>
+                    </div>
+                    <h5 class="fw-bold mb-0 text-dark">Chi tiết Doanh thu</h5>
+                </div>
+                <p class="small text-muted mb-0">Xem biểu đồ và xuất báo cáo doanh thu theo ngày</p>
+            </a>
+        </div>
+
+        <div class="col-md-4 col-lg-4">
+            <a asp-page="/Staff/Reviews/Index" class="card border-0 shadow-sm rounded-4 p-4 bg-white text-decoration-none h-100 text-dark border-top border-4" style="border-top-color: #fd7e14 !important;">
+                <div class="d-flex align-items-center gap-3 mb-2">
+                    <div class="p-2 rounded-3 text-white" style="background-color: #fd7e14;">
+                        <i class="fa-solid fa-comments fs-4"></i>
+                    </div>
+                    <h5 class="fw-bold mb-0 text-dark">Phản hồi Khách hàng</h5>
+                </div>
+                <p class="small text-muted mb-0">Xem và trả lời các đánh giá, bình luận về sách</p>
+            </a>
+        </div>
+
+        <div class="col-md-4 col-lg-4">
+            <a asp-page="/Staff/Customers/Index" class="card border-0 shadow-sm rounded-4 p-4 bg-white text-decoration-none h-100 text-dark border-top border-4 border-success">
+                <div class="d-flex align-items-center gap-3 mb-2">
+                    <div class="p-2 rounded-3 bg-success-subtle text-success">
+                        <i class="fa-solid fa-users-viewfinder fs-4"></i>
+                    </div>
+                    <h5 class="fw-bold mb-0 text-dark">Hỗ trợ Khách hàng</h5>
+                </div>
+                <p class="small text-muted mb-0">Tra cứu thông tin liên hệ, lịch sử và giải quyết khiếu nại</p>
+            </a>
+        </div>
+
+        <div class="col-md-4 col-lg-4">
+            <a asp-page="/Staff/FPoints/Index" class="card border-0 shadow-sm rounded-4 p-4 bg-white text-decoration-none h-100 text-dark border-top border-4 border-warning">
+                <div class="d-flex align-items-center gap-3 mb-2">
+                    <div class="p-2 rounded-3 bg-warning-subtle text-warning">
+                        <i class="fa-solid fa-coins fs-4"></i>
+                    </div>
+                    <h5 class="fw-bold mb-0 text-dark">Quản lý F-Point</h5>
+                </div>
+                <p class="small text-muted mb-0">Thao tác cộng/trừ điểm thưởng và xem lịch sử biến động</p>
+            </a>
+        </div>
+
+        <div class="col-md-4 col-lg-4">
+            <a asp-page="/Staff/Tickets/Index" class="card border-0 shadow-sm rounded-4 p-4 bg-white text-decoration-none h-100 text-dark border-top border-4 border-danger">
+                <div class="d-flex align-items-center gap-3 mb-2">
+                    <div class="p-2 rounded-3 bg-danger-subtle text-danger">
+                        <i class="fa-solid fa-headset fs-4"></i>
+                    </div>
+                    <h5 class="fw-bold mb-0 text-dark">Quản lý Khiếu nại</h5>
+                </div>
+                <p class="small text-muted mb-0">Tiếp nhận yêu cầu hỗ trợ, xử lý ticket và duyệt trả hàng</p>
+            </a>
+        </div>
+
+        <div class="col-md-4 col-lg-4">
+            <a asp-page="/Staff/Chat" class="card border-0 shadow-sm rounded-4 p-4 bg-white text-decoration-none h-100 text-dark border-top border-4" style="border-top-color: #6610f2 !important;">
+                <div class="d-flex align-items-center gap-3 mb-2">
+                    <div class="p-2 rounded-3 text-white" style="background-color: #6610f2;">
+                        <i class="fa-brands fa-rocketchat fs-4"></i>
+                    </div>
+                    <h5 class="fw-bold mb-0 text-dark">Quản lý Live Chat</h5>
+                </div>
+                <p class="small text-muted mb-0">Tương tác, tư vấn và hỗ trợ khách hàng theo thời gian thực</p>
+            </a>
+        </div>
+
+        <div class="col-md-4 col-lg-4">
+            <a asp-page="/Staff/Promotions/Index" class="card border-0 shadow-sm rounded-4 p-4 bg-white text-decoration-none h-100 text-dark border-top border-4" style="border-top-color: #ff4757 !important;">
+                <div class="d-flex align-items-center gap-3 mb-2">
+                    <div class="p-2 rounded-3 text-white" style="background-color: #ff4757;">
+                        <i class="fa-solid fa-bolt fs-4"></i>
+                    </div>
+                    <h5 class="fw-bold mb-0 text-dark">Quản lý Flash Sale</h5>
+                </div>
+                <p class="small text-muted mb-0">Tạo chương trình khuyến mãi, cài đặt mức giảm giá và chọn sách</p>
+            </a>
+        </div>
+    </div>
+
+    <!-- ======================== RECENT TICKETS & RECENT REVIEWS ======================== -->
+    <div class="row g-4">
+        <!-- RECENT TICKETS -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-headset text-warning me-2"></i>Yêu cầu hỗ trợ mới</h5>
+                    <a asp-page="/Staff/Tickets/Index" class="btn btn-sm btn-link text-danger p-0 text-decoration-none fw-bold">
+                        Xem tất cả <i class="fa-solid fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+
+                <div class="d-flex flex-column gap-3">
+                    @if (!Model.Stats.RecentTickets.Any())
+                    {
+                        <p class="text-muted small py-3 text-center">Không có yêu cầu hỗ trợ mới nào.</p>
+                    }
+                    else
+                    {
+                        @foreach (var t in Model.Stats.RecentTickets)
+                        {
+                            <div class="p-3 border rounded-3 bg-light">
+                                <div class="d-flex justify-content-between align-items-start mb-1">
+                                    <strong class="text-dark">@t.TicketSubject</strong>
+                                    <span class="badge @(t.Status == "Closed" ? "bg-secondary" : "bg-warning text-dark")">@t.Status</span>
+                                </div>
+                                <p class="text-muted small mb-2 text-truncate">@t.TicketMessage</p>
+                                <div class="d-flex justify-content-between align-items-center small">
+                                    <span class="text-muted">Khách: <strong>@(t.User?.FullName ?? "N/A")</strong></span>
+                                    <a asp-page="/Staff/Tickets/Index" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-semibold">
+                                        Phản hồi
+                                    </a>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- RECENT REVIEWS -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-star text-warning me-2"></i>Đánh giá gần đây</h5>
+                    <a asp-page="/Staff/Reviews/Index" class="btn btn-sm btn-link text-danger p-0 text-decoration-none fw-bold">
+                        Quản lý đánh giá <i class="fa-solid fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+
+                <div class="d-flex flex-column gap-3">
+                    @if (!Model.Stats.RecentReviews.Any())
+                    {
+                        <p class="text-muted small py-3 text-center">Chưa có đánh giá nào gần đây.</p>
+                    }
+                    else
+                    {
+                        @foreach (var r in Model.Stats.RecentReviews)
+                        {
+                            <div class="p-3 border rounded-3 bg-light">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <strong class="text-dark">@r.Book?.Title</strong>
+                                    <div class="text-warning small">
+                                        @for (int i = 1; i <= r.Rating; i++)
+                                        {
+                                            <i class="fa-solid fa-star"></i>
+                                        }
+                                    </div>
+                                </div>
+                                <p class="text-muted small mb-2 text-truncate">@r.Comment</p>
+                                <div class="d-flex justify-content-between align-items-center small">
+                                    <span class="text-muted">Bởi: <strong>@(r.User?.FullName ?? "Khách hàng")</strong></span>
+                                    @if (string.IsNullOrEmpty(r.StaffReply))
+                                    {
+                                        <span class="badge bg-warning text-dark">Chưa trả lời</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">Đã phản hồi</span>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

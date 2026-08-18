@@ -1,0 +1,42 @@
+﻿@page
+@model BookStore.Pages.Products.ConanModel
+@{
+    ViewData["Title"] = "Thám Tử Lừng Danh Conan";
+}
+
+<div class="container py-4">
+    <div class="p-4 rounded-4 text-white mb-4 shadow-sm" style="background: linear-gradient(135deg, #1e3a8a, #0369a1);">
+        <h3 class="fw-bold mb-1"><i class="fa-solid fa-magnifying-glass text-warning me-2"></i>THÁM TỬ LỪNG DANH CONAN</h3>
+        <p class="mb-0 text-white-50">Tuyển tập trọn bộ truyện tranh, ngoại truyện và ấn bản màu đặc biệt.</p>
+    </div>
+
+    @if (!Model.ConanBooks.Any())
+    {
+        <div class="card border-0 shadow-sm rounded-4 p-5 bg-white text-center">
+            <p class="text-muted">Đang cập nhật các tập truyện Conan...</p>
+        </div>
+    }
+    else
+    {
+        <div class="row row-cols-2 row-cols-md-4 g-3">
+            @foreach (var book in Model.ConanBooks)
+            {
+                <div class="col">
+                    <div class="product-card">
+                        <a asp-page="/Products/Detail" asp-route-id="@book.Id" class="product-thumb">
+                            <img src="@(string.IsNullOrEmpty(book.ImageUrl) ? "https://via.placeholder.com/200x280" : book.ImageUrl)" alt="@book.Title" />
+                        </a>
+                        <div class="product-info">
+                            <a asp-page="/Products/Detail" asp-route-id="@book.Id" class="product-title" title="@book.Title">
+                                @book.Title
+                            </a>
+                            <div class="product-price-box">
+                                <span class="price-current">@book.Price.ToString("N0")đ</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

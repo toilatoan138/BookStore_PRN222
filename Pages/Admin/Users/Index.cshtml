@@ -1,0 +1,100 @@
+﻿@page
+@model BookStore.Pages.Admin.Users.IndexModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Quản lý Người dùng";
+    ViewData["Subtitle"] = "Danh sách tài khoản, phân quyền vai trò và khóa/mở khóa thành viên";
+}
+
+<div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+    <!-- SEARCH & FILTER -->
+    <div class="d-flex justify-content-between align-items-center mb-4 gap-3">
+        <form method="get" class="d-flex gap-2" style="max-width: 400px;">
+            <input asp-for="Keyword" type="text" class="form-control form-control-sm" placeholder="Tìm theo tên, email, username..." />
+            <button type="submit" class="btn btn-sm btn-danger px-3">
+                <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
+        </form>
+
+        <span class="text-muted small">Tổng số: <strong>@Model.Users.Count</strong> tài khoản</span>
+    </div>
+
+    <!-- USERS TABLE -->
+    <div class="table-responsive">
+        <table class="table table-hover align-middle small">
+            <thead class="table-light">
+                <tr>
+                    <th>Người dùng</th>
+                    <th>Email & SĐT</th>
+                    <th>Vai trò (Role)</th>
+                    <th>F-Points</th>
+                    <th>Số dư ví</th>
+                    <th>Trạng thái</th>
+                    <th class="text-end">Tác vụ</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in Model.Users)
+                {
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <img src="https://ui-avatars.com/api/?name=@Uri.EscapeDataString(user.FullName)&background=C92127&color=fff&size=36&bold=true"
+                                     class="rounded-circle" style="width: 36px; height: 36px;" />
+                                <div>
+                                    <div class="fw-bold text-dark">@user.FullName</div>
+                                    <small class="text-muted">&#64;@user.UserName</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div>@user.Email</div>
+                            <small class="text-muted">@(user.PhoneNumber ?? "Chưa có SĐT")</small>
+                        </td>
+                        <td>
+                            <form method="post" asp-page-handler="ChangeRole" class="d-inline">
+                                <input type="hidden" name="userId" value="@user.Id" />
+                                <select name="newRole" class="form-select form-select-sm rounded-pill d-inline-block w-auto" onchange="this.form.submit()">
+                                    <option value="Customer" selected="@(user.Role == "Customer")">Customer</option>
+                                    <option value="Staff" selected="@(user.Role == "Staff")">Staff</option>
+                                    <option value="Warehouse" selected="@(user.Role == "Warehouse")">Warehouse</option>
+                                    <option value="Admin" selected="@(user.Role == "Admin")">Admin</option>
+                                </select>
+                            </form>
+                        </td>
+                        <td>
+                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">
+                                @user.FPoints.ToString("N0") pts
+                            </span>
+                        </td>
+                        <td class="fw-bold text-success">
+                            @user.WalletBalance.ToString("N0")đ
+                        </td>
+                        <td>
+                            @if (user.Status)
+                            {
+                                <span class="badge bg-success-subtle text-success border border-success-subtle">
+                                    <i class="fa-solid fa-check me-1"></i>Hoạt động
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle">
+                                    <i class="fa-solid fa-ban me-1"></i>Bị khóa
+                                </span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <form method="post" asp-page-handler="ToggleStatus" asp-route-userId="@user.Id" class="d-inline"
+                                  onsubmit="return confirm('Bạn có chắc muốn thay đổi trạng thái hoạt động của tài khoản này?');">
+                                <button type="submit" class="btn btn-sm @(user.Status ? "btn-outline-danger" : "btn-outline-success") rounded-pill px-3">
+                                    @(user.Status ? "Khóa tài khoản" : "Mở khóa")
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

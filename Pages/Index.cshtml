@@ -1,0 +1,210 @@
+﻿@page
+@model BookStore.Pages.IndexModel
+@{
+    ViewData["Title"] = "Trang chủ - Nhà Sách Trực Tuyến";
+}
+
+<div class="container py-4">
+    <!-- ======================== HERO CAROUSEL BANNER ======================== -->
+    <div id="heroCarousel" class="carousel slide rounded-4 overflow-hidden shadow-sm mb-4" data-bs-ride="carousel">
+        <div class="carousel-indicators">
+            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="0" class="active"></button>
+            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="1"></button>
+            <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="2"></button>
+        </div>
+        <div class="carousel-inner">
+            <div class="carousel-item active" style="background: linear-gradient(135deg, #b91c1c, #991b1b); min-height: 280px;">
+                <div class="d-flex align-items-center justify-content-between p-5 text-white h-100">
+                    <div style="max-width: 600px;">
+                        <span class="badge bg-warning text-dark px-3 py-2 fw-bold text-uppercase mb-2">Đại tiệc sách 2026</span>
+                        <h2 class="display-6 fw-bold mb-2">SĂN SÁCH HAY - GIÁ CỰC TỐT</h2>
+                        <p class="lead mb-4 text-white-50 fs-6">Giảm đến 50% hàng ngàn đầu sách văn học, kinh tế, thiếu nhi và manga hot nhất.</p>
+                        <a asp-page="/Search" class="btn btn-light text-danger fw-bold rounded-pill px-4 py-2 shadow-sm">
+                            <i class="fa-solid fa-bag-shopping me-2"></i>Khám phá ngay
+                        </a>
+                    </div>
+                    <div class="d-none d-md-block text-end">
+                        <i class="fa-solid fa-book-bookmark fa-8x text-white opacity-25"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="carousel-item" style="background: linear-gradient(135deg, #1e3a8a, #1e40af); min-height: 280px;">
+                <div class="d-flex align-items-center justify-content-between p-5 text-white h-100">
+                    <div style="max-width: 600px;">
+                        <span class="badge bg-danger px-3 py-2 fw-bold text-uppercase mb-2">Manga & Comic</span>
+                        <h2 class="display-6 fw-bold mb-2">THẾ GIỚI TRUYỆN TRANH NHẬT BẢN</h2>
+                        <p class="lead mb-4 text-white-50 fs-6">Trọn bộ Thám Tử Conan, One Piece, Doraemon và các ấn bản đặc biệt.</p>
+                        <a asp-page="/Products/Conan" class="btn btn-warning text-dark fw-bold rounded-pill px-4 py-2 shadow-sm">
+                            <i class="fa-solid fa-star me-2"></i>Xem ngay
+                        </a>
+                    </div>
+                    <div class="d-none d-md-block text-end">
+                        <i class="fa-solid fa-masks-theater fa-8x text-white opacity-25"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="carousel-item" style="background: linear-gradient(135deg, #065f46, #047857); min-height: 280px;">
+                <div class="d-flex align-items-center justify-content-between p-5 text-white h-100">
+                    <div style="max-width: 600px;">
+                        <span class="badge bg-light text-success px-3 py-2 fw-bold text-uppercase mb-2">Ưu đãi thành viên</span>
+                        <h2 class="display-6 fw-bold mb-2">TÍCH ĐIỂM F-POINTS - ĐỔI VOUCHER</h2>
+                        <p class="lead mb-4 text-white-50 fs-6">Nâng hạng Kim Cương nhận chiết khấu lên đến 15% cho mọi đơn hàng.</p>
+                        <a asp-page="/Vouchers/Hub" class="btn btn-light text-success fw-bold rounded-pill px-4 py-2 shadow-sm">
+                            <i class="fa-solid fa-ticket me-2"></i>Săn Voucher
+                        </a>
+                    </div>
+                    <div class="d-none d-md-block text-end">
+                        <i class="fa-solid fa-crown fa-8x text-white opacity-25"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon"></span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon"></span>
+        </button>
+    </div>
+
+    <!-- ======================== QUICK CATEGORIES PILLS ======================== -->
+    <div class="card border-0 shadow-sm rounded-4 p-3 bg-white mb-4">
+        <div class="d-flex align-items-center gap-2 overflow-auto py-1">
+            <a asp-page="/Search" class="btn btn-sm btn-outline-danger rounded-pill px-3 py-2 fw-semibold text-nowrap">
+                <i class="fa-solid fa-border-all me-1"></i>Tất cả
+            </a>
+            @foreach (var cat in Model.Categories.Take(8))
+            {
+                <a asp-page="/Search" asp-route-categoryId="@cat.Id" class="btn btn-sm btn-light text-dark rounded-pill px-3 py-2 fw-semibold text-nowrap border">
+                    @cat.Name
+                </a>
+            }
+        </div>
+    </div>
+
+    <!-- ======================== FLASH SALE ======================== -->
+    @if (Model.FlashSaleBooks.Any())
+    {
+        <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white" style="border-top: 4px solid #C92127 !important;">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="d-flex align-items-center gap-2">
+                    <h4 class="fw-bold text-danger mb-0">
+                        <i class="fa-solid fa-bolt me-1"></i>FLASH SALE
+                    </h4>
+                    <span class="badge bg-danger rounded-pill px-3 py-1 animate-pulse">ĐANG DIỄN RA</span>
+                </div>
+                <a asp-page="/Products/FlashSale" class="text-danger fw-semibold small text-decoration-none">
+                    Xem tất cả <i class="fa-solid fa-angle-right ms-1"></i>
+                </a>
+            </div>
+
+            <div class="row row-cols-2 row-cols-md-4 g-3">
+                @foreach (var book in Model.FlashSaleBooks)
+                {
+                    <div class="col">
+                        <div class="product-card">
+                            <a asp-page="/Products/Detail" asp-route-id="@book.Id" class="product-thumb">
+                                <img src="@(string.IsNullOrEmpty(book.ImageUrl) ? "https://via.placeholder.com/200x280?text=MindBook" : book.ImageUrl)" alt="@book.Title" loading="lazy" />
+                                <span class="badge-discount">-20%</span>
+                            </a>
+                            <div class="product-info">
+                                <a asp-page="/Products/Detail" asp-route-id="@book.Id" class="product-title" title="@book.Title">
+                                    @book.Title
+                                </a>
+                                <div class="product-author">@book.Author</div>
+                                <div class="product-price-box">
+                                    <span class="price-current">@book.Price.ToString("N0")đ</span>
+                                    <span class="price-old">@((book.Price * 1.25m).ToString("N0"))đ</span>
+                                </div>
+                                <form method="post" asp-page-handler="AddToCart" asp-route-bookId="@book.Id" class="mt-2">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger w-100 rounded-pill fw-semibold">
+                                        <i class="fa-solid fa-cart-plus me-1"></i>Thêm giỏ
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    <!-- ======================== BEST SELLERS ======================== -->
+    <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="fw-bold text-dark mb-0">
+                <i class="fa-solid fa-fire text-danger me-2"></i>Sách Bán Chạy Nhất
+            </h4>
+            <a asp-page="/Search" asp-route-sortBy="bestseller" class="text-danger fw-semibold small text-decoration-none">
+                Xem thêm <i class="fa-solid fa-angle-right ms-1"></i>
+            </a>
+        </div>
+
+        <div class="row row-cols-2 row-cols-md-4 g-3">
+            @foreach (var book in Model.BestSellerBooks)
+            {
+                <div class="col">
+                    <div class="product-card">
+                        <a asp-page="/Products/Detail" asp-route-id="@book.Id" class="product-thumb">
+                            <img src="@(string.IsNullOrEmpty(book.ImageUrl) ? "https://via.placeholder.com/200x280?text=MindBook" : book.ImageUrl)" alt="@book.Title" loading="lazy" />
+                        </a>
+                        <div class="product-info">
+                            <a asp-page="/Products/Detail" asp-route-id="@book.Id" class="product-title" title="@book.Title">
+                                @book.Title
+                            </a>
+                            <div class="product-author">@book.Author</div>
+                            <div class="product-price-box">
+                                <span class="price-current">@book.Price.ToString("N0")đ</span>
+                                <small class="text-muted ms-auto">Đã bán @book.SoldQuantity</small>
+                            </div>
+                            <form method="post" asp-page-handler="AddToCart" asp-route-bookId="@book.Id" class="mt-2">
+                                <button type="submit" class="btn btn-sm btn-outline-danger w-100 rounded-pill fw-semibold">
+                                    <i class="fa-solid fa-cart-plus me-1"></i>Thêm giỏ
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- ======================== NEW ARRIVALS ======================== -->
+    <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="fw-bold text-dark mb-0">
+                <i class="fa-solid fa-sparkles text-warning me-2"></i>Sách Mới Phát Hành
+            </h4>
+            <a asp-page="/Search" asp-route-sortBy="newest" class="text-danger fw-semibold small text-decoration-none">
+                Xem thêm <i class="fa-solid fa-angle-right ms-1"></i>
+            </a>
+        </div>
+
+        <div class="row row-cols-2 row-cols-md-4 g-3">
+            @foreach (var book in Model.NewArrivalBooks)
+            {
+                <div class="col">
+                    <div class="product-card">
+                        <a asp-page="/Products/Detail" asp-route-id="@book.Id" class="product-thumb">
+                            <img src="@(string.IsNullOrEmpty(book.ImageUrl) ? "https://via.placeholder.com/200x280?text=MindBook" : book.ImageUrl)" alt="@book.Title" loading="lazy" />
+                        </a>
+                        <div class="product-info">
+                            <a asp-page="/Products/Detail" asp-route-id="@book.Id" class="product-title" title="@book.Title">
+                                @book.Title
+                            </a>
+                            <div class="product-author">@book.Author</div>
+                            <div class="product-price-box">
+                                <span class="price-current">@book.Price.ToString("N0")đ</span>
+                            </div>
+                            <form method="post" asp-page-handler="AddToCart" asp-route-bookId="@book.Id" class="mt-2">
+                                <button type="submit" class="btn btn-sm btn-outline-danger w-100 rounded-pill fw-semibold">
+                                    <i class="fa-solid fa-cart-plus me-1"></i>Thêm giỏ
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>

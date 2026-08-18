@@ -1,0 +1,57 @@
+﻿@page
+@model BookStore.Pages.Account.LoginModel
+@{
+    ViewData["Title"] = "Đăng nhập";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="card-header bg-danger text-white text-center py-4">
+                    <h3 class="fw-bold mb-1"><i class="fa-solid fa-book-open me-2"></i>MINDBOOK</h3>
+                    <p class="mb-0 text-white-50">Đăng nhập tài khoản của bạn</p>
+                </div>
+                <div class="card-body p-4 p-md-5 bg-white">
+                    <form method="post">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 mb-3" role="alert"></div>
+
+                        <div class="mb-3">
+                            <label asp-for="Input.UserNameOrEmail" class="form-label fw-semibold">Email hoặc Tên đăng nhập</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><i class="fa-regular fa-user text-muted"></i></span>
+                                <input asp-for="Input.UserNameOrEmail" class="form-control border-start-0 ps-0" placeholder="Nhập email hoặc tên tài khoản" autofocus />
+                            </div>
+                            <span asp-validation-for="Input.UserNameOrEmail" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <label asp-for="Input.Password" class="form-label fw-semibold">Mật khẩu</label>
+                                <a asp-page="/Account/ForgotPassword" class="text-danger small text-decoration-none">Quên mật khẩu?</a>
+                            </div>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-lock text-muted"></i></span>
+                                <input asp-for="Input.Password" class="form-control border-start-0 ps-0" placeholder="Nhập mật khẩu" />
+                            </div>
+                            <span asp-validation-for="Input.Password" class="text-danger small"></span>
+                        </div>
+
+                        <div class="form-check mb-4">
+                            <input asp-for="Input.RememberMe" class="form-check-input" />
+                            <label asp-for="Input.RememberMe" class="form-check-label text-muted small">Ghi nhớ đăng nhập</label>
+                        </div>
+
+                        <button type="submit" class="btn btn-danger w-100 py-2 fw-bold rounded-3 shadow-sm mb-3">
+                            <i class="fa-solid fa-right-to-bracket me-2"></i>Đăng nhập
+                        </button>
+
+                        <div class="text-center text-muted small">
+                            Chưa có tài khoản? <a asp-page="/Account/Register" class="text-danger fw-bold text-decoration-none">Đăng ký ngay</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

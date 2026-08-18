@@ -1,0 +1,209 @@
+﻿@page
+@model BookStore.Pages.Warehouse.Invoices.IndexModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Quản lý Hóa Đơn Chứng Từ";
+    ViewData["Subtitle"] = "Theo dõi chứng từ hóa đơn bán lẻ (Sale Invoice) và hóa đơn nhập kho (Purchase Invoice)";
+}
+
+<div class="container-fluid px-0">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <a asp-page="/Warehouse/Index" class="btn btn-outline-secondary btn-sm shadow-sm">
+            <i class="fa-solid fa-arrow-left me-1"></i> Dashboard
+        </a>
+
+        <h4 class="fw-bold text-primary m-0 text-center">
+            <i class="fa-solid fa-file-invoice-dollar me-2"></i>
+            QUẢN LÝ HÓA ĐƠN
+        </h4>
+
+        <div style="width: 120px;"></div>
+    </div>
+
+    <!-- FILTER -->
+    <div class="bg-white p-3 rounded-4 shadow-sm mb-4">
+        <form method="get" class="d-flex align-items-center gap-3">
+            <label class="fw-bold small text-muted text-nowrap"><i class="fa-solid fa-filter me-1"></i> Phân loại hóa đơn:</label>
+            <select asp-for="Filter" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
+                <option value="">-- Tất cả hóa đơn --</option>
+                <option value="SALE">Sale Invoice (Hóa đơn Bán)</option>
+                <option value="PURCHASE">Purchase Invoice (Hóa đơn Nhập)</option>
+            </select>
+        </form>
+    </div>
+
+    <!-- TABLE -->
+    <div class="bg-white p-4 rounded-4 shadow-sm mb-4">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle w-100 mb-0">
+                <thead class="table-dark">
+                    <tr class="text-center">
+                        <th style="width: 12%;">Mã Hóa Đơn</th>
+                        <th style="width: 15%;">Loại Hóa Đơn</th>
+                        <th style="width: 18%;">Ngày Tạo</th>
+                        <th style="width: 18%;">Tổng Tiền</th>
+                        <th style="width: 15%;">Trạng Thái</th>
+                        <th style="width: 12%;">Thao Tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Invoices.Any())
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">Không tìm thấy hóa đơn nào phù hợp.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var inv in Model.Invoices)
+                        {
+                            <tr>
+                                <td class="text-center fw-bold font-monospace">#INV-@inv.InvoiceId.ToString("D5")</td>
+                                <td class="text-center">
+                                    @if (inv.InvoiceType.ToUpper() == "SALE")
+                                    {
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 fw-semibold">
+                                            <i class="fa-solid fa-cart-shopping me-1"></i> Bán hàng (Sale)
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 fw-semibold">
+                                            <i class="fa-solid fa-truck-ramp-box me-1"></i> Nhập hàng (PO)
+                                        </span>
+                                    }
+                                </td>
+                                <td class="text-center">@inv.CreatedDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                <td class="text-end fw-bold text-danger fs-6">@inv.TotalAmount.ToString("N0")đ</td>
+                                <td class="text-center">
+                                    <span class="badge bg-secondary">@(string.IsNullOrEmpty(inv.Status) ? "Completed" : inv.Status)</span>
+                                </td>
+                                <td class="text-center">
+                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3"
+                                            data-bs-toggle="modal" data-bs-target="#invoiceModal-@inv.InvoiceId">
+                                        <i class="fa-solid fa-eye me-1"></i> Chi tiết
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- MODALS CHI TIẾT HÓA ĐƠN -->
+@foreach (var inv in Model.Invoices)
+{
+    <div class="modal fade" id="invoiceModal-@inv.InvoiceId" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold">
+                        <i class="fa-solid fa-file-invoice me-2"></i>Chi Tiết Hóa Đơn #INV-@inv.InvoiceId.ToString("D5")
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row g-3 mb-4 bg-light p-3 rounded-3 mx-0 border">
+                        <div class="col-6">
+                            <small class="text-muted d-block">Loại hóa đơn:</small>
+                            <strong class="text-dark">@(inv.InvoiceType == "SALE" ? "Hóa Đơn Bán Lẻ (Sale)" : "Hóa Đơn Nhập Kho (Purchase Order)")</strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted d-block">Ngày lập chứng từ:</small>
+                            <strong class="text-dark">@inv.CreatedDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")</strong>
+                        </div>
+                        @if (inv.InvoiceType == "SALE" && inv.Order != null)
+                        {
+                            <div class="col-6">
+                                <small class="text-muted d-block">Khách hàng:</small>
+                                <strong class="text-primary">@(inv.Order.FullName ?? inv.Order.User?.FullName ?? "Khách vãng lai")</strong>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted d-block">Mã đơn hàng liên kết:</small>
+                                <strong class="text-dark">#ORD-@inv.OrderId</strong>
+                            </div>
+                        }
+                        else if (inv.InvoiceType == "PURCHASE" && inv.PurchaseOrder != null)
+                        {
+                            <div class="col-6">
+                                <small class="text-muted d-block">Nhà cung cấp:</small>
+                                <strong class="text-success">@(inv.PurchaseOrder.Supplier?.Name ?? "N/A")</strong>
+                            </div>
+                            <div class="col-6">
+                                <small class="text-muted d-block">Mã đơn PO liên kết:</small>
+                                <strong class="text-dark">#PO-@inv.PurchaseOrderId</strong>
+                            </div>
+                        }
+                    </div>
+
+                    <h6 class="fw-bold mb-3"><i class="fa-solid fa-list me-2 text-primary"></i>Danh Sách Sản Phẩm</h6>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-sm align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>STT</th>
+                                    <th>Tên sách</th>
+                                    <th class="text-center">Số lượng</th>
+                                    <th class="text-end">Đơn giá</th>
+                                    <th class="text-end">Thành tiền</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (inv.InvoiceType == "SALE" && inv.Order?.Details != null)
+                                {
+                                    int itemIdx = 0;
+                                    foreach (var d in inv.Order.Details)
+                                    {
+                                        itemIdx++;
+                                        <tr>
+                                            <td class="text-center fw-bold text-muted">@itemIdx</td>
+                                            <td class="fw-semibold">@(d.Book?.Title ?? "Sách #" + d.BookId)</td>
+                                            <td class="text-center fw-bold">@d.Quantity</td>
+                                            <td class="text-end">@d.Price.ToString("N0")đ</td>
+                                            <td class="text-end fw-bold">@((d.Quantity * d.Price).ToString("N0"))đ</td>
+                                        </tr>
+                                    }
+                                }
+                                else if (inv.InvoiceType == "PURCHASE" && inv.PurchaseOrder?.Details != null)
+                                {
+                                    int itemIdx = 0;
+                                    foreach (var d in inv.PurchaseOrder.Details)
+                                    {
+                                        itemIdx++;
+                                        <tr>
+                                            <td class="text-center fw-bold text-muted">@itemIdx</td>
+                                            <td class="fw-semibold">@(d.Book?.Title ?? "Sách #" + d.BookId)</td>
+                                            <td class="text-center fw-bold">@d.ExpectedQuantity</td>
+                                            <td class="text-end">@d.Price.ToString("N0")đ</td>
+                                            <td class="text-end fw-bold">@((d.ExpectedQuantity * d.Price).ToString("N0"))đ</td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted">Không có chi tiết mặt hàng.</td>
+                                    </tr>
+                                }
+                            </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <th colspan="4" class="text-end fw-bold">TỔNG CỘNG:</th>
+                                    <th class="text-end text-danger fw-bold fs-6">@inv.TotalAmount.ToString("N0")đ</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}

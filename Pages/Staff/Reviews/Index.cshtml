@@ -1,0 +1,232 @@
+﻿@page
+@model BookStore.Pages.Staff.Reviews.IndexModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Quản lý Đánh Giá & Phản Hồi";
+    ViewData["Subtitle"] = "Theo dõi và phản hồi trải nghiệm của khách hàng đối với các đầu sách";
+}
+
+@section Styles {
+    <style>
+        .avatar-circle-sm {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #e2e8f0, #cbd5e1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #334155;
+            font-size: 14px;
+        }
+        .star-yellow {
+            color: #f59e0b;
+        }
+    </style>
+}
+
+<div class="container-fluid px-0">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center gap-3">
+            <a asp-page="/Staff/Index" class="btn btn-outline-secondary btn-sm shadow-sm">
+                <i class="fa-solid fa-chart-line me-1"></i> Dashboard
+            </a>
+            <div class="border-start ps-3">
+                <h4 class="fw-bold text-danger m-0">
+                    <i class="fa-solid fa-comments me-2"></i>
+                    QUẢN LÝ ĐÁNH GIÁ
+                </h4>
+                <small class="text-muted">Xem và trả lời phản hồi của độc giả</small>
+            </div>
+        </div>
+
+        <a asp-page="/Index" class="btn btn-outline-secondary btn-sm shadow-sm">
+            <i class="fa-solid fa-store me-1"></i> Về Cửa hàng
+        </a>
+    </div>
+
+    <!-- FILTER -->
+    <div class="bg-white p-4 rounded-4 shadow-sm mb-4">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label small fw-bold text-muted">Tìm kiếm Sách / Khách hàng / Nội dung</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                    <input type="text" asp-for="Keyword" class="form-control" placeholder="Nhập từ khóa tìm kiếm..." />
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label small fw-bold text-muted">Lọc theo số sao</label>
+                <select asp-for="Rating" class="form-select">
+                    <option value="">-- Tất cả số sao --</option>
+                    <option value="5">⭐⭐⭐⭐⭐ (5 sao)</option>
+                    <option value="4">⭐⭐⭐⭐ (4 sao)</option>
+                    <option value="3">⭐⭐⭐ (3 sao)</option>
+                    <option value="2">⭐⭐ (2 sao)</option>
+                    <option value="1">⭐ (1 sao)</option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label small fw-bold text-muted">Trạng thái phản hồi</label>
+                <select asp-for="HasReply" class="form-select">
+                    <option value="">-- Tất cả trạng thái --</option>
+                    <option value="false">Chưa trả lời</option>
+                    <option value="true">Đã phản hồi</option>
+                </select>
+            </div>
+
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-danger w-50 fw-semibold">Lọc</button>
+                <a asp-page="/Staff/Reviews/Index" class="btn btn-secondary w-50">Làm mới</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- TABLE -->
+    <div class="bg-white p-4 rounded-4 shadow-sm mb-4">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle w-100 mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="text-center" style="width: 5%;">STT</th>
+                        <th style="width: 18%;">Khách Hàng</th>
+                        <th style="width: 20%;">Sách</th>
+                        <th class="text-center" style="width: 12%;">Đánh Giá</th>
+                        <th style="width: 25%;">Nội Dung Nhận Xét</th>
+                        <th style="width: 20%;">Phản Hồi Từ Staff</th>
+                        <th class="text-center" style="width: 10%;">Thao Tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Reviews.Any())
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">Không tìm thấy đánh giá nào phù hợp.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        int index = 0;
+                        foreach (var r in Model.Reviews)
+                        {
+                            index++;
+                            <tr>
+                                <td class="text-center fw-bold text-muted">@index</td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="avatar-circle-sm">
+                                            @(string.IsNullOrEmpty(r.User?.FullName) ? "U" : r.User.FullName.Substring(0, 1).ToUpper())
+                                        </div>
+                                        <div>
+                                            <strong class="text-dark d-block">@(r.User?.FullName ?? "Khách hàng")</strong>
+                                            <small class="text-muted">@r.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <img src="@(string.IsNullOrEmpty(r.Book?.ImageUrl) ? "https://placehold.co/35x50?text=Img" : r.Book.ImageUrl)"
+                                             alt="@r.Book?.Title" style="width: 35px; height: 50px; object-fit: cover;" class="rounded border" />
+                                        <strong class="text-dark small d-block text-truncate" style="max-width: 180px;" title="@r.Book?.Title">
+                                            @(r.Book?.Title ?? "Sách #" + r.BookId)
+                                        </strong>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <div class="star-yellow fs-6">
+                                        @for (int s = 1; s <= r.Rating; s++)
+                                        {
+                                            <i class="fa-solid fa-star"></i>
+                                        }
+                                    </div>
+                                    <small class="text-muted">(@r.Rating/5 sao)</small>
+                                </td>
+                                <td>
+                                    <p class="text-dark small mb-0">@r.Comment</p>
+                                </td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(r.StaffReply))
+                                    {
+                                        <div class="p-2 bg-success-subtle rounded border border-success-subtle text-dark small">
+                                            <i class="fa-solid fa-reply text-success me-1"></i><strong>Staff:</strong> @r.StaffReply
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2 py-1">
+                                            Chưa trả lời
+                                        </span>
+                                    }
+                                </td>
+                                <td class="text-center text-nowrap">
+                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-2 me-1"
+                                            title="Trả lời đánh giá"
+                                            onclick="openReplyModal(@r.ReviewId, '@Html.Raw(Html.Encode(r.Book?.Title ?? ""))', '@Html.Raw(Html.Encode(r.User?.FullName ?? ""))', '@Html.Raw(Html.Encode(r.Comment ?? ""))', '@Html.Raw(Html.Encode(r.StaffReply ?? ""))')">
+                                        <i class="fa-solid fa-reply me-1"></i>Trả lời
+                                    </button>
+
+                                    <form method="post" asp-page-handler="Delete" asp-route-reviewId="@r.ReviewId" class="d-inline"
+                                          onsubmit="return confirm('Bạn có chắc muốn xóa đánh giá này?');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2" title="Xóa">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL PHẢN HỒI ĐÁNH GIÁ -->
+<div class="modal fade" id="replyReviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-reply me-2"></i>Phản Hồi Đánh Giá Của Khách</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-page-handler="Reply">
+                <div class="modal-body p-4">
+                    <input type="hidden" name="reviewId" id="modalReviewId" />
+
+                    <div class="mb-3 bg-light p-3 rounded border">
+                        <small class="text-muted d-block">Sách: <strong id="modalBookTitle" class="text-dark"></strong></small>
+                        <small class="text-muted d-block">Khách hàng: <strong id="modalCustomerName" class="text-dark"></strong></small>
+                        <div class="mt-2 text-dark fst-italic small" id="modalCustomerComment"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">Nội dung phản hồi từ MindBook Store *</label>
+                        <textarea name="staffReply" id="modalStaffReply" class="form-control" rows="4" placeholder="Cảm ơn bạn đã ủng hộ MindBook Store! Chúng tôi rất vui..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary rounded-pill px-3" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold">Gửi Phản Hồi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openReplyModal(id, bookTitle, customerName, comment, existingReply) {
+            document.getElementById('modalReviewId').value = id;
+            document.getElementById('modalBookTitle').innerText = bookTitle;
+            document.getElementById('modalCustomerName').innerText = customerName;
+            document.getElementById('modalCustomerComment').innerText = `"${comment}"`;
+            document.getElementById('modalStaffReply').value = existingReply;
+            new bootstrap.Modal(document.getElementById('replyReviewModal')).show();
+        }
+    </script>
+}

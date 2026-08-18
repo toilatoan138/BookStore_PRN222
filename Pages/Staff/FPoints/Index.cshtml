@@ -1,0 +1,156 @@
+﻿@page
+@model BookStore.Pages.Staff.FPoints.IndexModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Quản lý Tích Điểm (F-Point)";
+    ViewData["Subtitle"] = "Thao tác cộng/trừ điểm thưởng chăm sóc khách hàng và kiểm tra lịch sử biến động điểm";
+}
+
+<div class="container-fluid px-0">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center gap-3">
+            <a asp-page="/Staff/Index" class="btn btn-outline-secondary btn-sm shadow-sm">
+                <i class="fa-solid fa-chart-line me-1"></i> Dashboard
+            </a>
+            <div class="border-start ps-3">
+                <h4 class="fw-bold text-warning-emphasis m-0">
+                    <i class="fa-solid fa-coins me-2 text-warning"></i>
+                    HỆ THỐNG F-POINT
+                </h4>
+                <small class="text-muted">Thao tác cộng/trừ điểm thưởng cho khách hàng</small>
+            </div>
+        </div>
+
+        <a asp-page="/Staff/Customers/Index" class="btn btn-outline-success btn-sm shadow-sm fw-semibold">
+            <i class="fa-solid fa-users me-1"></i> Khách hàng & CRM
+        </a>
+    </div>
+
+    <!-- MAIN TWO COLUMNS ROW -->
+    <div class="row g-4 mb-4">
+        <!-- LEFT COLUMN: LỆNH THỰC THI ĐIỂM -->
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden h-100">
+                <div class="card-header bg-dark text-white fw-bold py-3">
+                    <i class="fa-solid fa-wand-magic-sparkles me-2 text-warning"></i> Lệnh Thực Thi Điểm
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" asp-page-handler="ExecutePoint">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-muted">Khách hàng nhận thao tác *</label>
+                            <input type="text" name="userIdentifier" class="form-control" placeholder="Nhập Email, SĐT hoặc User ID..." list="customerDatalist" required />
+                            <datalist id="customerDatalist">
+                                @foreach (var u in Model.AvailableCustomers)
+                                {
+                                    <option value="@u.Email">@u.FullName (Hiện có: @u.FPoints pts)</option>
+                                }
+                            </datalist>
+                            <small class="text-muted fst-italic">Gõ để gợi ý theo danh sách khách hàng</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-muted">Loại thao tác *</label>
+                            <div class="d-flex gap-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="actionType" id="actionAdd" value="add" checked />
+                                    <label class="form-check-label fw-semibold text-success" for="actionAdd">
+                                        <i class="fa-solid fa-plus-circle me-1"></i> Cộng điểm (Reward)
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="actionType" id="actionSub" value="sub" />
+                                    <label class="form-check-label fw-semibold text-danger" for="actionSub">
+                                        <i class="fa-solid fa-minus-circle me-1"></i> Trừ điểm (Deduct)
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-muted">Số điểm thưởng *</label>
+                            <input type="number" name="amount" class="form-control fw-bold fs-5 text-primary" min="1" max="1000000" value="50" required />
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold small text-muted">Lý do điều chỉnh *</label>
+                            <textarea name="reason" class="form-control" rows="3" placeholder="VD: Tặng điểm sinh nhật, đền bù sự cố giao hàng..." required></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-warning w-100 rounded-pill py-2 fw-bold text-dark shadow-sm">
+                            <i class="fa-solid fa-bolt me-1"></i> Thực Thi Điểm Ngay
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: LỊCH SỬ BIẾN ĐỘNG F-POINT -->
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden h-100">
+                <div class="card-header bg-light border-0 py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="fw-bold text-dark mb-0"><i class="fa-solid fa-clock-rotate-left text-warning me-2"></i>Lịch Sử Biến Động F-Point</h6>
+                    <form method="get" class="d-flex gap-2" style="max-width: 250px;">
+                        <input type="text" asp-for="Keyword" class="form-control form-control-sm" placeholder="Tìm kiếm lịch sử..." />
+                        <button type="submit" class="btn btn-sm btn-dark"><i class="fa-solid fa-magnifying-glass"></i></button>
+                    </form>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0 small">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 30%;">Khách Hàng</th>
+                                    <th class="text-center" style="width: 18%;">Điểm</th>
+                                    <th style="width: 32%;">Lý Do</th>
+                                    <th class="text-center" style="width: 20%;">Thời Gian</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (!Model.Histories.Any())
+                                {
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted py-4">Chưa có giao dịch F-Point nào.</td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    foreach (var h in Model.Histories)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <strong class="text-dark d-block">@(h.User?.FullName ?? h.CustomerInfo ?? "Khách hàng")</strong>
+                                                <small class="text-muted">@(h.User?.Email ?? "")</small>
+                                            </td>
+                                            <td class="text-center fw-bold fs-6">
+                                                @if (h.ActionType.ToLower() == "add")
+                                                {
+                                                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+                                                        +@h.Amount.ToString("N0") pts
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">
+                                                        -@h.Amount.ToString("N0") pts
+                                                    </span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <span class="text-dark">@h.Reason</span>
+                                            </td>
+                                            <td class="text-center text-muted">
+                                                @h.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

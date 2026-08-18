@@ -1,0 +1,256 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using BookStore.Models.Entities
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+@{
+    var isLoggedIn = SignInManager.IsSignedIn(User);
+    ApplicationUser? currentUser = null;
+    int cartCount = 0;
+    int unreadNotif = 0;
+
+    if (isLoggedIn)
+    {
+        currentUser = await UserManager.GetUserAsync(User);
+        // Cart count và unread notifications được truyền vào TempData từ các PageModel
+        cartCount = ViewData["CartCount"] is int cc ? cc : 0;
+        unreadNotif = ViewData["UnreadNotifCount"] is int uc ? uc : 0;
+    }
+
+    bool isAdmin = User.IsInRole("Admin");
+    bool isWarehouse = User.IsInRole("Warehouse");
+    bool isStaff = User.IsInRole("Staff");
+}
+
+<header class="site-header" id="siteHeader">
+    <!-- ========== TOP BAR ========== -->
+    <div class="header-topbar">
+        <div class="container-fluid px-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="topbar-text">
+                    <i class="fa-solid fa-truck-fast me-1"></i>
+                    Miễn phí vận chuyển cho đơn từ <strong>299.000đ</strong>
+                </span>
+                <div class="topbar-links">
+                    @if (!isLoggedIn)
+                    {
+                        <a asp-page="/Account/Login" class="topbar-link">Đăng nhập</a>
+                        <span class="topbar-divider">|</span>
+                        <a asp-page="/Account/Register" class="topbar-link">Đăng ký</a>
+                    }
+                    else
+                    {
+                        <span class="topbar-link text-muted">Xin chào, <strong>@(currentUser?.FullName ?? currentUser?.UserName)</strong></span>
+                        @if (isAdmin)
+                        {
+                            <span class="topbar-divider">|</span>
+                            <a asp-page="/Admin/Index" class="topbar-link text-danger"><i class="fa-solid fa-shield-halved me-1"></i>Admin</a>
+                        }
+                        @if (isWarehouse)
+                        {
+                            <span class="topbar-divider">|</span>
+                            <a asp-page="/Warehouse/Index" class="topbar-link text-primary"><i class="fa-solid fa-warehouse me-1"></i>Kho</a>
+                        }
+                        @if (isStaff)
+                        {
+                            <span class="topbar-divider">|</span>
+                            <a asp-page="/Staff/Index" class="topbar-link text-success"><i class="fa-solid fa-users me-1"></i>Staff</a>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========== MAIN NAVBAR ========== -->
+    <nav class="navbar navbar-expand-lg navbar-main">
+        <div class="container-fluid px-4">
+            <!-- LOGO -->
+            <a class="navbar-brand site-logo" asp-page="/Index">
+                <span class="logo-text">MIND<span class="logo-accent">BOOK</span></span>
+            </a>
+
+            <!-- SEARCH BAR (Desktop) -->
+            <div class="search-bar-wrapper d-none d-lg-flex">
+                <form asp-page="/Search" method="get" class="search-form">
+                    <div class="search-input-group">
+                        <input type="text" name="q" class="search-input" placeholder="Tìm kiếm sách, tác giả, thể loại..."
+                               value="@(ViewData["SearchQuery"]?.ToString())" autocomplete="off" id="headerSearchInput" />
+                        <button type="submit" class="search-btn">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- RIGHT ACTIONS -->
+            <div class="header-actions d-flex align-items-center gap-3">
+                <!-- MOBILE SEARCH TOGGLE -->
+                <button class="action-btn d-lg-none" id="mobileSearchToggle" title="Tìm kiếm">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </button>
+
+                <!-- NOTIFICATIONS -->
+                @if (isLoggedIn)
+                {
+                    <div class="dropdown notif-dropdown">
+                        <button class="action-btn position-relative" id="notifDropdownBtn"
+                                data-bs-toggle="dropdown" aria-expanded="false" title="Thông báo">
+                            <i class="fa-regular fa-bell"></i>
+                            @if (unreadNotif > 0)
+                            {
+                                <span class="badge-dot">@(unreadNotif > 9 ? "9+" : unreadNotif.ToString())</span>
+                            }
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-end notif-menu" aria-labelledby="notifDropdownBtn">
+                            <div class="notif-header">
+                                <span><i class="fa-regular fa-bell me-2"></i>Thông báo</span>
+                                @if (unreadNotif > 0)
+                                {
+                                    <span class="badge bg-danger rounded-pill">@unreadNotif mới</span>
+                                }
+                            </div>
+                            <div class="notif-body" id="notifList">
+                                <div class="text-center py-3 text-muted">
+                                    <i class="fa-regular fa-bell-slash fa-2x mb-2 d-block"></i>
+                                    Chưa có thông báo
+                                </div>
+                            </div>
+                            <div class="notif-footer">
+                                <a asp-page="/Notifications/All" class="btn btn-sm btn-outline-danger w-100">
+                                    Xem tất cả thông báo
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <!-- USER DROPDOWN -->
+                @if (isLoggedIn)
+                {
+                    <div class="dropdown user-dropdown">
+                        <button class="action-btn" data-bs-toggle="dropdown" aria-expanded="false" title="Tài khoản">
+                            <img src="https://ui-avatars.com/api/?name=@Uri.EscapeDataString(currentUser?.FullName ?? "U")&background=C92127&color=fff&size=32&bold=true"
+                                 alt="Avatar" class="user-avatar-sm" />
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end user-menu">
+                            <li class="user-menu-header">
+                                <div class="user-info-mini">
+                                    <img src="https://ui-avatars.com/api/?name=@Uri.EscapeDataString(currentUser?.FullName ?? "U")&background=C92127&color=fff&size=48&bold=true"
+                                         alt="Avatar" class="user-avatar-lg" />
+                                    <div>
+                                        <div class="user-name">@currentUser?.FullName</div>
+                                        <div class="user-rank badge-rank rank-@(currentUser?.RankName?.Replace(" ", "-").ToLower())">
+                                            @currentUser?.RankName
+                                        </div>
+                                    </div>
+                                </div>
+                            </li>
+                            <li><hr class="dropdown-divider" /></li>
+                            <li><a class="dropdown-item" asp-page="/Account/Profile"><i class="fa-regular fa-address-card fa-fw me-2"></i>Hồ sơ cá nhân</a></li>
+                            <li><a class="dropdown-item" asp-page="/Orders/Index"><i class="fa-solid fa-receipt fa-fw me-2"></i>Đơn hàng của tôi</a></li>
+                            <li><a class="dropdown-item" asp-page="/Vouchers/Wallet"><i class="fa-solid fa-ticket fa-fw me-2"></i>Ví Voucher</a></li>
+                            <li><a class="dropdown-item" asp-page="/Account/Wallet"><i class="fa-solid fa-wallet fa-fw me-2"></i>Ví BookStore</a></li>
+                            <li><hr class="dropdown-divider" /></li>
+                            <li>
+                                <form asp-page="/Account/Logout" method="post" class="d-inline w-100">
+                                    <button type="submit" class="dropdown-item text-danger">
+                                        <i class="fa-solid fa-arrow-right-from-bracket fa-fw me-2"></i>Đăng xuất
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                }
+                else
+                {
+                    <a asp-page="/Account/Login" class="action-btn login-btn-sm" title="Đăng nhập">
+                        <i class="fa-regular fa-user"></i>
+                    </a>
+                }
+
+                <!-- CART -->
+                <a asp-page="/Cart/Index" class="action-btn position-relative cart-btn" title="Giỏ hàng">
+                    <i class="fa-solid fa-cart-shopping"></i>
+                    @if (cartCount > 0)
+                    {
+                        <span class="badge-dot cart-badge">@(cartCount > 9 ? "9+" : cartCount.ToString())</span>
+                    }
+                </a>
+
+                <!-- HAMBURGER (Mobile) -->
+                <button class="action-btn d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileMenu" title="Menu">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- MOBILE SEARCH BAR (collapses below header) -->
+        <div class="mobile-search-bar container-fluid px-4" id="mobileSearchBar" style="display:none;">
+            <form asp-page="/Search" method="get" class="search-form">
+                <div class="search-input-group">
+                    <input type="text" name="q" class="search-input" placeholder="Tìm kiếm sách..." />
+                    <button type="submit" class="search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
+                </div>
+            </form>
+        </div>
+    </nav>
+
+    <!-- ========== CATEGORY NAV ========== -->
+    <div class="category-nav d-none d-lg-block">
+        <div class="container-fluid px-4">
+            <ul class="cat-nav-list">
+                <li><a asp-page="/Index" class="cat-nav-link"><i class="fa-solid fa-house me-1"></i>Trang chủ</a></li>
+                <li><a asp-page="/Search" class="cat-nav-link"><i class="fa-solid fa-book me-1"></i>Tất cả sách</a></li>
+                <li><a asp-page="/Products/FlashSale" class="cat-nav-link flash-link"><i class="fa-solid fa-bolt me-1"></i>Flash Sale</a></li>
+                <li><a asp-page="/Products/Conan" class="cat-nav-link"><i class="fa-solid fa-star me-1"></i>Conan</a></li>
+                <li><a asp-page="/Products/OnePiece" class="cat-nav-link"><i class="fa-solid fa-anchor me-1"></i>One Piece</a></li>
+                <li><a asp-page="/Vouchers/Hub" class="cat-nav-link voucher-link"><i class="fa-solid fa-ticket me-1"></i>Săn Voucher</a></li>
+            </ul>
+        </div>
+    </div>
+</header>
+
+<!-- Spacer to push content below fixed header -->
+<div class="header-spacer"></div>
+
+<!-- ========== MOBILE OFFCANVAS MENU ========== -->
+<div class="offcanvas offcanvas-start" tabindex="-1" id="mobileMenu" aria-labelledby="mobileMenuLabel">
+    <div class="offcanvas-header border-bottom">
+        <span class="site-logo logo-text" id="mobileMenuLabel">MIND<span class="logo-accent">BOOK</span></span>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body">
+        <ul class="nav flex-column mobile-nav">
+            <li class="nav-item"><a class="nav-link" asp-page="/Index"><i class="fa-solid fa-house fa-fw me-2"></i>Trang chủ</a></li>
+            <li class="nav-item"><a class="nav-link" asp-page="/Search"><i class="fa-solid fa-book fa-fw me-2"></i>Tất cả sách</a></li>
+            <li class="nav-item"><a class="nav-link text-danger" asp-page="/Products/FlashSale"><i class="fa-solid fa-bolt fa-fw me-2"></i>Flash Sale</a></li>
+            <li class="nav-item"><a class="nav-link" asp-page="/Vouchers/Hub"><i class="fa-solid fa-ticket fa-fw me-2"></i>Săn Voucher</a></li>
+            <li class="nav-item"><hr /></li>
+            @if (isLoggedIn)
+            {
+                <li class="nav-item"><a class="nav-link" asp-page="/Account/Profile"><i class="fa-regular fa-address-card fa-fw me-2"></i>Hồ sơ</a></li>
+                <li class="nav-item"><a class="nav-link" asp-page="/Orders/Index"><i class="fa-solid fa-receipt fa-fw me-2"></i>Đơn hàng</a></li>
+                <li class="nav-item">
+                    <form asp-page="/Account/Logout" method="post">
+                        <button type="submit" class="nav-link btn btn-link text-danger p-0">
+                            <i class="fa-solid fa-arrow-right-from-bracket fa-fw me-2"></i>Đăng xuất
+                        </button>
+                    </form>
+                </li>
+            }
+            else
+            {
+                <li class="nav-item"><a class="nav-link" asp-page="/Account/Login"><i class="fa-regular fa-user fa-fw me-2"></i>Đăng nhập</a></li>
+                <li class="nav-item"><a class="nav-link" asp-page="/Account/Register"><i class="fa-solid fa-user-plus fa-fw me-2"></i>Đăng ký</a></li>
+            }
+        </ul>
+    </div>
+</div>
+
+<script>
+    // Mobile search toggle
+    document.getElementById('mobileSearchToggle')?.addEventListener('click', function () {
+        const bar = document.getElementById('mobileSearchBar');
+        bar.style.display = bar.style.display === 'none' ? 'block' : 'none';
+    });
+</script>

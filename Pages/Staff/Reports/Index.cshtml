@@ -1,0 +1,135 @@
+﻿@page
+@model BookStore.Pages.Staff.Reports.IndexModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Báo Cáo Doanh Thu Bán Hàng - Staff";
+    ViewData["Subtitle"] = "Thống kê doanh số, sản lượng sách tiêu thụ và giá trị đơn hàng bình quân";
+}
+
+<div class="container-fluid px-0">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center gap-3">
+            <a asp-page="/Staff/Index" class="btn btn-outline-secondary btn-sm shadow-sm">
+                <i class="fa-solid fa-chart-line me-1"></i> Dashboard
+            </a>
+            <div class="border-start ps-3">
+                <h4 class="fw-bold m-0" style="color: #6f42c1;">
+                    <i class="fa-solid fa-chart-pie me-2"></i>
+                    BÁO CÁO DOANH THU
+                </h4>
+                <small class="text-muted">Tổng hợp và phân tích hiệu quả bán hàng</small>
+            </div>
+        </div>
+
+        <a asp-page="/Index" class="btn btn-outline-secondary btn-sm shadow-sm">
+            <i class="fa-solid fa-store me-1"></i> Về Cửa hàng
+        </a>
+    </div>
+
+    <!-- DATE FILTER -->
+    <div class="bg-white p-4 rounded-4 shadow-sm mb-4">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label small fw-bold text-muted">Từ ngày:</label>
+                <input type="date" asp-for="FromDate" class="form-control" />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small fw-bold text-muted">Đến ngày:</label>
+                <input type="date" asp-for="ToDate" class="form-control" />
+            </div>
+            <div class="col-md-4 d-flex gap-2">
+                <button type="submit" class="btn text-white w-50 fw-bold" style="background-color: #6f42c1;">
+                    <i class="fa-solid fa-chart-line me-1"></i> Xem Báo Cáo
+                </button>
+                <a asp-page="/Staff/Reports/Index" class="btn btn-secondary w-50 fw-semibold">
+                    <i class="fa-solid fa-rotate-right me-1"></i> 30 ngày qua
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- STATS SUMMARY CARDS -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white border-top border-4 border-success">
+                <small class="text-muted d-block">Tổng Doanh Thu</small>
+                <h3 class="fw-bold text-success mb-0 mt-1">@Model.TotalRevenue.ToString("N0")đ</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white border-top border-4 border-primary">
+                <small class="text-muted d-block">Đơn Hoàn Thành / Giao</small>
+                <h3 class="fw-bold text-primary mb-0 mt-1">@Model.CompletedOrdersCount đơn</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white border-top border-4 border-warning">
+                <small class="text-muted d-block">Sách Tiêu Thụ</small>
+                <h3 class="fw-bold text-warning-emphasis mb-0 mt-1">@Model.TotalBooksSold.ToString("N0") quyển</h3>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white border-top border-4 border-info">
+                <small class="text-muted d-block">Giá Trị Đơn Trung Bình (AOV)</small>
+                <h3 class="fw-bold text-info mb-0 mt-1">@Model.AverageOrderValue.ToString("N0")đ</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- DAILY BREAKDOWN TABLE -->
+    <div class="bg-white p-4 rounded-4 shadow-sm mb-4">
+        <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-calendar-days text-primary me-2"></i>Chi Tiết Doanh Thu Theo Ngày</h5>
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle w-100 mb-0">
+                <thead class="table-dark">
+                    <tr class="text-center">
+                        <th style="width: 25%;">Ngày</th>
+                        <th style="width: 25%;">Số Lượng Đơn</th>
+                        <th style="width: 25%;">Số Sách Bán Ra</th>
+                        <th style="width: 25%;" class="text-end">Doanh Thu Trong Ngày</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.DailyReports.Any())
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-4">Không có giao dịch bán hàng nào trong khoảng thời gian đã chọn.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var d in Model.DailyReports)
+                        {
+                            <tr>
+                                <td class="text-center fw-bold text-dark">
+                                    <i class="fa-regular fa-calendar me-2 text-muted"></i>@d.Date.ToString("dd/MM/yyyy (dddd)")
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1 fw-bold fs-6">
+                                        @d.OrderCount đơn
+                                    </span>
+                                </td>
+                                <td class="text-center fw-bold">
+                                    @d.BooksCount quyển
+                                </td>
+                                <td class="text-end fw-bold text-success fs-6">
+                                    @d.Revenue.ToString("N0")đ
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+                <tfoot class="table-light">
+                    <tr>
+                        <th class="text-center fw-bold">TỔNG CỘNG:</th>
+                        <th class="text-center text-primary fw-bold fs-6">@Model.DailyReports.Sum(x => x.OrderCount) đơn</th>
+                        <th class="text-center fw-bold fs-6">@Model.TotalBooksSold quyển</th>
+                        <th class="text-end text-success fw-bold fs-5">@Model.TotalRevenue.ToString("N0")đ</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>

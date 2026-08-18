@@ -1,0 +1,70 @@
+﻿@page
+@model BookStore.Pages.Staff.Promotions.CreateModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Tạo Sự Kiện Khuyến Mãi Mới";
+    ViewData["Subtitle"] = "Thiết lập phần trăm chiết khấu và chọn danh sách sách áp dụng ưu đãi";
+}
+
+<div class="card border-0 shadow-sm rounded-4 p-4 bg-white" style="max-width: 900px;">
+    <form method="post">
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 mb-3" role="alert"></div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-md-8">
+                <label asp-for="Input.Name" class="form-label fw-semibold">Tên chiến dịch</label>
+                <input asp-for="Input.Name" class="form-control" placeholder="VD: Siêu Sale Mùa Tựu Trường" autofocus />
+                <span asp-validation-for="Input.Name" class="text-danger small"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="Input.DiscountPercent" class="form-label fw-semibold">Mức giảm giá (%)</label>
+                <input asp-for="Input.DiscountPercent" type="number" class="form-control fw-bold text-danger" />
+                <span asp-validation-for="Input.DiscountPercent" class="text-danger small"></span>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-md-6">
+                <label asp-for="Input.StartDate" class="form-label fw-semibold">Ngày bắt đầu</label>
+                <input asp-for="Input.StartDate" type="date" class="form-control" />
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Input.EndDate" class="form-label fw-semibold">Ngày kết thúc</label>
+                <input asp-for="Input.EndDate" type="date" class="form-control" />
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <label asp-for="Input.Description" class="form-label fw-semibold">Mô tả sự kiện</label>
+            <textarea asp-for="Input.Description" rows="3" class="form-control" placeholder="Thông tin chi tiết về chương trình..."></textarea>
+        </div>
+
+        <div class="mb-4">
+            <label class="form-label fw-semibold">Chọn các sách áp dụng khuyến mãi này:</label>
+            <div class="border rounded-3 p-3 bg-light" style="max-height: 250px; overflow-y: auto;">
+                <div class="row row-cols-1 row-cols-md-2 g-2">
+                    @foreach (var b in Model.AvailableBooks)
+                    {
+                        <div class="col">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="Input.SelectedBookIds" value="@b.Id" id="book_@b.Id" />
+                                <label class="form-check-label small" for="book_@b.Id">
+                                    <strong>@b.Title</strong> <span class="text-muted">(@b.Price.ToString("N0")đ)</span>
+                                </label>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-success px-4 py-2 rounded-pill fw-bold">
+                <i class="fa-solid fa-floppy-disk me-1"></i>Lưu chiến dịch
+            </button>
+            <a asp-page="/Staff/Promotions/Index" class="btn btn-outline-secondary px-4 py-2 rounded-pill">
+                Hủy
+            </a>
+        </div>
+    </form>
+</div>

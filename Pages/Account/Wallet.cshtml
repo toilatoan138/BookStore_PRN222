@@ -1,0 +1,152 @@
+﻿@page
+@model BookStore.Pages.Account.WalletModel
+@{
+    ViewData["Title"] = "Ví BookStore";
+}
+
+<div class="container py-4">
+    <div class="row g-4">
+        <!-- SIDEBAR -->
+        <div class="col-lg-3">
+            <partial name="_SidebarPartial" />
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="col-lg-9">
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+                <div class="row align-items-center mb-4">
+                    <div class="col-md-6 mb-3 mb-md-0">
+                        <h4 class="fw-bold mb-1 text-dark"><i class="fa-solid fa-wallet text-danger me-2"></i>Ví BookStore</h4>
+                        <p class="text-muted small mb-0">Thanh toán nhanh chóng, an toàn và nhận nhiều ưu đãi</p>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <button class="btn btn-success fw-bold rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#depositModal">
+                            <i class="fa-solid fa-circle-plus me-1"></i>Nạp tiền vào ví
+                        </button>
+                    </div>
+                </div>
+
+                <!-- WALLET BALANCE CARD -->
+                <div class="p-4 rounded-4 text-white mb-4 shadow-sm" style="background: linear-gradient(135deg, #1e293b, #0f172a);">
+                    <div class="row align-items-center">
+                        <div class="col-sm-6 mb-3 mb-sm-0">
+                            <div class="text-white-50 small text-uppercase">Số dư khả dụng</div>
+                            <div class="display-6 fw-bold text-warning mt-1">@Model.CurrentUser.WalletBalance.ToString("N0") <span class="fs-4">đ</span></div>
+                        </div>
+                        <div class="col-sm-6 text-sm-end">
+                            <div class="text-white-50 small">Chủ tài khoản ví:</div>
+                            <div class="fw-bold fs-5">@Model.CurrentUser.FullName</div>
+                            <small class="text-white-50">Tài khoản: @Model.CurrentUser.UserName</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TRANSACTION HISTORY -->
+                <h5 class="fw-bold mb-3 text-dark"><i class="fa-solid fa-clock-rotate-left me-2"></i>Lịch sử giao dịch (Sao kê ví)</h5>
+
+                @if (!Model.Histories.Any())
+                {
+                    <div class="text-center py-5 bg-light rounded-4">
+                        <i class="fa-solid fa-receipt fa-3x text-muted mb-2"></i>
+                        <p class="text-muted small mb-0">Chưa có giao dịch nào phát sinh trên ví của bạn.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Mã GD</th>
+                                    <th>Thời gian</th>
+                                    <th>Loại giao dịch</th>
+                                    <th>Mô tả</th>
+                                    <th class="text-end">Số tiền</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model.Histories)
+                                {
+                                    <tr>
+                                        <td class="fw-semibold">#@item.TransactionId</td>
+                                        <td class="small text-muted">@item.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                        <td>
+                                            @if (item.TransactionType == "TOPUP" || item.TransactionType == "REFUND")
+                                            {
+                                                <span class="badge bg-success-subtle text-success border border-success-subtle">
+                                                    <i class="fa-solid fa-arrow-down me-1"></i>@(item.TransactionType == "TOPUP" ? "Nạp tiền" : "Hoàn tiền")
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle">
+                                                    <i class="fa-solid fa-arrow-up me-1"></i>Thanh toán
+                                                </span>
+                                            }
+                                        </td>
+                                        <td class="small">
+                                            @item.Description
+                                            @if (item.OrderId.HasValue)
+                                            {
+                                                <a asp-page="/Orders/Detail" asp-route-id="@item.OrderId" class="ms-1 text-danger text-decoration-none">
+                                                    (Đơn #@item.OrderId)
+                                                </a>
+                                            }
+                                        </td>
+                                        <td class="text-end fw-bold @(item.Amount >= 0 ? "text-success" : "text-danger")">
+                                            @(item.Amount >= 0 ? "+" : "")@item.Amount.ToString("N0")đ
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ======================== DEPOSIT MODAL ======================== -->
+<div class="modal fade" id="depositModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-circle-dollar-to-slot me-2"></i>Nạp tiền vào Ví BookStore</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-page-handler="Deposit">
+                <div class="modal-body p-4">
+                    <p class="text-muted small mb-3">Chọn hoặc nhập số tiền bạn muốn nạp vào ví (Giả lập thanh toán tức thì):</p>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Số tiền nạp (VNĐ)</label>
+                        <input asp-for="DepositAmount" type="number" min="10000" step="10000" class="form-control form-control-lg fw-bold text-success" />
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setAmount(50000)">50.000đ</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setAmount(100000)">100.000đ</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setAmount(200000)">200.000đ</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setAmount(500000)">500.000đ</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setAmount(1000000)">1.000.000đ</button>
+                    </div>
+
+                    <div class="alert alert-info py-2 small mb-0">
+                        <i class="fa-solid fa-circle-info me-1"></i>Số tiền nạp sẽ được cộng trực tiếp vào ví để bạn có thể sử dụng khi mua sách.
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-success rounded-3 fw-bold px-4">Xác nhận nạp tiền</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function setAmount(val) {
+        document.getElementById('DepositAmount').value = val;
+    }
+</script>

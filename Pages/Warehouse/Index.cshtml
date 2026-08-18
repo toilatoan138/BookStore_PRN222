@@ -1,0 +1,218 @@
+﻿@page
+@model BookStore.Pages.Warehouse.IndexModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Tổng quan Quản lý Kho & Vận hành (Warehouse)";
+    ViewData["Subtitle"] = "Kiểm soát lượng tồn kho, đề xuất nhập hàng (PO) và danh sách soạn hàng (Picking List)";
+}
+
+<!-- ======================== KPI METRICS ROW ======================== -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted small fw-semibold text-uppercase">Tổng số sách trong kho</span>
+                <div class="p-2 rounded-circle bg-primary-subtle text-primary">
+                    <i class="fa-solid fa-boxes-stacked fs-5"></i>
+                </div>
+            </div>
+            <h3 class="fw-bold text-dark mb-0">@Model.Stats.TotalBooksInStock.ToString("N0") <span class="fs-6 text-muted">quyển</span></h3>
+            <small class="text-muted mt-2 d-block">Trên tổng @Model.Stats.TotalSkus đầu sách</small>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted small fw-semibold text-uppercase">Cảnh báo sắp hết hàng</span>
+                <div class="p-2 rounded-circle bg-danger-subtle text-danger">
+                    <i class="fa-solid fa-triangle-exclamation fs-5"></i>
+                </div>
+            </div>
+            <h3 class="fw-bold text-danger mb-0">@Model.Stats.LowStockCount <span class="fs-6 text-muted">đầu sách</span></h3>
+            <small class="text-danger mt-2 d-block">Tồn kho &le; 5 quyển</small>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted small fw-semibold text-uppercase">Đơn hàng cần soạn (Picking)</span>
+                <div class="p-2 rounded-circle bg-warning-subtle text-warning">
+                    <i class="fa-solid fa-dolly fs-5"></i>
+                </div>
+            </div>
+            <h3 class="fw-bold text-dark mb-0">@Model.Stats.PendingPickingOrdersCount <span class="fs-6 text-muted">đơn</span></h3>
+            <small class="text-warning mt-2 d-block">Cần đóng gói xuất kho</small>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted small fw-semibold text-uppercase">Lô hàng về chờ nhập kho</span>
+                <div class="p-2 rounded-circle bg-success-subtle text-success">
+                    <i class="fa-solid fa-truck-ramp-box fs-5"></i>
+                </div>
+            </div>
+            <h3 class="fw-bold text-success mb-0">@Model.Stats.PendingReceivingPOCount <span class="fs-6 text-muted">đơn PO</span></h3>
+            <small class="text-success mt-2 d-block">Admin đã duyệt</small>
+        </div>
+    </div>
+</div>
+
+<!-- ======================== 10 FUNCTION CARDS GRID (NHƯ BOOKSTORE-MAIN) ======================== -->
+<div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+    <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-grid-2 text-primary me-2"></i>Chức Năng Nghiệp Vụ Kho</h5>
+    <div class="row g-4">
+        <div class="col-md-4 col-lg-3">
+            <div class="card p-4 shadow-sm h-100 border-primary border-2 text-center rounded-4">
+                <h5 class="text-primary fw-bold"><i class="fa-solid fa-boxes-stacked fs-3 d-block mb-2"></i> Inventory List</h5>
+                <p class="small text-muted mb-3">Xem danh sách toàn bộ sách, tìm kiếm và lọc vị trí kệ.</p>
+                <a asp-page="/Warehouse/Inventory/Index" class="btn btn-primary mt-auto rounded-pill fw-semibold">Truy cập</a>
+            </div>
+        </div>
+
+        <div class="col-md-4 col-lg-3">
+            <div class="card p-4 shadow-sm h-100 border-warning border-2 text-center rounded-4">
+                <h5 class="text-warning fw-bold"><i class="fa-solid fa-triangle-exclamation fs-3 d-block mb-2"></i> Low Stock Books</h5>
+                <p class="small text-muted mb-3">Xem các sách sắp hết hàng cần nhập thêm vào kho.</p>
+                <a asp-page="/Warehouse/Inventory/LowStock" class="btn btn-warning mt-auto rounded-pill text-dark fw-semibold">Truy cập</a>
+            </div>
+        </div>
+
+        <div class="col-md-4 col-lg-3">
+            <div class="card p-4 shadow-sm h-100 border-success border-2 text-center rounded-4">
+                <h5 class="text-success fw-bold"><i class="fa-solid fa-truck-fast fs-3 d-block mb-2"></i> Supplier Mng.</h5>
+                <p class="small text-muted mb-3">Quản lý nhà cung cấp, NXB (Thêm, Sửa, Xóa, Lưu trữ).</p>
+                <a asp-page="/Warehouse/Suppliers/Index" class="btn btn-success mt-auto rounded-pill text-white fw-semibold">Truy cập</a>
+            </div>
+        </div>
+
+        <div class="col-md-4 col-lg-3">
+            <div class="card p-4 shadow-sm h-100 border-info border-2 text-center rounded-4">
+                <h5 class="text-info fw-bold"><i class="fa-solid fa-map-location-dot fs-3 d-block mb-2"></i> Location Setup</h5>
+                <p class="small text-muted mb-3">Thiết lập sơ đồ kho: Khu vực (Zone), Kệ, Tầng.</p>
+                <a asp-page="/Warehouse/Locations/Index" class="btn btn-info text-white mt-auto rounded-pill fw-semibold">Truy cập</a>
+            </div>
+        </div>
+
+        <div class="col-md-4 col-lg-3">
+            <div class="card p-4 shadow-sm h-100 border-danger border-2 text-center rounded-4">
+                <h5 class="text-danger fw-bold"><i class="fa-solid fa-clipboard-check fs-3 d-block mb-2"></i> Orders & Picking</h5>
+                <p class="small text-muted mb-3">Xem đơn hàng xuất kho, soạn hàng (Picking) và giao vận.</p>
+                <a asp-page="/Warehouse/Orders/Index" class="btn btn-danger mt-auto rounded-pill fw-semibold">Truy cập</a>
+            </div>
+        </div>
+
+        <div class="col-md-4 col-lg-3">
+            <div class="card p-4 shadow-sm h-100 border-2 text-center rounded-4" style="border-color: #fd7e14 !important;">
+                <h5 class="fw-bold" style="color: #fd7e14;"><i class="fa-solid fa-rotate-left fs-3 d-block mb-2"></i> Return & Inspect</h5>
+                <p class="small text-muted mb-3">Tiếp nhận đơn trả hàng, kiểm QC và nhập lại tồn kho.</p>
+                <a asp-page="/Warehouse/Returns/Index" class="btn mt-auto rounded-pill text-white fw-semibold" style="background-color: #fd7e14;">Truy cập</a>
+            </div>
+        </div>
+
+        <div class="col-md-4 col-lg-3">
+            <div class="card p-4 shadow-sm h-100 border-secondary border-2 text-center rounded-4">
+                <h5 class="text-secondary fw-bold"><i class="fa-solid fa-dolly fs-3 d-block mb-2"></i> Create PO</h5>
+                <p class="small text-muted mb-3">Tạo yêu cầu nhập sách từ nhà cung cấp vào kho.</p>
+                <a asp-page="/Warehouse/PurchaseOrders/Create" class="btn btn-secondary mt-auto rounded-pill fw-semibold">Truy cập</a>
+            </div>
+        </div>
+
+        <div class="col-md-4 col-lg-3">
+            <div class="card p-4 shadow-sm h-100 border-dark border-2 text-center rounded-4">
+                <h5 class="text-dark fw-bold"><i class="fa-solid fa-clipboard-list fs-3 d-block mb-2"></i> Purchase Orders</h5>
+                <p class="small text-muted mb-3">Xem danh sách đơn nhập hàng và thực hiện nhập kho.</p>
+                <a asp-page="/Warehouse/PurchaseOrders/Index" class="btn btn-dark mt-auto rounded-pill fw-semibold">Truy cập</a>
+            </div>
+        </div>
+
+        <div class="col-md-4 col-lg-3">
+            <div class="card p-4 shadow-sm h-100 border-primary border-2 text-center rounded-4">
+                <h5 class="text-primary fw-bold"><i class="fa-solid fa-file-invoice-dollar fs-3 d-block mb-2"></i> Invoices</h5>
+                <p class="small text-muted mb-3">Xem danh sách hóa đơn bán và nhập, kiểm tra chi tiết.</p>
+                <a asp-page="/Warehouse/Invoices/Index" class="btn btn-primary mt-auto rounded-pill fw-semibold">Truy cập</a>
+            </div>
+        </div>
+
+        <div class="col-md-4 col-lg-3">
+            <div class="card p-4 shadow-sm h-100 border-dark border-2 text-center rounded-4">
+                <h5 class="text-dark fw-bold"><i class="fa-solid fa-clock-rotate-left fs-3 d-block mb-2"></i> Inventory History</h5>
+                <p class="small text-muted mb-3">Xem lịch sử biến động tồn kho (nhập, xuất, trả hàng).</p>
+                <a asp-page="/Warehouse/Inventory/History" class="btn btn-dark mt-auto rounded-pill fw-semibold">Truy cập</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ======================== LOW STOCK & PENDING POs ======================== -->
+<div class="row g-4">
+    <!-- LOW STOCK BOOKS -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-triangle-exclamation text-danger me-2"></i>Sách tồn kho thấp (&le; 5)</h5>
+                <a asp-page="/Warehouse/Inventory/LowStock" class="btn btn-sm btn-link text-danger p-0 text-decoration-none fw-bold">
+                    Xem tất cả <i class="fa-solid fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+
+            <div class="d-flex flex-column gap-3">
+                @foreach (var b in Model.Stats.LowStockBooks)
+                {
+                    <div class="d-flex align-items-center justify-content-between p-2 border rounded-3 bg-light">
+                        <div class="d-flex align-items-center gap-3">
+                            <img src="@(string.IsNullOrEmpty(b.ImageUrl) ? "https://via.placeholder.com/35x50" : b.ImageUrl)"
+                                 alt="@b.Title" class="rounded border" style="width: 35px; height: 48px; object-fit: cover;" />
+                            <div>
+                                <strong class="text-dark small d-block text-truncate" style="max-width: 220px;">@b.Title</strong>
+                                <small class="text-muted">Vị trí kệ: <strong class="text-info">@(b.LocationCode ?? "Chưa xếp kệ")</strong></small>
+                            </div>
+                        </div>
+                        <span class="badge bg-danger fs-6 px-3 py-2">Tồn: @b.StockQuantity</span>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- PENDING ARRIVAL POs -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-truck-fast text-success me-2"></i>Đơn PO đã duyệt - Chờ nhận hàng</h5>
+                <a asp-page="/Warehouse/PurchaseOrders/Index" class="btn btn-sm btn-link text-success p-0 text-decoration-none fw-bold">
+                    Quản lý PO <i class="fa-solid fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+
+            @if (!Model.Stats.PendingReceivingPOs.Any())
+            {
+                <p class="text-muted small py-4 text-center">Không có lô hàng nào đang chờ nhận.</p>
+            }
+            else
+            {
+                <div class="d-flex flex-column gap-3">
+                    @foreach (var po in Model.Stats.PendingReceivingPOs)
+                    {
+                        <div class="p-3 border rounded-3 bg-light d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong class="text-dark">Đơn PO #@po.PurchaseOrderId</strong>
+                                <div class="text-muted small">NCC: <strong>@po.Supplier?.Name</strong></div>
+                                <small class="text-muted">Ngày đặt: @po.OrderDate.ToLocalTime().ToString("dd/MM/yyyy")</small>
+                            </div>
+                            <div class="text-end">
+                                <div class="fw-bold text-danger small mb-1">@po.TotalAmount.ToString("N0")đ</div>
+                                <a asp-page="/Warehouse/PurchaseOrders/Receive" asp-route-id="@po.PurchaseOrderId" class="btn btn-sm btn-success rounded-pill px-3 fw-bold">
+                                    <i class="fa-solid fa-boxes-packing me-1"></i>Nhận hàng
+                                </a>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>

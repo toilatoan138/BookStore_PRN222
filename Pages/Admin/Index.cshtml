@@ -1,0 +1,191 @@
+﻿@page
+@model BookStore.Pages.Admin.IndexModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Tổng quan Quản trị";
+    ViewData["Subtitle"] = "Báo cáo số liệu kinh doanh và vận hành hệ thống MindBook";
+}
+
+<!-- ======================== KPI METRICS ROW ======================== -->
+<div class="row g-3 mb-4">
+    <!-- REVENUE -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted small fw-semibold text-uppercase">Doanh thu thực nhận</span>
+                <div class="p-2 rounded-circle bg-success-subtle text-success">
+                    <i class="fa-solid fa-dollar-sign fs-5"></i>
+                </div>
+            </div>
+            <h3 class="fw-bold text-dark mb-0">@Model.Stats.TotalRevenue.ToString("N0") <span class="fs-6 text-muted">VNĐ</span></h3>
+            <small class="text-success mt-2 d-block"><i class="fa-solid fa-arrow-trend-up me-1"></i>Từ các đơn hoàn tất</small>
+        </div>
+    </div>
+
+    <!-- TOTAL ORDERS -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted small fw-semibold text-uppercase">Tổng số đơn hàng</span>
+                <div class="p-2 rounded-circle bg-primary-subtle text-primary">
+                    <i class="fa-solid fa-receipt fs-5"></i>
+                </div>
+            </div>
+            <h3 class="fw-bold text-dark mb-0">@Model.Stats.TotalOrders</h3>
+            <small class="text-muted mt-2 d-block">
+                <strong class="text-warning">@Model.Stats.PendingOrdersCount</strong> đơn chờ duyệt
+            </small>
+        </div>
+    </div>
+
+    <!-- BOOKS SOLD -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted small fw-semibold text-uppercase">Số sách đã bán</span>
+                <div class="p-2 rounded-circle bg-warning-subtle text-warning">
+                    <i class="fa-solid fa-book fs-5"></i>
+                </div>
+            </div>
+            <h3 class="fw-bold text-dark mb-0">@Model.Stats.TotalBooksSold</h3>
+            <small class="text-danger mt-2 d-block">
+                <strong class="text-danger">@Model.Stats.LowStockBooksCount</strong> đầu sách sắp hết hàng
+            </small>
+        </div>
+    </div>
+
+    <!-- CUSTOMERS -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted small fw-semibold text-uppercase">Khách hàng / Users</span>
+                <div class="p-2 rounded-circle bg-info-subtle text-info">
+                    <i class="fa-solid fa-users fs-5"></i>
+                </div>
+            </div>
+            <h3 class="fw-bold text-dark mb-0">@Model.Stats.TotalCustomers</h3>
+            <small class="text-muted mt-2 d-block">Thành viên hệ thống</small>
+        </div>
+    </div>
+</div>
+
+<!-- ======================== OPERATIONAL ALERTS ROW ======================== -->
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-4 p-3 bg-white d-flex flex-row align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-3">
+                <div class="p-3 bg-warning-subtle text-warning rounded-3">
+                    <i class="fa-solid fa-file-invoice-dollar fs-4"></i>
+                </div>
+                <div>
+                    <h6 class="fw-bold mb-0 text-dark">Đơn nhập hàng (PO) chờ duyệt</h6>
+                    <small class="text-muted">Có @Model.Stats.PendingPOCount đơn từ bộ phận Kho</small>
+                </div>
+            </div>
+            <a asp-page="/Admin/PurchaseOrders/Index" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                Xem ngay
+            </a>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-4 p-3 bg-white d-flex flex-row align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-3">
+                <div class="p-3 bg-danger-subtle text-danger rounded-3">
+                    <i class="fa-solid fa-arrow-rotate-left fs-4"></i>
+                </div>
+                <div>
+                    <h6 class="fw-bold mb-0 text-dark">Yêu cầu trả hàng & hoàn tiền</h6>
+                    <small class="text-muted">Có @Model.Stats.PendingReturnsCount yêu cầu đang chờ duyệt</small>
+                </div>
+            </div>
+            <a asp-page="/Admin/Returns/Index" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                Xem ngay
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- ======================== RECENT ORDERS & TOP PRODUCTS ======================== -->
+<div class="row g-4">
+    <!-- RECENT ORDERS -->
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-receipt text-danger me-2"></i>Đơn hàng gần đây</h5>
+                <a asp-page="/Admin/Orders/Index" class="btn btn-sm btn-link text-danger p-0 text-decoration-none">
+                    Xem tất cả đơn
+                </a>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle small">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Mã đơn</th>
+                            <th>Khách hàng</th>
+                            <th>Tổng tiền</th>
+                            <th>Trạng thái</th>
+                            <th class="text-end">Tác vụ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var o in Model.Stats.RecentOrders)
+                        {
+                            <tr>
+                                <td class="fw-bold">#@o.Id</td>
+                                <td>
+                                    <div>@o.FullName</div>
+                                    <small class="text-muted">@o.PhoneNumber</small>
+                                </td>
+                                <td class="fw-bold text-danger">@o.TotalAmount.ToString("N0")đ</td>
+                                <td>
+                                    <span class="badge @(o.Status == Models.Enums.OrderStatus.Delivered ? "bg-success" : o.Status == Models.Enums.OrderStatus.Pending ? "bg-warning text-dark" : "bg-primary")">
+                                        @o.Status
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <a asp-page="/Admin/Orders/Detail" asp-route-id="@o.Id" class="btn btn-sm btn-outline-secondary rounded-pill px-2">
+                                        Chi tiết
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOP SELLING BOOKS -->
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-trophy text-warning me-2"></i>Sách bán chạy</h5>
+                <a asp-page="/Admin/Products/Index" class="btn btn-sm btn-link text-danger p-0 text-decoration-none">
+                    Quản lý sách
+                </a>
+            </div>
+
+            <div class="d-flex flex-column gap-3">
+                @foreach (var b in Model.Stats.TopSellingBooks)
+                {
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center gap-3">
+                            <img src="@(string.IsNullOrEmpty(b.ImageUrl) ? "https://via.placeholder.com/40x55" : b.ImageUrl)"
+                                 alt="@b.Title" class="rounded border" style="width: 40px; height: 55px; object-fit: cover;" />
+                            <div>
+                                <div class="fw-semibold small text-truncate" style="max-width: 200px;">@b.Title</div>
+                                <small class="text-muted">Danh mục: @b.Category?.Name</small>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-bold text-danger small">@b.Price.ToString("N0")đ</div>
+                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle small">Đã bán: @b.SoldQuantity</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

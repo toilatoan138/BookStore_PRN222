@@ -1,0 +1,42 @@
+﻿@page
+@model BookStore.Pages.Account.ChangePhoneModel
+@{
+    ViewData["Title"] = "Thay đổi Số điện thoại";
+}
+
+<div class="container py-4">
+    <div class="row g-4">
+        <!-- SIDEBAR -->
+        <div class="col-lg-3">
+            <partial name="_SidebarPartial" />
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="col-lg-9">
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+                <h4 class="fw-bold mb-1 text-dark">Thay đổi Số điện thoại</h4>
+                <p class="text-muted small mb-4">Số điện thoại hiện tại: <strong class="text-dark">@Model.CurrentPhone</strong></p>
+
+                <form method="post" style="max-width: 500px;">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 mb-3" role="alert"></div>
+
+                    <div class="mb-4">
+                        <label asp-for="Input.NewPhone" class="form-label fw-semibold">Số điện thoại mới</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-phone text-muted"></i></span>
+                            <input asp-for="Input.NewPhone" class="form-control border-start-0 ps-0" placeholder="VD: 0912345678" autofocus />
+                        </div>
+                        <span asp-validation-for="Input.NewPhone" class="text-danger small"></span>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-danger px-4 py-2 fw-bold rounded-3">
+                            <i class="fa-solid fa-floppy-disk me-2"></i>Lưu Số điện thoại
+                        </button>
+                        <a asp-page="/Account/Profile" class="btn btn-outline-secondary px-4 py-2 rounded-3">Hủy</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

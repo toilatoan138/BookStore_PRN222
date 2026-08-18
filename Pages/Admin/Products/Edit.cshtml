@@ -1,0 +1,154 @@
+﻿@page "{id:int}"
+@model BookStore.Pages.Admin.Products.EditModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = $"Chỉnh sửa sách #{Model.Book.Id}";
+    ViewData["Subtitle"] = Model.Book.Title;
+}
+
+<div class="row g-4" style="max-width: 1000px;">
+    <!-- LEFT: MAIN EDIT FORM -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+            <h5 class="fw-bold text-dark mb-4"><i class="fa-regular fa-pen-to-square text-danger me-2"></i>Thông tin sách</h5>
+
+            <form method="post">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 mb-3" role="alert"></div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-8">
+                        <label asp-for="Input.Title" class="form-label fw-semibold">Tiêu đề sách</label>
+                        <input asp-for="Input.Title" class="form-control" />
+                        <span asp-validation-for="Input.Title" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Input.CategoryId" class="form-label fw-semibold">Danh mục</label>
+                        <select asp-for="Input.CategoryId" class="form-select">
+                            @foreach (var c in Model.Categories)
+                            {
+                                <option value="@c.Id" selected="@(c.Id == Model.Input.CategoryId)">@c.Name</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label asp-for="Input.Author" class="form-label fw-semibold">Tác giả</label>
+                        <input asp-for="Input.Author" class="form-control" />
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="Input.Publisher" class="form-label fw-semibold">Nhà xuất bản</label>
+                        <input asp-for="Input.Publisher" class="form-control" />
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label asp-for="Input.Price" class="form-label fw-semibold">Giá bán (VNĐ)</label>
+                        <input asp-for="Input.Price" type="number" step="1000" class="form-control fw-bold text-danger" />
+                        <span asp-validation-for="Input.Price" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Input.ImportPrice" class="form-label fw-semibold">Giá nhập (VNĐ)</label>
+                        <input asp-for="Input.ImportPrice" type="number" step="1000" class="form-control" />
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Input.StockQuantity" class="form-label fw-semibold">Tồn kho</label>
+                        <input asp-for="Input.StockQuantity" type="number" class="form-control fw-bold text-success" />
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-8">
+                        <label asp-for="Input.ImageUrl" class="form-label fw-semibold">URL Ảnh bìa chính</label>
+                        <input asp-for="Input.ImageUrl" class="form-control" />
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Input.LocationCode" class="form-label fw-semibold">Mã vị trí kho</label>
+                        <input asp-for="Input.LocationCode" class="form-control" />
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label asp-for="Input.Isbn" class="form-label fw-semibold">Mã ISBN</label>
+                        <input asp-for="Input.Isbn" class="form-control" />
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Input.YearOfPublish" class="form-label fw-semibold">Năm xuất bản</label>
+                        <input asp-for="Input.YearOfPublish" type="number" class="form-control" />
+                    </div>
+                    <div class="col-md-4">
+                        <label asp-for="Input.NumberOfPages" class="form-label fw-semibold">Số trang</label>
+                        <input asp-for="Input.NumberOfPages" type="number" class="form-control" />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Input.Description" class="form-label fw-semibold">Mô tả tóm tắt</label>
+                    <textarea asp-for="Input.Description" rows="5" class="form-control"></textarea>
+                </div>
+
+                <div class="form-check mb-4">
+                    <input asp-for="Input.IsActive" class="form-check-input" />
+                    <label asp-for="Input.IsActive" class="form-check-label fw-semibold">Hiển thị và mở bán trên cửa hàng</label>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-danger px-4 py-2 rounded-pill fw-bold">
+                        <i class="fa-solid fa-floppy-disk me-1"></i>Lưu thay đổi
+                    </button>
+                    <a asp-page="/Admin/Products/Index" class="btn btn-outline-secondary px-4 py-2 rounded-pill">
+                        Hủy
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- RIGHT: DETAIL GALLERY IMAGES -->
+    <div class="col-lg-4">
+        <!-- COVER PREVIEW -->
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4 text-center">
+            <h6 class="fw-bold text-dark mb-3">Ảnh bìa hiện tại</h6>
+            <img src="@(string.IsNullOrEmpty(Model.Book.ImageUrl) ? "https://via.placeholder.com/180x250" : Model.Book.ImageUrl)"
+                 alt="@Model.Book.Title" class="img-fluid rounded border shadow-sm mx-auto mb-2" style="max-height: 220px; object-fit: cover;" />
+            <small class="text-muted">Đã bán: <strong>@Model.Book.SoldQuantity</strong> cuốn</small>
+        </div>
+
+        <!-- DETAIL IMAGES GALLERY -->
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+            <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-images text-danger me-2"></i>Ảnh chi tiết phụ</h6>
+
+            <!-- ADD IMAGE FORM -->
+            <form method="post" asp-page-handler="AddDetailImage" asp-route-id="@Model.Book.Id" class="mb-3">
+                <div class="input-group input-group-sm">
+                    <input type="text" name="detailImageUrl" class="form-control" placeholder="Dán URL ảnh chi tiết..." required />
+                    <button type="submit" class="btn btn-danger">Thêm</button>
+                </div>
+            </form>
+
+            @if (!Model.Book.DetailImages.Any())
+            {
+                <small class="text-muted text-center d-block py-3">Chưa có ảnh phụ nào.</small>
+            }
+            else
+            {
+                <div class="d-flex flex-column gap-2">
+                    @foreach (var img in Model.Book.DetailImages)
+                    {
+                        <div class="d-flex align-items-center justify-content-between border rounded p-2">
+                            <img src="@img.ImageUrl" class="rounded" style="width: 40px; height: 50px; object-fit: cover;" />
+                            <form method="post" asp-page-handler="DeleteDetailImage" asp-route-id="@Model.Book.Id" asp-route-imageId="@img.Id">
+                                <button type="submit" class="btn btn-sm btn-link text-danger p-0">
+                                    <i class="fa-regular fa-trash-can"></i>
+                                </button>
+                            </form>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>

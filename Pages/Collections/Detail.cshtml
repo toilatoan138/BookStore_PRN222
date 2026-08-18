@@ -1,0 +1,96 @@
+﻿@page "{id:int}"
+@model BookStore.Pages.Collections.DetailModel
+@{
+    ViewData["Title"] = Model.Collection.Name;
+}
+
+<div class="container py-4">
+    <!-- BREADCRUMB -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb small">
+            <li class="breadcrumb-item"><a asp-page="/Index" class="text-danger text-decoration-none">Trang chủ</a></li>
+            <li class="breadcrumb-item"><a asp-page="/Collections/Index" class="text-danger text-decoration-none">Bộ sưu tập</a></li>
+            <li class="breadcrumb-item active" aria-current="page">@Model.Collection.Name</li>
+        </ol>
+    </nav>
+
+    <!-- HERO HEADER -->
+    <div class="p-4 p-md-5 rounded-4 text-white mb-4 shadow-sm" style="background: linear-gradient(135deg, @(string.IsNullOrEmpty(Model.Collection.CoverColor) ? "#C92127" : Model.Collection.CoverColor), #1e293b);">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <span class="badge bg-white text-dark px-3 py-1 fw-bold mb-2">
+                    <i class="fa-solid fa-bookmark me-1 text-danger"></i>@(Model.Collection.IsPublic ? "Bộ sưu tập công khai" : "Bộ sưu tập riêng tư")
+                </span>
+                <h2 class="display-6 fw-bold mb-2">@Model.Collection.Name</h2>
+                <p class="lead mb-0 text-white-50 fs-6">@(Model.Collection.Description ?? "Không có mô tả")</p>
+                <div class="text-white-50 small mt-2">
+                    Tạo bởi: <strong>@(Model.Collection.User?.FullName ?? "Thành viên")</strong> | @Model.Collection.CollectionBooks.Count cuốn sách
+                </div>
+            </div>
+
+            @if (Model.IsOwner)
+            {
+                <div>
+                    <a asp-page="/Search" class="btn btn-light text-danger fw-bold rounded-pill px-4">
+                        <i class="fa-solid fa-plus me-1"></i>Thêm sách vào BST
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- BOOKS GRID -->
+    @if (!Model.Collection.CollectionBooks.Any())
+    {
+        <div class="card border-0 shadow-sm rounded-4 p-5 bg-white text-center">
+            <i class="fa-solid fa-book-open fa-4x text-muted mb-3"></i>
+            <h5 class="fw-bold text-dark">Chưa có cuốn sách nào trong bộ sưu tập này</h5>
+            <p class="text-muted small">Hãy khám phá thư viện sách của MindBook và lưu vào bộ sưu tập nhé!</p>
+            <a asp-page="/Search" class="btn btn-danger btn-sm rounded-pill px-4 align-self-center">
+                Khám phá sách
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="row row-cols-2 row-cols-md-4 g-3">
+            @foreach (var cb in Model.Collection.CollectionBooks)
+            {
+                <div class="col">
+                    <div class="product-card">
+                        <a asp-page="/Products/Detail" asp-route-id="@cb.Book.Id" class="product-thumb">
+                            <img src="@(string.IsNullOrEmpty(cb.Book.ImageUrl) ? "https://via.placeholder.com/200x280" : cb.Book.ImageUrl)" alt="@cb.Book.Title" />
+                        </a>
+                        <div class="product-info">
+                            <a asp-page="/Products/Detail" asp-route-id="@cb.Book.Id" class="product-title" title="@cb.Book.Title">
+                                @cb.Book.Title
+                            </a>
+                            <div class="product-author">@cb.Book.Author</div>
+                            <div class="product-price-box">
+                                <span class="price-current">@cb.Book.Price.ToString("N0")đ</span>
+                            </div>
+
+                            <div class="d-flex gap-1 mt-2">
+                                <form method="post" asp-page-handler="AddToCart" asp-route-bookId="@cb.BookId" class="flex-grow-1">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger w-100 rounded-pill fw-semibold">
+                                        <i class="fa-solid fa-cart-plus me-1"></i>Mua
+                                    </button>
+                                </form>
+
+                                @if (Model.IsOwner)
+                                {
+                                    <form method="post" asp-page-handler="RemoveBook" asp-route-bookId="@cb.BookId"
+                                          onsubmit="return confirm('Bạn có chắc muốn xóa sách này khỏi BST?');">
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary rounded-circle" title="Xóa khỏi BST">
+                                            <i class="fa-regular fa-trash-can"></i>
+                                        </button>
+                                    </form>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

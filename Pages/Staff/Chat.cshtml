@@ -1,0 +1,182 @@
+﻿@page
+@model BookStore.Pages.Staff.ChatModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Trung Tâm Trò Chuyện Trực Tuyến (Live Chat)";
+    ViewData["Subtitle"] = "Tư vấn và phản hồi khách hàng theo thời gian thực (Real-time SignalR)";
+}
+
+<div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden" style="height: calc(100vh - 200px); min-height: 600px;">
+    <div class="row g-0 h-100">
+        <!-- LEFT: CONVERSATION LIST -->
+        <div class="col-md-4 col-lg-3 border-end h-100 d-flex flex-column bg-light">
+            <div class="p-3 border-bottom bg-white">
+                <h6 class="fw-bold text-dark mb-0"><i class="fa-solid fa-comments text-success me-2"></i>Khách hàng đang chat</h6>
+            </div>
+
+            <div class="list-group list-group-flush overflow-auto flex-grow-1" id="customerList">
+                <div class="text-center py-4 text-muted small" id="noCustomerMsg">
+                    <i class="fa-regular fa-comment-dots fa-2x mb-2 d-block"></i>
+                    Đang đợi khách hàng nhắn tin...
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: ACTIVE CHAT CONVERSATION -->
+        <div class="col-md-8 col-lg-9 h-100 d-flex flex-column bg-white">
+            <!-- CHAT HEADER -->
+            <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-white" id="chatHeader" style="display: none !important;">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="p-2 rounded-circle bg-success-subtle text-success">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-0 text-dark" id="activeCustomerName">Khách hàng</h6>
+                        <small class="text-success"><i class="fa-solid fa-circle me-1" style="font-size: 8px;"></i>Đang kết nối</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CHAT EMPTY PLACEHOLDER -->
+            <div class="flex-grow-1 d-flex align-items-center justify-content-center flex-column text-muted" id="emptyChatPlaceholder">
+                <i class="fa-solid fa-headset fa-3x mb-3 text-muted"></i>
+                <h6 class="fw-bold">Chọn một khách hàng ở danh sách bên trái để bắt đầu chat</h6>
+                <small>Hệ thống tự động đồng bộ tin nhắn qua SignalR Hub</small>
+            </div>
+
+            <!-- CHAT MESSAGES STREAM -->
+            <div class="flex-grow-1 p-3 overflow-auto d-flex flex-column gap-2" id="chatMessages" style="display: none !important; background-color: #f8fafc;">
+            </div>
+
+            <!-- CHAT INPUT -->
+            <div class="p-3 border-top bg-white" id="chatInputArea" style="display: none !important;">
+                <form id="staffChatForm" class="d-flex gap-2">
+                    <input type="text" id="staffMsgInput" class="form-control rounded-pill px-3" placeholder="Nhập câu trả lời tư vấn cho khách..." autocomplete="off" required />
+                    <button type="submit" class="btn btn-success rounded-circle" style="width: 42px; height: 42px;">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+    <script>
+        const chatStore = {}; // customerName -> [ { sender, senderName, content, timestamp } ]
+        let currentCustomer = null;
+
+        // Initialize SignalR connection
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/chatHub")
+            .withAutomaticReconnect()
+            .build();
+
+        connection.on("LoadCustomerHistory", (customerName, history) => {
+            chatStore[customerName] = history;
+            renderCustomerList();
+            if (currentCustomer === customerName) {
+                renderMessages(customerName);
+            }
+        });
+
+        connection.on("ReceiveCustomerMessage", (customerName, msgItem) => {
+            if (!chatStore[customerName]) chatStore[customerName] = [];
+            chatStore[customerName].push(msgItem);
+            renderCustomerList();
+            if (currentCustomer === customerName) {
+                appendMessage(msgItem);
+            }
+        });
+
+        connection.on("SyncStaffMessage", (targetCustomer, msgItem) => {
+            if (!chatStore[targetCustomer]) chatStore[targetCustomer] = [];
+            chatStore[targetCustomer].push(msgItem);
+            if (currentCustomer === targetCustomer) {
+                appendMessage(msgItem);
+            }
+        });
+
+        connection.start().then(() => {
+            console.log("Staff connected to SignalR Hub");
+            connection.invoke("RegisterStaff");
+        }).catch(err => console.error(err.toString()));
+
+        function renderCustomerList() {
+            const list = document.getElementById("customerList");
+            const names = Object.keys(chatStore);
+            if (names.length === 0) return;
+
+            document.getElementById("noCustomerMsg")?.remove();
+            list.innerHTML = "";
+
+            names.forEach(name => {
+                const history = chatStore[name];
+                const lastMsg = history[history.length - 1]?.content || "Bắt đầu cuộc trò chuyện";
+                const isActive = currentCustomer === name;
+
+                const item = document.createElement("a");
+                item.href = "#";
+                item.className = `list-group-item list-group-item-action p-3 border-0 border-bottom ${isActive ? "bg-white border-start border-success border-4 fw-bold" : ""}`;
+                item.onclick = (e) => { e.preventDefault(); selectCustomer(name); };
+                item.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <strong class="text-dark">${name}</strong>
+                    </div>
+                    <small class="text-muted text-truncate d-block">${lastMsg}</small>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        function selectCustomer(name) {
+            currentCustomer = name;
+            renderCustomerList();
+
+            document.getElementById("emptyChatPlaceholder").style.setProperty("display", "none", "important");
+            document.getElementById("chatHeader").style.removeProperty("display");
+            document.getElementById("chatMessages").style.removeProperty("display");
+            document.getElementById("chatInputArea").style.removeProperty("display");
+
+            document.getElementById("activeCustomerName").innerText = name;
+            renderMessages(name);
+        }
+
+        function renderMessages(name) {
+            const box = document.getElementById("chatMessages");
+            box.innerHTML = "";
+            const history = chatStore[name] || [];
+            history.forEach(m => appendMessage(m));
+        }
+
+        function appendMessage(m) {
+            const box = document.getElementById("chatMessages");
+            const isStaff = m.sender === "Staff";
+
+            const div = document.createElement("div");
+            div.className = `d-flex flex-column ${isStaff ? "align-items-end" : "align-items-start"}`;
+            div.innerHTML = `
+                <div class="p-3 rounded-4 small shadow-sm ${isStaff ? "bg-success text-white" : "bg-white text-dark border"}" style="max-width: 70%;">
+                    ${m.content}
+                </div>
+                <small class="text-muted mt-1" style="font-size: 10px;">${isStaff ? "Nhân viên MindBook" : m.senderName}</small>
+            `;
+            box.appendChild(div);
+            box.scrollTop = box.scrollHeight;
+        }
+
+        document.getElementById("staffChatForm").onsubmit = function (e) {
+            e.preventDefault();
+            const input = document.getElementById("staffMsgInput");
+            const text = input.value.trim();
+            if (!text || !currentCustomer) return;
+
+            connection.invoke("SendMessageFromStaff", currentCustomer, text, "Tư vấn viên MindBook")
+                .then(() => {
+                    input.value = "";
+                })
+                .catch(err => console.error(err.toString()));
+        };
+    </script>
+}

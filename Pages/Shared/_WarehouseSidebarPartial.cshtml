@@ -1,0 +1,71 @@
+@{
+    string currentPage = ViewContext.RouteData.Values["page"]?.ToString() ?? "";
+}
+
+<div class="admin-sidebar" style="background: #aa2418ff;">
+    <div class="sidebar-brand" style="border-color: #aa2418ff;">
+        <i class="fa-solid fa-warehouse text-primary me-2"></i>KHO HÀNG (WAREHOUSE)
+    </div>
+    <ul class="nav flex-column mt-3">
+        <li class="nav-item">
+            <a asp-page="/Warehouse/Index" class="nav-link @(currentPage == "/Warehouse/Index" ? "active" : "")">
+                <i class="fa-solid fa-warehouse fa-fw"></i> Tổng quan kho
+            </a>
+        </li>
+        <li class="nav-item">
+            <a asp-page="/Warehouse/Inventory/Index" class="nav-link @(currentPage == "/Warehouse/Inventory/Index" ? "active" : "")">
+                <i class="fa-solid fa-boxes-stacked fa-fw"></i> Danh sách tồn kho
+            </a>
+        </li>
+        <li class="nav-item">
+            <a asp-page="/Warehouse/Inventory/LowStock" class="nav-link @(currentPage == "/Warehouse/Inventory/LowStock" ? "active" : "")">
+                <i class="fa-solid fa-triangle-exclamation fa-fw text-warning"></i> Sách sắp hết hàng
+            </a>
+        </li>
+        <li class="nav-item">
+            <a asp-page="/Warehouse/Suppliers/Index" class="nav-link @(currentPage.Contains("/Warehouse/Suppliers") ? "active" : "")">
+                <i class="fa-solid fa-truck-fast fa-fw"></i> Nhà cung cấp
+            </a>
+        </li>
+        <li class="nav-item">
+            <a asp-page="/Warehouse/Locations/Index" class="nav-link @(currentPage.Contains("/Warehouse/Locations") ? "active" : "")">
+                <i class="fa-solid fa-map-location-dot fa-fw"></i> Sơ đồ vị trí kho
+            </a>
+        </li>
+        <li class="nav-item">
+            <a asp-page="/Warehouse/Orders/Index" class="nav-link @(currentPage.Contains("/Warehouse/Orders") ? "active" : "")">
+                <i class="fa-solid fa-clipboard-check fa-fw"></i> Xuất kho & Đơn hàng
+            </a>
+        </li>
+        <li class="nav-item">
+            <a asp-page="/Warehouse/Returns/Index" class="nav-link @(currentPage.Contains("/Warehouse/Returns") ? "active" : "")">
+                <i class="fa-solid fa-rotate-left fa-fw"></i> Đơn trả hàng & QC
+            </a>
+        </li>
+        <li class="nav-item">
+            <a asp-page="/Warehouse/PurchaseOrders/Create" class="nav-link @(currentPage == "/Warehouse/PurchaseOrders/Create" ? "active" : "")">
+                <i class="fa-solid fa-dolly fa-fw"></i> Tạo đơn nhập (PO)
+            </a>
+        </li>
+        <li class="nav-item">
+            <a asp-page="/Warehouse/PurchaseOrders/Index" class="nav-link @(currentPage == "/Warehouse/PurchaseOrders/Index" ? "active" : "")">
+                <i class="fa-solid fa-clipboard-list fa-fw"></i> Danh sách đơn PO
+            </a>
+        </li>
+        <li class="nav-item">
+            <a asp-page="/Warehouse/Invoices/Index" class="nav-link @(currentPage.Contains("/Warehouse/Invoices") ? "active" : "")">
+                <i class="fa-solid fa-file-invoice-dollar fa-fw"></i> Quản lý hóa đơn
+            </a>
+        </li>
+        <li class="nav-item">
+            <a asp-page="/Warehouse/Inventory/History" class="nav-link @(currentPage.Contains("/Warehouse/Inventory/History") ? "active" : "")">
+                <i class="fa-solid fa-clock-rotate-left fa-fw"></i> Lịch sử biến động
+            </a>
+        </li>
+        <li class="nav-item mt-4 pt-3 border-top border-primary">
+            <a asp-page="/Index" class="nav-link text-warning">
+                <i class="fa-solid fa-arrow-left fa-fw"></i> Về cửa hàng
+            </a>
+        </li>
+    </ul>
+</div>

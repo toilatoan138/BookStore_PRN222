@@ -1,0 +1,94 @@
+﻿@page
+@model BookStore.Pages.Warehouse.PurchaseOrders.IndexModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Đơn Nhập Hàng (Purchase Orders - PO)";
+    ViewData["Subtitle"] = "Tạo đề xuất nhập sách từ nhà cung cấp và xác nhận hàng về kho";
+}
+
+<div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+    <!-- STATUS TABS & CREATE BUTTON -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <div class="d-flex gap-1 overflow-auto">
+            <a asp-page="/Warehouse/PurchaseOrders/Index" class="btn btn-sm rounded-pill px-3 @(!Model.Status.HasValue ? "btn-primary fw-bold" : "btn-light text-dark border")">
+                Tất cả (@Model.PurchaseOrders.Count)
+            </a>
+            <a asp-page="/Warehouse/PurchaseOrders/Index" asp-route-status="0" class="btn btn-sm rounded-pill px-3 @(Model.Status == 0 ? "btn-primary fw-bold" : "btn-light text-dark border")">
+                Chờ Admin duyệt
+            </a>
+            <a asp-page="/Warehouse/PurchaseOrders/Index" asp-route-status="1" class="btn btn-sm rounded-pill px-3 @(Model.Status == 1 ? "btn-success fw-bold" : "btn-light text-dark border")">
+                Đã duyệt - Chờ nhận hàng
+            </a>
+            <a asp-page="/Warehouse/PurchaseOrders/Index" asp-route-status="2" class="btn btn-sm rounded-pill px-3 @(Model.Status == 2 ? "btn-primary fw-bold" : "btn-light text-dark border")">
+                Đã nhập kho
+            </a>
+            <a asp-page="/Warehouse/PurchaseOrders/Index" asp-route-status="3" class="btn btn-sm rounded-pill px-3 @(Model.Status == 3 ? "btn-secondary fw-bold" : "btn-light text-dark border")">
+                Đã hủy
+            </a>
+        </div>
+
+        <a asp-page="/Warehouse/PurchaseOrders/Create" class="btn btn-primary btn-sm rounded-pill px-4 fw-bold shadow-sm">
+            <i class="fa-solid fa-plus me-1"></i>Tạo đơn nhập hàng (PO)
+        </a>
+    </div>
+
+    <!-- PO TABLE -->
+    <div class="table-responsive">
+        <table class="table table-hover align-middle small">
+            <thead class="table-light">
+                <tr>
+                    <th>Mã PO</th>
+                    <th>Ngày tạo</th>
+                    <th>Nhà cung cấp</th>
+                    <th>Người tạo</th>
+                    <th>Tổng SL</th>
+                    <th>Tổng tiền nhập</th>
+                    <th>Trạng thái</th>
+                    <th class="text-end">Tác vụ</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var po in Model.PurchaseOrders)
+                {
+                    <tr>
+                        <td class="fw-bold">#@po.PurchaseOrderId</td>
+                        <td>@po.OrderDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                        <td><strong>@po.Supplier?.Name</strong></td>
+                        <td>@(po.CreatedBy?.FullName ?? "Thủ kho")</td>
+                        <td>@po.TotalQuantity quyển</td>
+                        <td class="fw-bold text-danger">@po.TotalAmount.ToString("N0")đ</td>
+                        <td>
+                            @switch (po.Status)
+                            {
+                                case 0:
+                                    <span class="badge bg-warning text-dark">Chờ Admin duyệt</span>
+                                    break;
+                                case 1:
+                                    <span class="badge bg-success">Đã duyệt - Hàng đang về</span>
+                                    break;
+                                case 2:
+                                    <span class="badge bg-primary">Đã nhập kho</span>
+                                    break;
+                                case 3:
+                                    <span class="badge bg-secondary">Đã hủy</span>
+                                    break;
+                            }
+                        </td>
+                        <td class="text-end">
+                            @if (po.Status == 1)
+                            {
+                                <a asp-page="/Warehouse/PurchaseOrders/Receive" asp-route-id="@po.PurchaseOrderId" class="btn btn-sm btn-success rounded-pill px-3 fw-bold">
+                                    <i class="fa-solid fa-boxes-packing me-1"></i>Nhận hàng & Tăng tồn kho
+                                </a>
+                            }
+                            else if (po.Status == 2)
+                            {
+                                <span class="badge bg-light text-muted border">Đã hoàn tất</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

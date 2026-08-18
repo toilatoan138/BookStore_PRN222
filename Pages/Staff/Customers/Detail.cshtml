@@ -1,0 +1,207 @@
+﻿@page "{id}"
+@model BookStore.Pages.Staff.Customers.DetailModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = $"Hồ sơ CRM: {Model.Customer.FullName}";
+    ViewData["Subtitle"] = $"Tài khoản: {Model.Customer.UserName} | Email: {Model.Customer.Email}";
+}
+
+<div class="row g-4" style="max-width: 1100px;">
+    <!-- LEFT: CUSTOMER SUMMARY & ORDERS -->
+    <div class="col-lg-7">
+        <!-- PROFILE CARD -->
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <div class="d-flex align-items-center gap-3">
+                    <img src="https://ui-avatars.com/api/?name=@Uri.EscapeDataString(Model.Customer.FullName)&background=16a34a&color=fff&size=56&bold=true"
+                         class="rounded-circle border" style="width: 56px; height: 56px;" />
+                    <div>
+                        <h5 class="fw-bold text-dark mb-0">@Model.Customer.FullName</h5>
+                        <small class="text-muted">&#64;@Model.Customer.UserName | Tham gia: @Model.Customer.CreatedAt.ToString("dd/MM/yyyy")</small>
+                    </div>
+                </div>
+
+                <span class="badge-rank rank-@Model.Customer.RankName.Replace(" ", "-").ToLower() px-3 py-2 fs-6">
+                    <i class="fa-solid fa-crown me-1"></i>Hạng @Model.Customer.RankName
+                </span>
+            </div>
+
+            <div class="row g-2 p-3 bg-light rounded-3 small">
+                <div class="col-sm-6"><strong>Email:</strong> @Model.Customer.Email</div>
+                <div class="col-sm-6"><strong>SĐT:</strong> @(Model.Customer.PhoneNumber ?? "Chưa có")</div>
+                <div class="col-sm-6"><strong>Tổng chi tiêu:</strong> <span class="text-danger fw-bold">@Model.Customer.TotalSpend.ToString("N0")đ</span></div>
+                <div class="col-sm-6"><strong>Số dư ví:</strong> <span class="text-success fw-bold">@Model.Customer.WalletBalance.ToString("N0")đ</span></div>
+                <div class="col-sm-12">
+                    <strong>Điểm thưởng F-Points:</strong>
+                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle fw-bold ms-1">
+                        @Model.Customer.FPoints.ToString("N0") pts
+                    </span>
+                    <button class="btn btn-sm btn-link text-success p-0 ms-2 fw-bold" data-bs-toggle="modal" data-bs-target="#fpointModal">
+                        [Cộng / Trừ điểm]
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- RECENT ORDERS OF THIS CUSTOMER -->
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+            <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-receipt text-success me-2"></i>Lịch sử mua hàng (@Model.Customer.Orders.Count đơn)</h6>
+
+            @if (!Model.Customer.Orders.Any())
+            {
+                <p class="text-muted small py-3 text-center">Khách hàng chưa có đơn hàng nào.</p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle small">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Mã đơn</th>
+                                <th>Ngày đặt</th>
+                                <th>Tổng tiền</th>
+                                <th>Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var o in Model.Customer.Orders.OrderByDescending(o => o.OrderDate).Take(5))
+                            {
+                                <tr>
+                                    <td class="fw-bold">#@o.Id</td>
+                                    <td>@o.OrderDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td class="fw-bold text-danger">@o.TotalAmount.ToString("N0")đ</td>
+                                    <td>
+                                        <span class="badge @(o.Status == Models.Enums.OrderStatus.Delivered ? "bg-success" : "bg-warning text-dark")">
+                                            @o.Status
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- RIGHT: CRM NOTES TIMELINE -->
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-bold text-dark mb-0"><i class="fa-solid fa-clipboard-list text-success me-2"></i>Nhật ký chăm sóc (CRM Notes)</h6>
+                <button class="btn btn-sm btn-success rounded-pill px-3 fw-bold" data-bs-toggle="modal" data-bs-target="#addNoteModal">
+                    <i class="fa-solid fa-plus me-1"></i>Thêm ghi chú
+                </button>
+            </div>
+
+            @if (!Model.Notes.Any())
+            {
+                <p class="text-muted small py-4 text-center">Chưa có ghi chú nào cho khách hàng này.</p>
+            }
+            else
+            {
+                <div class="d-flex flex-column gap-3">
+                    @foreach (var n in Model.Notes)
+                    {
+                        <div class="p-3 border rounded-3 bg-light position-relative">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="badge bg-success-subtle text-success border border-success-subtle">
+                                    <i class="fa-solid fa-headset me-1"></i>@n.ContactChannel
+                                </span>
+                                <small class="text-muted">@n.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</small>
+                            </div>
+                            <p class="small text-dark mb-1">@n.NoteContent</p>
+                            @if (n.FollowUpDate.HasValue)
+                            {
+                                <small class="text-danger fw-semibold">
+                                    <i class="fa-regular fa-calendar me-1"></i>Hẹn liên hệ lại: @n.FollowUpDate.Value.ToString("dd/MM/yyyy")
+                                </small>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <a asp-page="/Staff/Customers/Index" class="btn btn-outline-secondary w-100 rounded-pill">
+            <i class="fa-solid fa-arrow-left me-1"></i>Quay lại danh sách khách hàng
+        </a>
+    </div>
+</div>
+
+<!-- ADD NOTE MODAL -->
+<div class="modal fade" id="addNoteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-pen me-2"></i>Thêm ghi chú khách hàng</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-page-handler="AddNote" asp-route-id="@Model.Customer.Id">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Kênh liên hệ</label>
+                        <select asp-for="NoteInput.ContactChannel" class="form-select">
+                            <option value="Điện thoại">Điện thoại</option>
+                            <option value="Zalo / Tin nhắn">Zalo / Tin nhắn</option>
+                            <option value="Email">Email</option>
+                            <option value="Gặp trực tiếp tại cửa hàng">Gặp trực tiếp tại cửa hàng</option>
+                            <option value="Ghi chú hệ thống">Ghi chú hệ thống</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Nội dung ghi chú</label>
+                        <textarea asp-for="NoteInput.NoteContent" rows="4" class="form-control" placeholder="Tóm tắt yêu cầu, phản ánh hoặc sở thích sách của khách..." required></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Ngày hẹn liên hệ lại (Follow-up)</label>
+                        <input asp-for="NoteInput.FollowUpDate" type="date" class="form-control" />
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-success rounded-3 fw-bold px-4">Lưu ghi chú</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- FPOINTS MODAL -->
+<div class="modal fade" id="fpointModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-coins me-2"></i>Điều chỉnh F-Points</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-page-handler="AdjustFPoints" asp-route-id="@Model.Customer.Id">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Hành động</label>
+                        <select asp-for="FPointInput.ActionType" class="form-select">
+                            <option value="add">Cộng thêm điểm (+)</option>
+                            <option value="sub">Trừ bớt điểm (-)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Số điểm điều chỉnh</label>
+                        <input asp-for="FPointInput.Amount" type="number" min="1" class="form-control fw-bold" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Lý do điều chỉnh</label>
+                        <input asp-for="FPointInput.Reason" type="text" class="form-control" placeholder="VD: Tặng điểm sinh nhật, Đền bù sự cố giao hàng..." required />
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-warning rounded-3 fw-bold px-4">Xác nhận</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

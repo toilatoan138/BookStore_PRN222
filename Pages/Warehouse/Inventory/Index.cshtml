@@ -1,0 +1,257 @@
+﻿@page
+@model BookStore.Pages.Warehouse.Inventory.IndexModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Danh Sách Tồn Kho";
+    ViewData["Subtitle"] = "Kiểm soát lượng tồn kho, vị trí kệ, giá bán và tình trạng sách";
+}
+
+<div class="container-fluid px-0">
+
+    <!-- TOP HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <a asp-page="/Warehouse/Index" class="btn btn-outline-secondary btn-sm shadow-sm">
+            <i class="fa-solid fa-arrow-left me-1"></i> Dashboard
+        </a>
+        <h4 class="text-uppercase fw-bold text-dark m-0">
+            <i class="fa-solid fa-warehouse text-primary me-2"></i> DANH SÁCH TỒN KHO
+        </h4>
+        <a asp-page="/Warehouse/Inventory/LowStock" class="btn btn-outline-warning btn-sm shadow-sm text-dark fw-bold">
+            <i class="fa-solid fa-triangle-exclamation text-warning me-1"></i> Sách sắp hết (&le; 5)
+        </a>
+    </div>
+
+    <!-- FILTER CONTAINER -->
+    <div class="bg-white p-4 rounded-4 shadow-sm mb-4">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label fw-bold small text-muted">Từ khóa (Tên sách / Mã vị trí)</label>
+                <input type="text" asp-for="Keyword" class="form-control" placeholder="Nhập tên sách, tác giả..." />
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label fw-bold small text-muted">Thể loại</label>
+                <select asp-for="CategoryId" class="form-select">
+                    <option value="0">-- Tất cả thể loại --</option>
+                    @foreach (var c in Model.Categories)
+                    {
+                        <option value="@c.Id">@c.Name</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label fw-bold small text-muted">Tác giả</label>
+                <select asp-for="Author" class="form-select">
+                    <option value="">-- Tất cả tác giả --</option>
+                    @foreach (var a in Model.Authors)
+                    {
+                        <option value="@a">@a</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label fw-bold small text-muted">Nhà xuất bản</label>
+                <select asp-for="Publisher" class="form-select">
+                    <option value="">-- Tất cả NXB --</option>
+                    @foreach (var p in Model.Publishers)
+                    {
+                        <option value="@p">@p</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-3 d-flex align-items-end gap-2">
+                <button type="submit" class="btn btn-primary w-50 fw-semibold">
+                    <i class="fa-solid fa-filter me-1"></i> Lọc
+                </button>
+                <a asp-page="/Warehouse/Inventory/Index" class="btn btn-secondary w-50 fw-semibold">
+                    <i class="fa-solid fa-rotate-right me-1"></i> Xóa lọc
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- TABLE CONTAINER -->
+    <div class="bg-white p-4 rounded-4 shadow-sm mb-4">
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped table-hover align-middle w-100 mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th class="text-center" style="width: 5%;">STT</th>
+                        <th class="text-center" style="width: 7%;">Ảnh</th>
+                        <th style="width: 22%;">Tên sách</th>
+                        <th style="width: 12%;">Thể loại</th>
+                        <th class="text-center" style="width: 10%;">Vị trí kệ</th>
+                        <th style="width: 13%;">Tác giả</th>
+                        <th style="width: 13%;">Nhà xuất bản</th>
+                        <th style="width: 10%;">Giá bán</th>
+                        <th class="text-center" style="width: 8%;">Tồn kho</th>
+                        <th class="text-center" style="width: 10%;">Trạng thái</th>
+                        <th class="text-center" style="width: 8%;">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Books.Any())
+                    {
+                        <tr>
+                            <td colspan="11" class="text-center text-muted py-4">Không tìm thấy sách nào phù hợp điều kiện lọc.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        int index = (Model.CurrentPage - 1) * Model.PageSize;
+                        foreach (var b in Model.Books)
+                        {
+                            index++;
+                            <tr>
+                                <td class="text-center fw-bold text-muted">@index</td>
+                                <td class="text-center">
+                                    <img src="@(string.IsNullOrEmpty(b.ImageUrl) ? "https://placehold.co/45x65?text=Img" : b.ImageUrl)"
+                                         alt="@b.Title"
+                                         style="width: 45px; height: 65px; object-fit: cover;"
+                                         class="rounded border"
+                                         onerror="this.src='https://placehold.co/45x65?text=Img'" />
+                                </td>
+                                <td class="fw-bold text-primary">@b.Title</td>
+                                <td>@(b.Category?.Name ?? "Chưa phân loại")</td>
+                                <td class="text-center fw-bold text-info">
+                                    @(b.LocationCode != null ? b.LocationCode : Html.Raw("<span class='text-muted small'>Chưa xếp kệ</span>"))
+                                </td>
+                                <td>@(b.Author ?? "N/A")</td>
+                                <td>@(b.Publisher ?? "N/A")</td>
+                                <td class="fw-bold text-danger">@b.Price.ToString("N0")đ</td>
+                                <td class="text-center fs-5 fw-bold text-secondary">@b.StockQuantity</td>
+                                <td class="text-center text-nowrap">
+                                    @if (b.StockQuantity <= 0)
+                                    {
+                                        <span class="badge bg-secondary">Hết hàng</span>
+                                    }
+                                    else if (b.StockQuantity <= 5)
+                                    {
+                                        <span class="badge bg-warning text-dark">Sắp hết</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">Còn hàng</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    <button type="button" class="btn btn-sm btn-outline-primary"
+                                            title="Kiểm kê / Điều chỉnh"
+                                            onclick="openAdjustStockModal(@b.Id, '@Html.Raw(Html.Encode(b.Title))', @b.StockQuantity, '@(b.LocationCode ?? "")')">
+                                        <i class="fa-solid fa-pen"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- PAGINATION -->
+        @if (Model.TotalPages > 1)
+        {
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center mb-0">
+                    <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                        <a class="page-link" asp-page="/Warehouse/Inventory/Index"
+                           asp-route-currentPage="@(Model.CurrentPage - 1)"
+                           asp-route-keyword="@Model.Keyword"
+                           asp-route-categoryId="@Model.CategoryId"
+                           asp-route-author="@Model.Author"
+                           asp-route-publisher="@Model.Publisher">
+                            &laquo; Trước
+                        </a>
+                    </li>
+
+                    @for (int i = 1; i <= Model.TotalPages; i++)
+                    {
+                        if (i == 1 || i == Model.TotalPages || (i >= Model.CurrentPage - 2 && i <= Model.CurrentPage + 2))
+                        {
+                            <li class="page-item @(Model.CurrentPage == i ? "active" : "")">
+                                <a class="page-link" asp-page="/Warehouse/Inventory/Index"
+                                   asp-route-currentPage="@i"
+                                   asp-route-keyword="@Model.Keyword"
+                                   asp-route-categoryId="@Model.CategoryId"
+                                   asp-route-author="@Model.Author"
+                                   asp-route-publisher="@Model.Publisher">@i</a>
+                            </li>
+                        }
+                        else if (i == Model.CurrentPage - 3 || i == Model.CurrentPage + 3)
+                        {
+                            <li class="page-item disabled"><span class="page-link bg-light text-muted border-0">...</span></li>
+                        }
+                    }
+
+                    <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                        <a class="page-link" asp-page="/Warehouse/Inventory/Index"
+                           asp-route-currentPage="@(Model.CurrentPage + 1)"
+                           asp-route-keyword="@Model.Keyword"
+                           asp-route-categoryId="@Model.CategoryId"
+                           asp-route-author="@Model.Author"
+                           asp-route-publisher="@Model.Publisher">
+                            Sau &raquo;
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        }
+    </div>
+</div>
+
+<!-- MODAL KIỂM KÊ / ĐIỀU CHỈNH TỒN KHO -->
+<div class="modal fade" id="adjustStockModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-boxes-packing me-2"></i>Kiểm Kê / Điều Chỉnh Tồn Kho</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-page-handler="AdjustStock">
+                <div class="modal-body p-4">
+                    <input type="hidden" name="bookId" id="modalBookId" />
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-muted small">Tên sách</label>
+                        <input type="text" id="modalBookTitle" class="form-control fw-bold bg-light" readonly />
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-6">
+                            <label class="form-label fw-bold small text-muted">Số lượng tồn mới *</label>
+                            <input type="number" name="newQuantity" id="modalQuantity" class="form-control fw-bold fs-5 text-primary" min="0" required />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-bold small text-muted">Vị trí kệ kho</label>
+                            <input type="text" name="locationCode" id="modalLocationCode" class="form-control text-uppercase" placeholder="VD: A-01-01" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">Lý do điều chỉnh / Ghi chú kiểm kê</label>
+                        <textarea name="reason" class="form-control" rows="2" placeholder="VD: Kiểm kê định kỳ, bù hao hụt..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary rounded-pill px-3" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Lưu Cập Nhật</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openAdjustStockModal(id, title, qty, loc) {
+            document.getElementById('modalBookId').value = id;
+            document.getElementById('modalBookTitle').value = title;
+            document.getElementById('modalQuantity').value = qty;
+            document.getElementById('modalLocationCode').value = loc;
+            new bootstrap.Modal(document.getElementById('adjustStockModal')).show();
+        }
+    </script>
+}

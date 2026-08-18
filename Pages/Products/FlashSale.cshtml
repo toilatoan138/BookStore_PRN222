@@ -1,0 +1,65 @@
+﻿@page
+@model BookStore.Pages.Products.FlashSaleModel
+@{
+    ViewData["Title"] = Model.ActivePromotion?.PromoName ?? "Flash Sale Giờ Vàng";
+    int discountPct = Model.ActivePromotion?.DiscountPercent ?? 20;
+}
+
+<div class="container py-4">
+    <!-- BANNER -->
+    <div class="p-5 rounded-4 text-white text-center mb-4 shadow-sm" style="background: linear-gradient(135deg, #b91c1c, #7f1d1d);">
+        <i class="fa-solid fa-bolt fa-3x text-warning mb-2 animate-bounce"></i>
+        <h2 class="display-6 fw-bold mb-1">
+            @(Model.ActivePromotion?.PromoName?.ToUpper() ?? "FLASH SALE GIỜ VÀNG")
+        </h2>
+        <p class="lead mb-2 text-white-50">
+            Giảm giá sốc -@discountPct% cho các đầu sách tuyển chọn. Nhanh tay săn ngay kẻo lỡ!
+        </p>
+        @if (Model.ActivePromotion != null)
+        {
+            <div class="badge bg-warning text-dark px-3 py-2 fs-6 fw-bold">
+                <i class="fa-regular fa-clock me-1"></i> Áp dụng đến: @Model.ActivePromotion.EndDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+            </div>
+        }
+    </div>
+
+    <!-- PRODUCTS -->
+    <div class="row row-cols-2 row-cols-md-4 g-3">
+        @if (!Model.FlashBooks.Any())
+        {
+            <div class="col-12 text-center py-5 text-muted">
+                <i class="fa-solid fa-box-open fa-3x mb-3 text-muted"></i>
+                <h5>Hiện tại chưa có sách nào trong đợt Flash Sale này.</h5>
+                <a asp-page="/Index" class="btn btn-outline-danger mt-2 rounded-pill px-4">Khám phá sách khác</a>
+            </div>
+        }
+        else
+        {
+            foreach (var book in Model.FlashBooks)
+            {
+                decimal discountedPrice = book.Price * (100 - discountPct) / 100m;
+                <div class="col">
+                    <div class="product-card h-100 d-flex flex-column bg-white rounded-3 shadow-sm p-3 border">
+                        <a asp-page="/Products/Detail" asp-route-id="@book.Id" class="product-thumb position-relative d-block text-center mb-2">
+                            <img src="@(string.IsNullOrEmpty(book.ImageUrl) ? "https://placehold.co/200x280?text=Book" : book.ImageUrl)"
+                                 alt="@book.Title" class="img-fluid rounded" style="max-height: 220px; object-fit: cover;" />
+                            <span class="badge bg-danger position-absolute top-0 start-0 m-2 px-2 py-1 fs-6">-@discountPct%</span>
+                        </a>
+                        <div class="product-info flex-grow-1 d-flex flex-column justify-content-between">
+                            <div>
+                                <a asp-page="/Products/Detail" asp-route-id="@book.Id" class="text-dark fw-bold text-decoration-none d-block mb-1 text-truncate" title="@book.Title">
+                                    @book.Title
+                                </a>
+                                <div class="text-muted small mb-2">@(book.Author ?? "Nhiều tác giả")</div>
+                            </div>
+                            <div class="product-price-box mt-auto">
+                                <span class="fw-bold text-danger fs-5">@discountedPrice.ToString("N0")đ</span>
+                                <span class="text-muted small text-decoration-line-through ms-2">@book.Price.ToString("N0")đ</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>

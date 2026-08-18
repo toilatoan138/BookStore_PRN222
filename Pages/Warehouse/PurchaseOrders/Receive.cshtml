@@ -1,0 +1,81 @@
+﻿@page "{id:int}"
+@model BookStore.Pages.Warehouse.PurchaseOrders.ReceiveModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = $"Nhập Kho Hàng Về: PO #{Model.PurchaseOrder.PurchaseOrderId}";
+    ViewData["Subtitle"] = $"Nhà cung cấp: {Model.PurchaseOrder.Supplier?.Name} | Người duyệt: {Model.PurchaseOrder.ApprovedBy?.FullName ?? "Admin"}";
+}
+
+<div class="card border-0 shadow-sm rounded-4 p-4 bg-white" style="max-width: 900px;">
+    <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+        <div>
+            <h5 class="fw-bold text-dark mb-1">Đơn nhập hàng PO #@Model.PurchaseOrder.PurchaseOrderId</h5>
+            <span class="text-muted small">Ngày lập: @Model.PurchaseOrder.OrderDate.ToLocalTime():dd/MM/yyyy HH:mm</span>
+        </div>
+        <div>
+            <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 fs-6 fw-bold">
+                <i class="fa-solid fa-check-circle me-1"></i>Admin đã duyệt
+            </span>
+        </div>
+    </div>
+
+    <!-- SUPPLIER INFO -->
+    <div class="row g-3 mb-4 p-3 bg-light rounded-3 small">
+        <div class="col-md-6"><strong>Nhà cung cấp:</strong> @Model.PurchaseOrder.Supplier?.Name</div>
+        <div class="col-md-6"><strong>Người liên hệ:</strong> @(Model.PurchaseOrder.Supplier?.ContactPerson ?? "N/A")</div>
+        <div class="col-md-6"><strong>Số điện thoại:</strong> @(Model.PurchaseOrder.Supplier?.Phone ?? "N/A")</div>
+        <div class="col-md-6"><strong>Địa chỉ kho NCC:</strong> @(Model.PurchaseOrder.Supplier?.Address ?? "N/A")</div>
+    </div>
+
+    <!-- ITEMS TABLE -->
+    <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-boxes-packing text-primary me-2"></i>Danh sách sách thực nhận</h6>
+    <div class="table-responsive mb-4">
+        <table class="table align-middle small">
+            <thead class="table-light">
+                <tr>
+                    <th>Sản phẩm</th>
+                    <th class="text-center">Số lượng nhập</th>
+                    <th class="text-end">Đơn giá nhập</th>
+                    <th class="text-end">Thành tiền</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var d in Model.PurchaseOrder.Details)
+                {
+                    <tr>
+                        <td>
+                            <strong class="text-dark">@d.Book?.Title</strong>
+                            <div class="text-muted small">Tồn hiện tại: @d.Book?.StockQuantity -> Sau nhập: <span class="text-success fw-bold">@((d.Book?.StockQuantity ?? 0) + d.ExpectedQuantity)</span></div>
+                        </td>
+                        <td class="text-center fw-bold text-primary">+@d.ExpectedQuantity</td>
+                        <td class="text-end">@d.Price.ToString("N0")đ</td>
+                        <td class="text-end fw-bold text-danger">@((d.ExpectedQuantity * d.Price).ToString("N0"))đ</td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr class="table-light">
+                    <td colspan="3" class="text-end fw-bold">Tổng thanh toán:</td>
+                    <td class="text-end fw-bold fs-6 text-danger">@Model.PurchaseOrder.TotalAmount.ToString("N0")đ</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <!-- CONFIRM BUTTON -->
+    <div class="alert alert-info py-2 small mb-4">
+        <i class="fa-solid fa-circle-info me-1"></i>Khi nhấn <strong>"Xác nhận nhập kho"</strong>, số lượng sách sẽ tự động cộng vào tồn kho hiện tại và hệ thống sẽ xuất hóa đơn nhập hàng.
+    </div>
+
+    <div class="d-flex gap-2">
+        <form method="post" asp-page-handler="Confirm" asp-route-id="@Model.PurchaseOrder.PurchaseOrderId"
+              onsubmit="return confirm('Bạn có chắc đã kiểm đếm đủ số lượng và muốn nhập lô sách này vào kho?');">
+            <button type="submit" class="btn btn-success px-4 py-2 rounded-pill fw-bold">
+                <i class="fa-solid fa-boxes-stacked me-1"></i>Xác nhận nhập kho & Tăng tồn
+            </button>
+        </form>
+        <a asp-page="/Warehouse/PurchaseOrders/Index" class="btn btn-outline-secondary px-4 py-2 rounded-pill">
+            Quay lại
+        </a>
+    </div>
+</div>

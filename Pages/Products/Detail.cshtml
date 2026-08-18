@@ -1,0 +1,270 @@
+﻿@page "{id:int}"
+@model BookStore.Pages.Products.DetailModel
+@{
+    ViewData["Title"] = Model.Book.Title;
+}
+
+<div class="container py-4">
+    <!-- BREADCRUMB -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb small">
+            <li class="breadcrumb-item"><a asp-page="/Index" class="text-danger text-decoration-none">Trang chủ</a></li>
+            <li class="breadcrumb-item"><a asp-page="/Search" asp-route-categoryId="@Model.Book.CategoryId" class="text-danger text-decoration-none">@Model.Book.Category?.Name</a></li>
+            <li class="breadcrumb-item active text-truncate" style="max-width: 300px;" aria-current="page">@Model.Book.Title</li>
+        </ol>
+    </nav>
+
+    <!-- ======================== MAIN PRODUCT SECTION ======================== -->
+    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+        <div class="row g-4">
+            <!-- IMAGE GALLERY -->
+            <div class="col-md-5 col-lg-4">
+                <div class="border rounded-3 p-2 text-center bg-light mb-3">
+                    <img id="mainBookImg"
+                         src="@(string.IsNullOrEmpty(Model.Book.ImageUrl) ? "https://via.placeholder.com/350x480?text=MindBook" : Model.Book.ImageUrl)"
+                         alt="@Model.Book.Title"
+                         class="img-fluid rounded"
+                         style="max-height: 400px; object-fit: contain;" />
+                </div>
+                @if (Model.Book.DetailImages.Any())
+                {
+                    <div class="d-flex gap-2 overflow-auto py-1">
+                        <img src="@Model.Book.ImageUrl"
+                             class="border rounded p-1"
+                             style="width: 60px; height: 80px; object-fit: cover; cursor: pointer;"
+                             onclick="document.getElementById('mainBookImg').src = this.src;" />
+                        @foreach (var img in Model.Book.DetailImages)
+                        {
+                            <img src="@img.ImageUrl"
+                                 class="border rounded p-1"
+                                 style="width: 60px; height: 80px; object-fit: cover; cursor: pointer;"
+                                 onclick="document.getElementById('mainBookImg').src = this.src;" />
+                        }
+                    </div>
+                }
+            </div>
+
+            <!-- BOOK INFO & ACTIONS -->
+            <div class="col-md-7 col-lg-8">
+                <h3 class="fw-bold text-dark mb-2">@Model.Book.Title</h3>
+
+                <div class="d-flex flex-wrap align-items-center gap-3 text-muted small mb-3">
+                    <div>Tác giả: <strong class="text-dark">@(Model.Book.Author ?? "Đang cập nhật")</strong></div>
+                    <span>|</span>
+                    <div>Nhà xuất bản: <strong class="text-dark">@(Model.Book.Publisher ?? "Đang cập nhật")</strong></div>
+                    <span>|</span>
+                    <div>Đã bán: <strong class="text-danger">@Model.Book.SoldQuantity</strong></div>
+                </div>
+
+                <!-- PRICE BOX -->
+                <div class="p-3 rounded-3 bg-light mb-4">
+                    <div class="d-flex align-items-baseline gap-3">
+                        <span class="display-6 fw-bold text-danger">@Model.Book.Price.ToString("N0") <span class="fs-4">đ</span></span>
+                        <span class="fs-5 text-muted text-decoration-line-through">@((Model.Book.Price * 1.25m).ToString("N0"))đ</span>
+                        <span class="badge bg-danger rounded-pill px-3 py-2">-20%</span>
+                    </div>
+                </div>
+
+                <!-- STOCK STATUS -->
+                <div class="mb-4">
+                    <span class="text-muted small">Tình trạng: </span>
+                    @if (Model.Book.StockQuantity > 0)
+                    {
+                        <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1">
+                            <i class="fa-solid fa-check me-1"></i>Còn hàng (@Model.Book.StockQuantity sản phẩm)
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-1">
+                            <i class="fa-solid fa-xmark me-1"></i>Tạm hết hàng
+                        </span>
+                    }
+                </div>
+
+                <!-- QUANTITY & BUY BUTTONS -->
+                @if (Model.Book.StockQuantity > 0)
+                {
+                    <form method="post" asp-page-handler="AddToCart" asp-route-id="@Model.Book.Id" class="mb-4">
+                        <div class="d-flex align-items-center gap-3 mb-4">
+                            <label class="form-label mb-0 fw-semibold">Số lượng:</label>
+                            <div class="input-group" style="width: 130px;">
+                                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="changeQty(-1)">-</button>
+                                <input type="number" id="qtyInput" name="quantity" value="1" min="1" max="@Model.Book.StockQuantity" class="form-control form-control-sm text-center fw-bold" />
+                                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="changeQty(1)">+</button>
+                            </div>
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-3">
+                            <button type="submit" class="btn btn-outline-danger btn-lg px-4 fw-bold rounded-pill">
+                                <i class="fa-solid fa-cart-plus me-2"></i>Thêm vào giỏ hàng
+                            </button>
+                            <button type="submit" name="buyNow" value="true" class="btn btn-danger btn-lg px-5 fw-bold rounded-pill shadow-sm">
+                                <i class="fa-solid fa-bolt me-2"></i>Mua ngay
+                            </button>
+                        </div>
+                    </form>
+                }
+
+                <!-- POLICIES -->
+                <div class="row g-2 border-top pt-4 text-muted small">
+                    <div class="col-sm-4"><i class="fa-solid fa-truck-fast text-danger me-1"></i> Giao hàng toàn quốc</div>
+                    <div class="col-sm-4"><i class="fa-solid fa-rotate-left text-danger me-1"></i> Đổi trả trong 7 ngày</div>
+                    <div class="col-sm-4"><i class="fa-solid fa-shield-halved text-danger me-1"></i> Sách chính hãng 100%</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================== DETAILS & SPECIFICATIONS ======================== -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+                <h5 class="fw-bold mb-3 text-dark"><i class="fa-solid fa-align-left text-danger me-2"></i>Mô tả sản phẩm</h5>
+                <div class="text-secondary lh-lg">
+                    @(string.IsNullOrEmpty(Model.Book.Description) ? "Đang cập nhật nội dung mô tả..." : Model.Book.Description)
+                </div>
+            </div>
+
+            <!-- REVIEWS SECTION -->
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="fw-bold mb-0 text-dark">
+                        <i class="fa-solid fa-star text-warning me-2"></i>Đánh giá khách hàng (@Model.Book.Reviews.Count)
+                    </h5>
+                </div>
+
+                <!-- ADD REVIEW FORM -->
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <form method="post" asp-page-handler="AddReview" asp-route-id="@Model.Book.Id" class="p-3 bg-light rounded-3 mb-4">
+                        <h6 class="fw-bold text-dark mb-2">Viết đánh giá của bạn</h6>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Đánh giá sao:</label>
+                            <select asp-for="ReviewInput.Rating" class="form-select form-select-sm" style="max-width: 160px;">
+                                <option value="5">⭐⭐⭐⭐⭐ (5 sao)</option>
+                                <option value="4">⭐⭐⭐⭐ (4 sao)</option>
+                                <option value="3">⭐⭐⭐ (3 sao)</option>
+                                <option value="2">⭐⭐ (2 sao)</option>
+                                <option value="1">⭐ (1 sao)</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <textarea asp-for="ReviewInput.Comment" rows="3" class="form-control form-control-sm" placeholder="Chia sẻ cảm nhận của bạn về cuốn sách này..."></textarea>
+                            <span asp-validation-for="ReviewInput.Comment" class="text-danger small"></span>
+                        </div>
+                        <button type="submit" class="btn btn-danger btn-sm rounded-pill px-4 fw-bold">Gửi đánh giá</button>
+                    </form>
+                }
+                else
+                {
+                    <div class="alert alert-light border small text-center mb-4">
+                        Vui lòng <a asp-page="/Account/Login" asp-route-returnUrl="@Request.Path" class="text-danger fw-bold">Đăng nhập</a> để viết đánh giá cho sản phẩm này.
+                    </div>
+                }
+
+                <!-- REVIEWS LIST -->
+                @if (!Model.Book.Reviews.Any())
+                {
+                    <div class="text-center py-4 text-muted small">
+                        Chưa có đánh giá nào cho sản phẩm này. Hãy là người đầu tiên nhận xét!
+                    </div>
+                }
+                else
+                {
+                    <div class="d-flex flex-column gap-3">
+                        @foreach (var review in Model.Book.Reviews)
+                        {
+                            <div class="border-bottom pb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <div class="fw-bold text-dark">@(review.User?.FullName ?? "Khách hàng")</div>
+                                    <small class="text-muted">@review.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</small>
+                                </div>
+                                <div class="text-warning small mb-2">
+                                    @for (int i = 1; i <= 5; i++)
+                                    {
+                                        if (i <= review.Rating) { <i class="fa-solid fa-star"></i> }
+                                        else { <i class="fa-regular fa-star"></i> }
+                                    }
+                                </div>
+                                <p class="text-secondary small mb-2">@review.Comment</p>
+
+                                @if (!string.IsNullOrEmpty(review.StaffReply))
+                                {
+                                    <div class="p-2 rounded bg-danger-subtle border-start border-danger border-3 small ms-3">
+                                        <strong class="text-danger"><i class="fa-solid fa-headset me-1"></i>Phản hồi từ MindBook:</strong>
+                                        <div class="text-dark mt-1">@review.StaffReply</div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- SPECIFICATIONS TABLE -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+                <h5 class="fw-bold mb-3 text-dark"><i class="fa-solid fa-circle-info text-danger me-2"></i>Thông tin chi tiết</h5>
+                <table class="table table-sm small">
+                    <tbody>
+                        <tr>
+                            <td class="text-muted">Mã ISBN:</td>
+                            <td class="fw-semibold text-end">@(Model.Book.Isbn ?? "N/A")</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Nhà xuất bản:</td>
+                            <td class="fw-semibold text-end">@(Model.Book.Publisher ?? "N/A")</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Năm xuất bản:</td>
+                            <td class="fw-semibold text-end">@(Model.Book.YearOfPublish?.ToString() ?? "N/A")</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Số trang:</td>
+                            <td class="fw-semibold text-end">@(Model.Book.NumberOfPages?.ToString() ?? "N/A") trang</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Vị trí kho:</td>
+                            <td class="fw-semibold text-end">@(Model.Book.LocationCode ?? "A-01-01")</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- SUGGESTED BOOKS -->
+            @if (Model.SuggestedBooks.Any())
+            {
+                <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+                    <h6 class="fw-bold mb-3 text-dark"><i class="fa-solid fa-thumbs-up text-danger me-2"></i>Có thể bạn cũng thích</h6>
+                    <div class="d-flex flex-column gap-3">
+                        @foreach (var book in Model.SuggestedBooks)
+                        {
+                            <a asp-page="/Products/Detail" asp-route-id="@book.Id" class="d-flex gap-3 text-decoration-none text-dark">
+                                <img src="@(string.IsNullOrEmpty(book.ImageUrl) ? "https://via.placeholder.com/60x80" : book.ImageUrl)"
+                                     alt="@book.Title" class="rounded border" style="width: 55px; height: 75px; object-fit: cover;" />
+                                <div>
+                                    <div class="fw-bold small text-truncate-2" style="max-height: 38px; overflow: hidden;">@book.Title</div>
+                                    <div class="text-danger fw-bold small mt-1">@book.Price.ToString("N0")đ</div>
+                                </div>
+                            </a>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<script>
+    function changeQty(delta) {
+        const input = document.getElementById('qtyInput');
+        let current = parseInt(input.value) || 1;
+        let max = parseInt(input.max) || 999;
+        let next = current + delta;
+        if (next >= 1 && next <= max) {
+            input.value = next;
+        }
+    }
+</script>

@@ -1,0 +1,178 @@
+﻿@page
+@model BookStore.Pages.Admin.Categories.IndexModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Quản lý Thể loại / Danh mục";
+    ViewData["Subtitle"] = "Cây phân cấp danh mục sách và phân loại sản phẩm";
+}
+
+<div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-layer-group text-danger me-2"></i>Danh sách thể loại</h5>
+        <button class="btn btn-danger btn-sm rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#createCatModal">
+            <i class="fa-solid fa-plus me-1"></i>Thêm thể loại mới
+        </button>
+    </div>
+
+    <!-- CATEGORIES TABLE -->
+    <div class="table-responsive">
+        <table class="table table-hover align-middle small">
+            <thead class="table-light">
+                <tr>
+                    <th>Mã</th>
+                    <th>Tên danh mục</th>
+                    <th>Danh mục cha</th>
+                    <th>Số sách</th>
+                    <th>Mô tả</th>
+                    <th class="text-end">Tác vụ</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var c in Model.Categories)
+                {
+                    <tr>
+                        <td class="fw-bold">#@c.Id</td>
+                        <td>
+                            <strong class="text-dark">@c.Name</strong>
+                        </td>
+                        <td>
+                            @if (c.Parent != null)
+                            {
+                                <span class="badge bg-light text-secondary border">@c.Parent.Name</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Danh mục gốc</span>
+                            }
+                        </td>
+                        <td>
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+                                @c.Books.Count quyển
+                            </span>
+                        </td>
+                        <td class="text-muted text-truncate" style="max-width: 250px;">
+                            @(c.Description ?? "Không có mô tả")
+                        </td>
+                        <td class="text-end">
+                            <div class="d-flex justify-content-end gap-1">
+                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-2"
+                                        onclick="openEditCatModal(@c.Id, '@c.Name', '@(c.Description ?? "")', '@(c.ImageUrl ?? "")', @(c.ParentId ?? 0))">
+                                    <i class="fa-regular fa-pen-to-square"></i>
+                                </button>
+                                <form method="post" asp-page-handler="Delete" asp-route-id="@c.Id" class="d-inline"
+                                      onsubmit="return confirm('Bạn có chắc muốn xóa danh mục này?');">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2">
+                                        <i class="fa-regular fa-trash-can"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- CREATE CATEGORY MODAL -->
+<div class="modal fade" id="createCatModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-layer-group me-2"></i>Thêm thể loại mới</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-page-handler="Create">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label asp-for="Input.Name" class="form-label fw-semibold">Tên danh mục</label>
+                        <input asp-for="Input.Name" class="form-control" placeholder="VD: Văn học Việt Nam" required />
+                        <span asp-validation-for="Input.Name" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Input.ParentId" class="form-label fw-semibold">Danh mục cha (nếu có)</label>
+                        <select asp-for="Input.ParentId" class="form-select">
+                            <option value="">-- Là danh mục gốc --</option>
+                            @foreach (var p in Model.Categories.Where(c => c.ParentId == null))
+                            {
+                                <option value="@p.Id">@p.Name</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Input.ImageUrl" class="form-label fw-semibold">URL Hình ảnh</label>
+                        <input asp-for="Input.ImageUrl" class="form-control" placeholder="https://..." />
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Input.Description" class="form-label fw-semibold">Mô tả</label>
+                        <textarea asp-for="Input.Description" rows="3" class="form-control" placeholder="Mô tả thể loại..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-danger rounded-3 fw-bold px-4">Lưu danh mục</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- EDIT CATEGORY MODAL -->
+<div class="modal fade" id="editCatModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-pen-to-square me-2"></i>Chỉnh sửa danh mục</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-page-handler="Edit">
+                <input type="hidden" id="editCatId" name="Input.Id" />
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Tên danh mục</label>
+                        <input id="editCatName" name="Input.Name" class="form-control" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Danh mục cha</label>
+                        <select id="editCatParent" name="Input.ParentId" class="form-select">
+                            <option value="0">-- Là danh mục gốc --</option>
+                            @foreach (var p in Model.Categories.Where(c => c.ParentId == null))
+                            {
+                                <option value="@p.Id">@p.Name</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">URL Hình ảnh</label>
+                        <input id="editCatImg" name="Input.ImageUrl" class="form-control" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Mô tả</label>
+                        <textarea id="editCatDesc" name="Input.Description" rows="3" class="form-control"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary rounded-3 fw-bold px-4">Cập nhật</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openEditCatModal(id, name, desc, img, parentId) {
+        document.getElementById('editCatId').value = id;
+        document.getElementById('editCatName').value = name;
+        document.getElementById('editCatDesc').value = desc;
+        document.getElementById('editCatImg').value = img;
+        document.getElementById('editCatParent').value = parentId || 0;
+        new bootstrap.Modal(document.getElementById('editCatModal')).show();
+    }
+</script>

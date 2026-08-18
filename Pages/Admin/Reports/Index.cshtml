@@ -1,0 +1,96 @@
+﻿@page
+@model BookStore.Pages.Admin.Reports.IndexModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Báo Cáo Doanh Thu & Thống Kê";
+    ViewData["Subtitle"] = "Phân tích doanh số theo danh mục sách và phương thức thanh toán";
+}
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white text-center">
+            <span class="text-muted small fw-semibold text-uppercase">Doanh thu giao thành công</span>
+            <h3 class="fw-bold text-success mt-2 mb-0">@Model.TotalDeliveredRevenue.ToString("N0") <span class="fs-6">VNĐ</span></h3>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white text-center">
+            <span class="text-muted small fw-semibold text-uppercase">Số đơn hoàn tất</span>
+            <h3 class="fw-bold text-primary mt-2 mb-0">@Model.TotalDeliveredOrders <span class="fs-6">đơn</span></h3>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white text-center">
+            <span class="text-muted small fw-semibold text-uppercase">Giá trị đơn trung bình (AOV)</span>
+            <h3 class="fw-bold text-danger mt-2 mb-0">@Model.AvgOrderValue.ToString("N0") <span class="fs-6">VNĐ</span></h3>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- CATEGORY REVENUE BREAKDOWN -->
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+            <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-layer-group text-danger me-2"></i>Doanh số theo Thể loại sách</h5>
+
+            @if (!Model.CategoryRevenues.Any())
+            {
+                <p class="text-muted small py-4 text-center">Chưa có dữ liệu đơn hàng hoàn tất.</p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle small">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Thể loại</th>
+                                <th class="text-center">Số lượng bán</th>
+                                <th class="text-end">Doanh thu</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var cr in Model.CategoryRevenues)
+                            {
+                                <tr>
+                                    <td class="fw-bold text-dark">@cr.CategoryName</td>
+                                    <td class="text-center">@cr.TotalSold quyển</td>
+                                    <td class="text-end fw-bold text-danger">@cr.TotalRevenue.ToString("N0")đ</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- PAYMENT METHODS SHARE -->
+    <div class="col-lg-5">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+            <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-chart-pie text-primary me-2"></i>Tỷ trọng Phương thức thanh toán</h5>
+
+            @if (!Model.PaymentShares.Any())
+            {
+                <p class="text-muted small py-4 text-center">Chưa có dữ liệu.</p>
+            }
+            else
+            {
+                <div class="d-flex flex-column gap-3">
+                    @foreach (var p in Model.PaymentShares)
+                    {
+                        <div class="p-3 border rounded-3 bg-light">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <strong class="text-dark">@p.Method</strong>
+                                <span class="badge bg-primary">@p.OrderCount đơn</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">Tổng giá trị giao dịch:</small>
+                                <span class="fw-bold text-danger">@p.TotalAmount.ToString("N0")đ</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>

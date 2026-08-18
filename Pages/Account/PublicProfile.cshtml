@@ -1,0 +1,72 @@
+﻿@page "{username?}"
+@model BookStore.Pages.Account.PublicProfileModel
+@{
+    ViewData["Title"] = Model.TargetUser?.FullName ?? "Hồ sơ thành viên";
+}
+
+<div class="container py-5">
+    @if (Model.TargetUser == null)
+    {
+        <div class="alert alert-warning text-center">
+            Không tìm thấy thông tin thành viên này.
+        </div>
+    }
+    else
+    {
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <!-- USER HERO CARD -->
+                <div class="card border-0 shadow-sm rounded-4 p-4 text-center bg-white mb-4">
+                    <div class="avatar-container mb-3" style="width: 100px; height: 100px;">
+                        <img src="https://ui-avatars.com/api/?name=@Uri.EscapeDataString(Model.TargetUser.FullName)&background=C92127&color=fff&size=128&bold=true"
+                             alt="Avatar" class="avatar-img" />
+                    </div>
+                    <h4 class="fw-bold mb-1 text-dark">@Model.TargetUser.FullName</h4>
+                    <p class="text-muted small mb-2">&#64;@Model.TargetUser.UserName</p>
+                    <div>
+                        <span class="badge-rank rank-@Model.TargetUser.RankName.Replace(" ", "-").ToLower() px-3 py-1">
+                            <i class="fa-solid fa-crown me-1"></i>Hạng @Model.TargetUser.RankName
+                        </span>
+                    </div>
+                    <div class="text-muted small mt-3">
+                        <i class="fa-regular fa-calendar-check me-1"></i>Thành viên từ: @Model.TargetUser.CreatedAt.ToString("dd/MM/yyyy")
+                    </div>
+                </div>
+
+                <!-- PUBLIC COLLECTIONS -->
+                <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+                    <h5 class="fw-bold mb-3 text-dark">
+                        <i class="fa-solid fa-bookmark text-danger me-2"></i>Bộ sưu tập công khai (@Model.PublicCollections.Count)
+                    </h5>
+
+                    @if (!Model.PublicCollections.Any())
+                    {
+                        <div class="text-center py-4 text-muted small">
+                            Thành viên này chưa chia sẻ bộ sưu tập công khai nào.
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="row g-3">
+                            @foreach (var col in Model.PublicCollections)
+                            {
+                                <div class="col-md-6">
+                                    <div class="card h-100 border rounded-3 p-3" style="border-left: 4px solid @(string.IsNullOrEmpty(col.CoverColor) ? "#C92127" : col.CoverColor) !important;">
+                                        <h6 class="fw-bold mb-1 text-dark">@col.Name</h6>
+                                        <p class="text-muted small mb-2">@(col.Description ?? "Không có mô tả")</p>
+                                        <div class="d-flex justify-content-between align-items-center mt-auto">
+                                            <span class="badge bg-light text-dark border">@col.TotalBooks quyển sách</span>
+                                            <a asp-page="/Collections/Detail" asp-route-id="@col.Id" class="btn btn-sm btn-outline-danger">
+                                                Xem bộ sưu tập
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>

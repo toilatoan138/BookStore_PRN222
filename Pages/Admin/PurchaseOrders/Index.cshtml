@@ -1,0 +1,121 @@
+﻿@page
+@model BookStore.Pages.Admin.PurchaseOrders.IndexModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Duyệt Đơn Nhập Hàng (PO)";
+    ViewData["Subtitle"] = "Kiểm tra và phê duyệt các đơn đề xuất nhập sách từ bộ phận Kho";
+}
+
+<div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+    <!-- STATUS TABS -->
+    <div class="d-flex gap-2 mb-4">
+        <a asp-page="/Admin/PurchaseOrders/Index" class="btn btn-sm rounded-pill px-3 @(!Model.Status.HasValue ? "btn-danger fw-bold" : "btn-light text-dark border")">
+            Tất cả (@Model.PurchaseOrders.Count)
+        </a>
+        <a asp-page="/Admin/PurchaseOrders/Index" asp-route-status="0" class="btn btn-sm rounded-pill px-3 @(Model.Status == 0 ? "btn-danger fw-bold" : "btn-light text-dark border")">
+            Chờ duyệt (Pending)
+        </a>
+        <a asp-page="/Admin/PurchaseOrders/Index" asp-route-status="1" class="btn btn-sm rounded-pill px-3 @(Model.Status == 1 ? "btn-danger fw-bold" : "btn-light text-dark border")">
+            Đã duyệt (Approved)
+        </a>
+        <a asp-page="/Admin/PurchaseOrders/Index" asp-route-status="2" class="btn btn-sm rounded-pill px-3 @(Model.Status == 2 ? "btn-danger fw-bold" : "btn-light text-dark border")">
+            Đã nhập kho (Completed)
+        </a>
+        <a asp-page="/Admin/PurchaseOrders/Index" asp-route-status="3" class="btn btn-sm rounded-pill px-3 @(Model.Status == 3 ? "btn-danger fw-bold" : "btn-light text-dark border")">
+            Đã hủy (Cancelled)
+        </a>
+    </div>
+
+    <!-- PO TABLE -->
+    <div class="table-responsive">
+        <table class="table table-hover align-middle small">
+            <thead class="table-light">
+                <tr>
+                    <th>Mã PO</th>
+                    <th>Ngày tạo</th>
+                    <th>Nhà cung cấp</th>
+                    <th>Người tạo (Kho)</th>
+                    <th>Tổng tiền nhập</th>
+                    <th>Trạng thái</th>
+                    <th class="text-end">Tác vụ</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var po in Model.PurchaseOrders)
+                {
+                    <tr>
+                        <td class="fw-bold">#@po.PurchaseOrderId</td>
+                        <td>@po.OrderDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                        <td><strong>@po.Supplier?.Name</strong></td>
+                        <td>@(po.CreatedBy?.FullName ?? "Thủ kho")</td>
+                        <td class="fw-bold text-danger">@po.TotalAmount.ToString("N0")đ</td>
+                        <td>
+                            @switch (po.Status)
+                            {
+                                case 0:
+                                    <span class="badge bg-warning text-dark"><i class="fa-solid fa-clock me-1"></i>Chờ Admin duyệt</span>
+                                    break;
+                                case 1:
+                                    <span class="badge bg-info text-dark"><i class="fa-solid fa-check me-1"></i>Đã duyệt - Chờ hàng về</span>
+                                    break;
+                                case 2:
+                                    <span class="badge bg-success"><i class="fa-solid fa-boxes-stacked me-1"></i>Đã nhập vào kho</span>
+                                    break;
+                                case 3:
+                                    <span class="badge bg-secondary"><i class="fa-solid fa-ban me-1"></i>Đã từ chối / Hủy</span>
+                                    break;
+                            }
+                        </td>
+                        <td class="text-end">
+                            <div class="d-flex justify-content-end gap-1">
+                                @if (po.Status == 0)
+                                {
+                                    <form method="post" asp-page-handler="Approve" asp-route-id="@po.PurchaseOrderId" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-success rounded-pill px-3 fw-bold">
+                                            <i class="fa-solid fa-check me-1"></i>Duyệt đơn
+                                        </button>
+                                    </form>
+
+                                    <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3"
+                                            onclick="openCancelPoModal(@po.PurchaseOrderId)">
+                                        Từ chối
+                                    </button>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- CANCEL PO MODAL -->
+<div class="modal fade" id="cancelPoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title fw-bold">Từ chối Đơn nhập hàng</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-page-handler="Cancel">
+                <input type="hidden" id="cancelPoId" name="id" />
+                <div class="modal-body p-4">
+                    <p class="text-muted small mb-3">Nhập lý do từ chối đơn nhập sách này để thủ kho nắm thông tin:</p>
+                    <textarea name="reason" class="form-control" rows="3" placeholder="Lý do từ chối..." required></textarea>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-danger rounded-3 fw-bold px-4">Xác nhận từ chối</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openCancelPoModal(id) {
+        document.getElementById('cancelPoId').value = id;
+        new bootstrap.Modal(document.getElementById('cancelPoModal')).show();
+    }
+</script>

@@ -1,0 +1,106 @@
+﻿@page
+@model BookStore.Pages.Admin.Products.IndexModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Quản lý Sách";
+    ViewData["Subtitle"] = "Quản trị danh mục đầu sách, giá bán, tồn kho và trạng thái kinh doanh";
+}
+
+<div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+    <!-- HEADER CONTROLS -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+        <form method="get" class="d-flex flex-wrap gap-2 flex-grow-1" style="max-width: 600px;">
+            <input asp-for="Keyword" type="text" class="form-control form-control-sm" placeholder="Tìm theo tên sách, tác giả..." />
+            <select asp-for="CategoryId" class="form-select form-select-sm" style="max-width: 200px;">
+                <option value="">-- Tất cả danh mục --</option>
+                @foreach (var c in Model.Categories)
+                {
+                    <option value="@c.Id">@c.Name</option>
+                }
+            </select>
+            <button type="submit" class="btn btn-sm btn-danger px-3">
+                <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
+        </form>
+
+        <a asp-page="/Admin/Products/Create" class="btn btn-danger btn-sm rounded-pill px-4 fw-bold shadow-sm">
+            <i class="fa-solid fa-plus me-1"></i>Thêm sách mới
+        </a>
+    </div>
+
+    <!-- BOOKS TABLE -->
+    <div class="table-responsive">
+        <table class="table table-hover align-middle small">
+            <thead class="table-light">
+                <tr>
+                    <th>Mã</th>
+                    <th>Ảnh & Tiêu đề</th>
+                    <th>Danh mục</th>
+                    <th>Giá bán</th>
+                    <th>Tồn kho</th>
+                    <th>Đã bán</th>
+                    <th>Trạng thái</th>
+                    <th class="text-end">Tác vụ</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var book in Model.Books)
+                {
+                    <tr>
+                        <td class="fw-bold">#@book.Id</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-3">
+                                <img src="@(string.IsNullOrEmpty(book.ImageUrl) ? "https://via.placeholder.com/40x55" : book.ImageUrl)"
+                                     alt="@book.Title" class="rounded border" style="width: 40px; height: 55px; object-fit: cover;" />
+                                <div>
+                                    <a asp-page="/Products/Detail" asp-route-id="@book.Id" target="_blank" class="fw-bold text-dark text-decoration-none">
+                                        @book.Title
+                                    </a>
+                                    <div class="text-muted small">Tác giả: @(book.Author ?? "N/A")</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark border">@book.Category?.Name</span>
+                        </td>
+                        <td class="fw-bold text-danger">@book.Price.ToString("N0")đ</td>
+                        <td>
+                            @if (book.StockQuantity <= 5)
+                            {
+                                <span class="badge bg-danger">@book.StockQuantity (Sắp hết)</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-success">@book.StockQuantity</span>
+                            }
+                        </td>
+                        <td>@book.SoldQuantity</td>
+                        <td>
+                            @if (book.IsActive)
+                            {
+                                <span class="badge bg-success-subtle text-success border border-success-subtle">Đang bán</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary-subtle text-secondary border">Đã ẩn</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <div class="d-flex justify-content-end gap-1">
+                                <a asp-page="/Admin/Products/Edit" asp-route-id="@book.Id" class="btn btn-sm btn-outline-primary rounded-pill px-2" title="Chỉnh sửa">
+                                    <i class="fa-regular fa-pen-to-square"></i>
+                                </a>
+                                <form method="post" asp-page-handler="ToggleStatus" asp-route-id="@book.Id" class="d-inline">
+                                    <button type="submit" class="btn btn-sm @(book.IsActive ? "btn-outline-warning" : "btn-outline-success") rounded-pill px-2"
+                                            title="@(book.IsActive ? "Ẩn khỏi cửa hàng" : "Hiện lại trên cửa hàng")">
+                                        <i class="fa-solid @(book.IsActive ? "fa-eye-slash" : "fa-eye")"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

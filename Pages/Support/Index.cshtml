@@ -1,0 +1,119 @@
+﻿@page
+@model BookStore.Pages.Support.IndexModel
+@{
+    ViewData["Title"] = "Trung tâm Hỗ trợ Khách hàng";
+}
+
+<div class="container py-4">
+    <div class="row g-4">
+        <!-- SIDEBAR -->
+        <div class="col-lg-3">
+            <partial name="_SidebarPartial" />
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="col-lg-9">
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+                    <div>
+                        <h4 class="fw-bold mb-1 text-dark"><i class="fa-solid fa-headset text-danger me-2"></i>Trung tâm Hỗ trợ Khách hàng</h4>
+                        <p class="text-muted small mb-0">Gửi yêu cầu thắc mắc, khiếu nại hoặc hỗ trợ kỹ thuật</p>
+                    </div>
+                    <button class="btn btn-danger rounded-3 fw-bold btn-sm" data-bs-toggle="modal" data-bs-target="#createTicketModal">
+                        <i class="fa-solid fa-paper-plane me-1"></i>Gửi yêu cầu mới
+                    </button>
+                </div>
+
+                @if (!Model.Tickets.Any())
+                {
+                    <div class="text-center py-5 bg-light rounded-4">
+                        <i class="fa-solid fa-comments fa-4x text-muted mb-3"></i>
+                        <h5 class="fw-bold text-dark">Chưa có yêu cầu hỗ trợ nào</h5>
+                        <p class="text-muted small">Nếu bạn cần trợ giúp về đơn hàng, tài khoản hoặc sản phẩm, hãy gửi yêu cầu cho chúng tôi.</p>
+                        <button class="btn btn-danger btn-sm rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#createTicketModal">
+                            Gửi yêu cầu ngay
+                        </button>
+                    </div>
+                }
+                else
+                {
+                    <div class="d-flex flex-column gap-3">
+                        @foreach (var t in Model.Tickets)
+                        {
+                            <div class="card border rounded-3 p-3">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <span class="badge bg-secondary-subtle text-secondary me-2">#@t.TicketId</span>
+                                        <strong class="text-dark">@t.TicketSubject</strong>
+                                        <span class="badge bg-light text-muted border ms-2">@t.IssueType</span>
+                                    </div>
+                                    <span class="badge @(t.Status == "Closed" ? "bg-secondary" : t.Status == "In Progress" ? "bg-info" : "bg-warning text-dark")">
+                                        @(t.Status == "Closed" ? "Đã xử lý" : t.Status == "In Progress" ? "Đang xử lý" : "Chờ phản hồi")
+                                    </span>
+                                </div>
+
+                                <p class="text-secondary small mb-2 bg-light p-3 rounded">
+                                    @t.TicketMessage
+                                </p>
+
+                                @if (!string.IsNullOrEmpty(t.AdminReply))
+                                {
+                                    <div class="p-3 rounded bg-danger-subtle border-start border-danger border-4 small mb-2">
+                                        <strong class="text-danger"><i class="fa-solid fa-headset me-1"></i>Phản hồi từ bộ phận CSKH MindBook:</strong>
+                                        <div class="text-dark mt-1">@t.AdminReply</div>
+                                    </div>
+                                }
+
+                                <div class="text-muted small">
+                                    Gửi lúc: @t.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CREATE TICKET MODAL -->
+<div class="modal fade" id="createTicketModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-headset me-2"></i>Gửi yêu cầu hỗ trợ mới</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-page-handler="Create">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label asp-for="Input.IssueType" class="form-label fw-semibold">Loại vấn đề</label>
+                        <select asp-for="Input.IssueType" class="form-select">
+                            <option value="Đơn hàng & Giao vận">Đơn hàng & Giao vận</option>
+                            <option value="Thanh toán & Hoàn tiền">Thanh toán & Hoàn tiền</option>
+                            <option value="Đổi trả sản phẩm">Đổi trả sản phẩm</option>
+                            <option value="Tài khoản & Ví">Tài khoản & Ví</option>
+                            <option value="Góp ý / Vấn đề khác">Góp ý / Vấn đề khác</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Input.Subject" class="form-label fw-semibold">Tiêu đề yêu cầu</label>
+                        <input asp-for="Input.Subject" class="form-control" placeholder="VD: Hỗ trợ kiểm tra tình trạng đơn #123" required />
+                        <span asp-validation-for="Input.Subject" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Input.Message" class="form-label fw-semibold">Nội dung chi tiết</label>
+                        <textarea asp-for="Input.Message" class="form-control" rows="4" placeholder="Mô tả cụ thể vấn đề của bạn..." required></textarea>
+                        <span asp-validation-for="Input.Message" class="text-danger small"></span>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-danger rounded-3 fw-bold px-4">Gửi yêu cầu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

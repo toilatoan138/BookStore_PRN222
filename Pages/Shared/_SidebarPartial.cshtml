@@ -1,0 +1,102 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using BookStore.Models.Entities
+@inject UserManager<ApplicationUser> UserManager
+@{
+    var currentUser = await UserManager.GetUserAsync(User);
+    if (currentUser == null) { return; }
+
+    int fpoints = currentUser.FPoints;
+    string rank = currentUser.RankName;
+    string nextRank = fpoints >= 5000 ? "Max" : fpoints >= 2000 ? "Kim Cương" : fpoints >= 500 ? "Vàng" : "Bạc";
+    int pointsNeeded = fpoints >= 5000 ? 0 : fpoints >= 2000 ? 5000 - fpoints : fpoints >= 500 ? 2000 - fpoints : 500 - fpoints;
+
+    var today = DateTime.Now;
+    int daysLeft = DateTime.DaysInMonth(today.Year, today.Month) - today.Day;
+
+    string currentPage = ViewContext.RouteData.Values["page"]?.ToString() ?? "";
+}
+
+<div class="sidebar-wrapper">
+    <!-- USER INFO -->
+    <div class="user-info-box">
+        <div class="avatar-container">
+            <img src="https://ui-avatars.com/api/?name=@Uri.EscapeDataString(currentUser.FullName)&background=ddd&color=555&size=128&bold=true"
+                 alt="Avatar" class="avatar-img" />
+        </div>
+        <div class="user-display-name">@currentUser.FullName</div>
+
+        <!-- RANK BADGE WITH TOOLTIP -->
+        <div class="rank-container">
+            <div class="membership-badge rank-@rank.Replace(" ", "-").ToLower()">
+                @(User.IsInRole("Admin") ? "Admin" : rank)
+            </div>
+            <div class="rank-tooltip">
+                <div class="rank-tooltip-title"><i class="fa-solid fa-circle-info me-1"></i>Thông tin hạng</div>
+                <div>Hạng sẽ làm mới sau: <strong class="text-warning">@daysLeft ngày</strong></div>
+            </div>
+        </div>
+
+        <div class="f-point">F-Point tích lũy: <strong>@fpoints.ToString("N0")</strong></div>
+        <div class="upgrade-note">
+            @if (User.IsInRole("Admin")) { <span>(Tài khoản Quản trị viên)</span> }
+            else if (nextRank == "Max") { <span>Bạn đã đạt hạng cao nhất! 💎</span> }
+            else { <span>Thêm <strong>@pointsNeeded.ToString("N0")</strong> điểm để nâng hạng @nextRank</span> }
+        </div>
+    </div>
+
+    <!-- MENU -->
+    <div class="sidebar-menu">
+        <div class="sidebar-section-title"><i class="fa-regular fa-user"></i> Tài khoản</div>
+
+        <a asp-page="/Account/Profile"
+           class="menu-item @(currentPage.Contains("Profile") ? "active" : "")">
+            <span><i class="fa-regular fa-address-card fa-fw me-2"></i>Hồ sơ cá nhân</span>
+        </a>
+        <a asp-page="/Account/Addresses/Index"
+           class="menu-item @(currentPage.Contains("Addresses") ? "active" : "")">
+            <span><i class="fa-solid fa-location-dot fa-fw me-2"></i>Sổ địa chỉ</span>
+        </a>
+        <a asp-page="/Account/ChangePassword"
+           class="menu-item @(currentPage.Contains("ChangePassword") ? "active" : "")">
+            <span><i class="fa-solid fa-lock fa-fw me-2"></i>Đổi mật khẩu</span>
+        </a>
+
+        <hr class="sidebar-divider" />
+
+        <a asp-page="/Orders/Index"
+           class="menu-item @(currentPage.Contains("/Orders/") ? "active" : "")">
+            <i class="fa-solid fa-receipt fa-fw me-2"></i>Đơn hàng của tôi
+        </a>
+        <a asp-page="/Vouchers/Wallet"
+           class="menu-item @(currentPage.Contains("Voucher") ? "active" : "")">
+            <i class="fa-solid fa-ticket fa-fw me-2"></i>Ví Voucher
+        </a>
+        <a asp-page="/Collections/Index"
+           class="menu-item @(currentPage.Contains("Collection") ? "active" : "")">
+            <i class="fa-solid fa-bookmark fa-fw me-2"></i>Bộ sưu tập
+        </a>
+        <a asp-page="/Support/Index"
+           class="menu-item @(currentPage.Contains("Support") ? "active" : "")">
+            <i class="fa-solid fa-headset fa-fw me-2"></i>Trung tâm hỗ trợ
+        </a>
+        <a asp-page="/Notifications/Index"
+           class="menu-item @(currentPage.Contains("Notification") ? "active" : "")">
+            <i class="fa-regular fa-bell fa-fw me-2"></i>Thông báo
+        </a>
+        <a asp-page="/Account/MyComments"
+           class="menu-item @(currentPage.Contains("MyComments") ? "active" : "")">
+            <i class="fa-regular fa-comment-dots fa-fw me-2"></i>Bình luận của tôi
+        </a>
+        <a asp-page="/Account/Wallet"
+           class="menu-item @(currentPage.Contains("Wallet") ? "active" : "")">
+            <i class="fa-solid fa-wallet fa-fw me-2"></i>Ví BookStore
+            <span class="wallet-badge">@currentUser.WalletBalance.ToString("N0")đ</span>
+        </a>
+
+        <form asp-page="/Account/Logout" method="post">
+            <button type="submit" class="menu-item w-100 text-start" style="color:#666;">
+                <i class="fa-solid fa-arrow-right-from-bracket fa-fw me-2"></i>Đăng xuất
+            </button>
+        </form>
+    </div>
+</div>

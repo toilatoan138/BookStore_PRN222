@@ -1,0 +1,55 @@
+﻿@page
+@model BookStore.Pages.Notifications.AllModel
+@{
+    ViewData["Title"] = "Tất cả thông báo";
+}
+
+<div class="container py-4">
+    <div class="row g-4">
+        <!-- SIDEBAR -->
+        <div class="col-lg-3">
+            <partial name="_SidebarPartial" />
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="col-lg-9">
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+                <h4 class="fw-bold mb-4 text-dark"><i class="fa-regular fa-bell text-danger me-2"></i>Tất cả thông báo hệ thống</h4>
+
+                @if (!Model.Notifications.Any())
+                {
+                    <div class="text-center py-5 bg-light rounded-4">
+                        <i class="fa-regular fa-bell-slash fa-4x text-muted mb-3"></i>
+                        <h5 class="fw-bold text-dark">Chưa có thông báo nào</h5>
+                    </div>
+                }
+                else
+                {
+                    <div class="d-flex flex-column gap-2">
+                        @foreach (var notif in Model.Notifications)
+                        {
+                            <div class="p-3 border rounded-3 d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-start gap-3">
+                                    <div class="p-2 rounded-circle @(!notif.IsRead ? "bg-danger text-white" : "bg-light text-muted")">
+                                        <i class="fa-solid fa-bell"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-semibold text-dark small mb-1">@notif.Message</div>
+                                        <small class="text-muted">@notif.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")</small>
+                                    </div>
+                                </div>
+
+                                @if (!string.IsNullOrEmpty(notif.Link))
+                                {
+                                    <a href="@notif.Link" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                                        Xem
+                                    </a>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

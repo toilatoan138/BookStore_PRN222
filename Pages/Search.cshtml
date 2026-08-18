@@ -1,0 +1,212 @@
+﻿@page
+@model BookStore.Pages.SearchModel
+@{
+    ViewData["Title"] = !string.IsNullOrEmpty(Model.Q) ? $"Tìm kiếm: {Model.Q}" : "Tất cả sách";
+}
+
+<div class="container py-4">
+    <!-- BREADCRUMB -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb small">
+            <li class="breadcrumb-item"><a asp-page="/Index" class="text-danger text-decoration-none">Trang chủ</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Tìm kiếm & Khám phá sách</li>
+        </ol>
+    </nav>
+
+    <div class="row g-4">
+        <!-- ======================== FILTER SIDEBAR ======================== -->
+        <div class="col-lg-3">
+            <form method="get" id="filterForm">
+                <input type="hidden" name="q" value="@Model.Q" />
+
+                <!-- CATEGORIES ACCORDION -->
+                <div class="card border-0 shadow-sm rounded-4 p-3 bg-white mb-3">
+                    <h6 class="fw-bold mb-3 text-dark text-uppercase small"><i class="fa-solid fa-list me-2 text-danger"></i>Danh mục sách</h6>
+                    <div class="d-flex flex-column gap-1">
+                        <a asp-page="/Search"
+                           asp-route-q="@Model.Q"
+                           asp-route-minPrice="@Model.MinPrice"
+                           asp-route-maxPrice="@Model.MaxPrice"
+                           asp-route-sortBy="@Model.SortBy"
+                           class="btn btn-sm text-start @(!Model.CategoryId.HasValue ? "btn-danger fw-bold" : "btn-light text-dark") rounded-3">
+                            Tất cả danh mục
+                        </a>
+                        @foreach (var cat in Model.Categories)
+                        {
+                            <a asp-page="/Search"
+                               asp-route-q="@Model.Q"
+                               asp-route-categoryId="@cat.Id"
+                               asp-route-minPrice="@Model.MinPrice"
+                               asp-route-maxPrice="@Model.MaxPrice"
+                               asp-route-sortBy="@Model.SortBy"
+                               class="btn btn-sm text-start @(Model.CategoryId == cat.Id ? "btn-danger fw-bold" : "btn-light text-dark") rounded-3 d-flex justify-content-between align-items-center">
+                                <span>@cat.Name</span>
+                                <span class="badge @(Model.CategoryId == cat.Id ? "bg-white text-danger" : "bg-secondary-subtle text-secondary") rounded-pill">@cat.Books.Count</span>
+                            </a>
+                        }
+                    </div>
+                </div>
+
+                <!-- PRICE RANGE FILTER -->
+                <div class="card border-0 shadow-sm rounded-4 p-3 bg-white mb-3">
+                    <h6 class="fw-bold mb-3 text-dark text-uppercase small"><i class="fa-solid fa-filter-dollar me-2 text-danger"></i>Khoảng giá (VNĐ)</h6>
+                    <div class="d-flex gap-2 mb-3">
+                        <input asp-for="MinPrice" type="number" step="10000" class="form-control form-control-sm" placeholder="Từ" />
+                        <span class="text-muted align-self-center">-</span>
+                        <input asp-for="MaxPrice" type="number" step="10000" class="form-control form-control-sm" placeholder="Đến" />
+                    </div>
+
+                    <!-- Quick Price Filter Buttons -->
+                    <div class="d-flex flex-column gap-1 mb-3">
+                        <a asp-page="/Search" asp-route-q="@Model.Q" asp-route-categoryId="@Model.CategoryId" asp-route-maxPrice="100000" asp-route-sortBy="@Model.SortBy"
+                           class="btn btn-sm btn-outline-secondary text-start rounded-3 @(Model.MaxPrice == 100000 && !Model.MinPrice.HasValue ? "active" : "")">
+                            Dưới 100.000đ
+                        </a>
+                        <a asp-page="/Search" asp-route-q="@Model.Q" asp-route-categoryId="@Model.CategoryId" asp-route-minPrice="100000" asp-route-maxPrice="200000" asp-route-sortBy="@Model.SortBy"
+                           class="btn btn-sm btn-outline-secondary text-start rounded-3 @(Model.MinPrice == 100000 && Model.MaxPrice == 200000 ? "active" : "")">
+                            100.000đ - 200.000đ
+                        </a>
+                        <a asp-page="/Search" asp-route-q="@Model.Q" asp-route-categoryId="@Model.CategoryId" asp-route-minPrice="200000" asp-route-maxPrice="500000" asp-route-sortBy="@Model.SortBy"
+                           class="btn btn-sm btn-outline-secondary text-start rounded-3 @(Model.MinPrice == 200000 && Model.MaxPrice == 500000 ? "active" : "")">
+                            200.000đ - 500.000đ
+                        </a>
+                        <a asp-page="/Search" asp-route-q="@Model.Q" asp-route-categoryId="@Model.CategoryId" asp-route-minPrice="500000" asp-route-sortBy="@Model.SortBy"
+                           class="btn btn-sm btn-outline-secondary text-start rounded-3 @(Model.MinPrice == 500000 ? "active" : "")">
+                            Trên 500.000đ
+                        </a>
+                    </div>
+
+                    <button type="submit" class="btn btn-danger btn-sm w-100 rounded-3 fw-bold">
+                        Áp dụng khoảng giá
+                    </button>
+                    @if (Model.MinPrice.HasValue || Model.MaxPrice.HasValue || Model.CategoryId.HasValue)
+                    {
+                        <a asp-page="/Search" asp-route-q="@Model.Q" class="btn btn-link btn-sm w-100 text-muted mt-1 text-decoration-none">
+                            <i class="fa-solid fa-rotate-left me-1"></i>Xóa bộ lọc
+                        </a>
+                    }
+                </div>
+            </form>
+        </div>
+
+        <!-- ======================== PRODUCT GRID & RESULTS ======================== -->
+        <div class="col-lg-9">
+            <!-- TOP BAR: TOTAL FOUND & SORT SELECT -->
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white mb-4">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                    <div>
+                        <span class="text-muted small">Tìm thấy <strong>@Model.PagedBooks.TotalItems</strong> sản phẩm</span>
+                        @if (!string.IsNullOrEmpty(Model.Q))
+                        {
+                            <span class="text-muted small">cho từ khóa "<strong>@Model.Q</strong>"</span>
+                        }
+                    </div>
+
+                    <div class="d-flex align-items-center gap-2">
+                        <label class="form-label mb-0 small text-nowrap fw-semibold text-muted">Sắp xếp theo:</label>
+                        <select class="form-select form-select-sm rounded-3" style="width: 180px;" onchange="location = this.value;">
+                            <option value="@Url.Page("/Search", new { q = Model.Q, categoryId = Model.CategoryId, minPrice = Model.MinPrice, maxPrice = Model.MaxPrice, sortBy = "newest" })" selected="@(Model.SortBy == "newest")">Mới nhất</option>
+                            <option value="@Url.Page("/Search", new { q = Model.Q, categoryId = Model.CategoryId, minPrice = Model.MinPrice, maxPrice = Model.MaxPrice, sortBy = "bestseller" })" selected="@(Model.SortBy == "bestseller")">Bán chạy nhất</option>
+                            <option value="@Url.Page("/Search", new { q = Model.Q, categoryId = Model.CategoryId, minPrice = Model.MinPrice, maxPrice = Model.MaxPrice, sortBy = "price_asc" })" selected="@(Model.SortBy == "price_asc")">Giá tăng dần</option>
+                            <option value="@Url.Page("/Search", new { q = Model.Q, categoryId = Model.CategoryId, minPrice = Model.MinPrice, maxPrice = Model.MaxPrice, sortBy = "price_desc" })" selected="@(Model.SortBy == "price_desc")">Giá giảm dần</option>
+                            <option value="@Url.Page("/Search", new { q = Model.Q, categoryId = Model.CategoryId, minPrice = Model.MinPrice, maxPrice = Model.MaxPrice, sortBy = "az" })" selected="@(Model.SortBy == "az")">Tên A - Z</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BOOK CARDS -->
+            @if (!Model.PagedBooks.Items.Any())
+            {
+                <div class="card border-0 shadow-sm rounded-4 p-5 bg-white text-center">
+                    <i class="fa-solid fa-book-open-reader fa-4x text-muted mb-3"></i>
+                    <h5 class="fw-bold text-dark">Không tìm thấy sách phù hợp</h5>
+                    <p class="text-muted small">Hãy thử tìm kiếm với từ khóa khác hoặc điều chỉnh lại bộ lọc giá / danh mục.</p>
+                    <a asp-page="/Search" class="btn btn-outline-danger btn-sm rounded-pill px-4 align-self-center mt-2">
+                        Xem tất cả sách
+                    </a>
+                </div>
+            }
+            else
+            {
+                <div class="row row-cols-2 row-cols-md-3 g-3 mb-4">
+                    @foreach (var book in Model.PagedBooks.Items)
+                    {
+                        <div class="col">
+                            <div class="product-card">
+                                <a asp-page="/Products/Detail" asp-route-id="@book.Id" class="product-thumb">
+                                    <img src="@(string.IsNullOrEmpty(book.ImageUrl) ? "https://via.placeholder.com/200x280?text=MindBook" : book.ImageUrl)" alt="@book.Title" loading="lazy" />
+                                </a>
+                                <div class="product-info">
+                                    <a asp-page="/Products/Detail" asp-route-id="@book.Id" class="product-title" title="@book.Title">
+                                        @book.Title
+                                    </a>
+                                    <div class="product-author">@book.Author</div>
+                                    <div class="product-price-box">
+                                        <span class="price-current">@book.Price.ToString("N0")đ</span>
+                                        <small class="text-muted ms-auto">Đã bán @book.SoldQuantity</small>
+                                    </div>
+                                    <form method="post" asp-page-handler="AddToCart" asp-route-bookId="@book.Id" class="mt-2">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger w-100 rounded-pill fw-semibold">
+                                            <i class="fa-solid fa-cart-plus me-1"></i>Thêm giỏ
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <!-- PAGINATION -->
+                @if (Model.PagedBooks.TotalPages > 1)
+                {
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item @(!Model.PagedBooks.HasPreviousPage ? "disabled" : "")">
+                                <a class="page-link"
+                                   asp-page="/Search"
+                                   asp-route-q="@Model.Q"
+                                   asp-route-categoryId="@Model.CategoryId"
+                                   asp-route-minPrice="@Model.MinPrice"
+                                   asp-route-maxPrice="@Model.MaxPrice"
+                                   asp-route-sortBy="@Model.SortBy"
+                                   asp-route-pageIndex="@(Model.PagedBooks.PageIndex - 1)">
+                                    <i class="fa-solid fa-angle-left"></i>
+                                </a>
+                            </li>
+
+                            @for (int p = 1; p <= Model.PagedBooks.TotalPages; p++)
+                            {
+                                <li class="page-item @(p == Model.PagedBooks.PageIndex ? "active" : "")">
+                                    <a class="page-link @(p == Model.PagedBooks.PageIndex ? "bg-danger border-danger" : "")"
+                                       asp-page="/Search"
+                                       asp-route-q="@Model.Q"
+                                       asp-route-categoryId="@Model.CategoryId"
+                                       asp-route-minPrice="@Model.MinPrice"
+                                       asp-route-maxPrice="@Model.MaxPrice"
+                                       asp-route-sortBy="@Model.SortBy"
+                                       asp-route-pageIndex="@p">
+                                        @p
+                                    </a>
+                                </li>
+                            }
+
+                            <li class="page-item @(!Model.PagedBooks.HasNextPage ? "disabled" : "")">
+                                <a class="page-link"
+                                   asp-page="/Search"
+                                   asp-route-q="@Model.Q"
+                                   asp-route-categoryId="@Model.CategoryId"
+                                   asp-route-minPrice="@Model.MinPrice"
+                                   asp-route-maxPrice="@Model.MaxPrice"
+                                   asp-route-sortBy="@Model.SortBy"
+                                   asp-route-pageIndex="@(Model.PagedBooks.PageIndex + 1)">
+                                    <i class="fa-solid fa-angle-right"></i>
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                }
+            }
+        </div>
+    </div>
+</div>

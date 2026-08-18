@@ -1,0 +1,42 @@
+﻿@page
+@model BookStore.Pages.Products.OnePieceModel
+@{
+    ViewData["Title"] = "Đảo Hải Tặc - One Piece";
+}
+
+<div class="container py-4">
+    <div class="p-4 rounded-4 text-white mb-4 shadow-sm" style="background: linear-gradient(135deg, #ea580c, #c2410c);">
+        <h3 class="fw-bold mb-1"><i class="fa-solid fa-anchor text-warning me-2"></i>ĐẢO HẢI TẶC - ONE PIECE</h3>
+        <p class="mb-0 text-white-50">Hành trình tìm kiếm kho báu vĩ đại cùng băng Mũ Rơm của Monkey D. Luffy.</p>
+    </div>
+
+    @if (!Model.OnePieceBooks.Any())
+    {
+        <div class="card border-0 shadow-sm rounded-4 p-5 bg-white text-center">
+            <p class="text-muted">Đang cập nhật các tập truyện One Piece...</p>
+        </div>
+    }
+    else
+    {
+        <div class="row row-cols-2 row-cols-md-4 g-3">
+            @foreach (var book in Model.OnePieceBooks)
+            {
+                <div class="col">
+                    <div class="product-card">
+                        <a asp-page="/Products/Detail" asp-route-id="@book.Id" class="product-thumb">
+                            <img src="@(string.IsNullOrEmpty(book.ImageUrl) ? "https://via.placeholder.com/200x280" : book.ImageUrl)" alt="@book.Title" />
+                        </a>
+                        <div class="product-info">
+                            <a asp-page="/Products/Detail" asp-route-id="@book.Id" class="product-title" title="@book.Title">
+                                @book.Title
+                            </a>
+                            <div class="product-price-box">
+                                <span class="price-current">@book.Price.ToString("N0")đ</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

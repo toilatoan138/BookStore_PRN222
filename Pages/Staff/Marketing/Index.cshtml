@@ -1,0 +1,73 @@
+﻿@page
+@model BookStore.Pages.Staff.Marketing.IndexModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Gửi Mail Marketing & CSKH";
+    ViewData["Subtitle"] = "Truyền thông sự kiện giảm giá, tặng quà sinh nhật và tri ân các nhóm khách hàng thân thiết";
+}
+
+<div class="row g-4" style="max-width: 1000px;">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+            <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-envelopes-bulk text-success me-2"></i>Thiết lập Chiến dịch Email</h5>
+
+            <form method="post" asp-page-handler="Send">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 mb-3" role="alert"></div>
+
+                <div class="mb-3">
+                    <label asp-for="Input.TargetGroup" class="form-label fw-semibold small">Nhóm đối tượng nhận tin</label>
+                    <select asp-for="Input.TargetGroup" class="form-select">
+                        <option value="ALL">Tất cả khách hàng (@Model.TotalCustomers thành viên)</option>
+                        <option value="SILVER">Khách hàng hạng Bạc (Silver: @Model.TotalSilverRank thành viên)</option>
+                        <option value="GOLD">Khách hàng VIP (Gold / Diamond: @Model.TotalGoldRank thành viên)</option>
+                        <option value="NEW">Khách hàng mới đăng ký (Dưới 30 ngày)</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Input.Subject" class="form-label fw-semibold small">Tiêu đề Email</label>
+                    <input asp-for="Input.Subject" class="form-control" placeholder="VD: [MindBook] Ưu đãi độc quyền dành riêng cho bạn..." required />
+                    <span asp-validation-for="Input.Subject" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="Input.Content" class="form-label fw-semibold small">Nội dung thư</label>
+                    <textarea asp-for="Input.Content" rows="8" class="form-control" placeholder="Kính gửi quý khách hàng, MindBook trân trọng thông báo..." required></textarea>
+                    <span asp-validation-for="Input.Content" class="text-danger small"></span>
+                </div>
+
+                <button type="submit" class="btn btn-success px-4 py-2 rounded-pill fw-bold"
+                        onsubmit="return confirm('Bạn có chắc muốn phát hành chiến dịch Email Marketing này?');">
+                    <i class="fa-solid fa-paper-plane me-1"></i>Gửi chiến dịch Email
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+            <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-users text-success me-2"></i>Quy mô tệp khách</h6>
+            <div class="d-flex flex-column gap-2 small">
+                <div class="d-flex justify-content-between p-2 rounded bg-light">
+                    <span>Tổng khách hàng:</span>
+                    <strong>@Model.TotalCustomers</strong>
+                </div>
+                <div class="d-flex justify-content-between p-2 rounded bg-light">
+                    <span>Hạng Bạc (Silver):</span>
+                    <strong class="text-secondary">@Model.TotalSilverRank</strong>
+                </div>
+                <div class="d-flex justify-content-between p-2 rounded bg-light">
+                    <span>Hạng Vàng & Kim Cương:</span>
+                    <strong class="text-warning">@Model.TotalGoldRank</strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+            <h6 class="fw-bold text-dark mb-2"><i class="fa-solid fa-circle-info text-primary me-2"></i>Lưu ý gửi mail</h6>
+            <p class="text-muted small mb-0">
+                Email sẽ được gửi thông qua SMTP Host đã cấu hình tại `appsettings.json`. Nội dung hỗ trợ định dạng văn bản chuẩn và liên kết trang web.
+            </p>
+        </div>
+    </div>
+</div>

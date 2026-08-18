@@ -1,0 +1,191 @@
+﻿@page
+@model BookStore.Pages.Warehouse.Inventory.LowStockModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Cảnh Báo Sách Sắp Hết Hàng";
+    ViewData["Subtitle"] = "Danh sách các đầu sách có lượng tồn kho dưới hoặc bằng mức an toàn (<= 5 quyển)";
+}
+
+<div class="container-fluid px-0">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <a asp-page="/Warehouse/Index" class="btn btn-outline-secondary btn-sm shadow-sm">
+            <i class="fa-solid fa-arrow-left me-1"></i> Dashboard
+        </a>
+
+        <h4 class="fw-bold text-warning m-0 text-center">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i>
+            SÁCH SẮP HẾT HÀNG
+        </h4>
+
+        <a asp-page="/Warehouse/PurchaseOrders/Create" class="btn btn-success btn-sm shadow-sm fw-bold">
+            <i class="fa-solid fa-boxes-packing me-1"></i> Nhập hàng ngay
+        </a>
+    </div>
+
+    <!-- FILTER -->
+    <div class="bg-white p-4 rounded-4 shadow-sm mb-4">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label fw-bold small text-muted">Tên sách / Mã vị trí</label>
+                <input type="text" asp-for="Keyword" class="form-control" placeholder="Nhập tên sách..." />
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label fw-bold small text-muted">Thể loại</label>
+                <select asp-for="CategoryId" class="form-select">
+                    <option value="0">-- Tất cả thể loại --</option>
+                    @foreach (var c in Model.Categories)
+                    {
+                        <option value="@c.Id">@c.Name</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label fw-bold small text-muted">Nhà xuất bản</label>
+                <select asp-for="Publisher" class="form-select">
+                    <option value="">-- Tất cả NXB --</option>
+                    @foreach (var p in Model.Publishers)
+                    {
+                        <option value="@p">@p</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-3 d-flex align-items-end gap-2">
+                <button type="submit" class="btn btn-warning w-50 fw-semibold text-dark">
+                    <i class="fa-solid fa-filter me-1"></i> Lọc
+                </button>
+                <a asp-page="/Warehouse/Inventory/LowStock" class="btn btn-secondary w-50 fw-semibold">
+                    <i class="fa-solid fa-rotate-right me-1"></i> Làm mới
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- TABLE -->
+    <div class="bg-white p-4 rounded-4 shadow-sm border-top border-danger border-4 mb-4">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle w-100 mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="text-center" style="width: 5%;">STT</th>
+                        <th class="text-center" style="width: 8%;">Ảnh</th>
+                        <th style="width: 25%;">Tên sách</th>
+                        <th style="width: 14%;">Thể loại</th>
+                        <th class="text-center" style="width: 12%;">Vị trí kệ</th>
+                        <th style="width: 14%;">Nhà xuất bản</th>
+                        <th style="width: 10%;">Giá bán</th>
+                        <th class="text-center" style="width: 8%;">Tồn kho</th>
+                        <th class="text-center" style="width: 12%;">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Books.Any())
+                    {
+                        <tr>
+                            <td colspan="9" class="text-center text-muted py-4">
+                                <i class="fa-solid fa-circle-check text-success fs-4 d-block mb-2"></i>
+                                Tuyệt vời! Hiện không có sách nào ở mức tồn kho thấp.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        int index = 0;
+                        foreach (var b in Model.Books)
+                        {
+                            index++;
+                            <tr>
+                                <td class="text-center fw-bold text-muted">@index</td>
+                                <td class="text-center">
+                                    <img src="@(string.IsNullOrEmpty(b.ImageUrl) ? "https://placehold.co/45x65?text=Img" : b.ImageUrl)"
+                                         alt="@b.Title"
+                                         style="width: 45px; height: 65px; object-fit: cover;"
+                                         class="rounded border"
+                                         onerror="this.src='https://placehold.co/45x65?text=Img'" />
+                                </td>
+                                <td class="fw-bold text-dark">@b.Title</td>
+                                <td>@(b.Category?.Name ?? "Chưa phân loại")</td>
+                                <td class="text-center fw-bold text-info">
+                                    @(b.LocationCode != null ? b.LocationCode : Html.Raw("<span class='text-muted small'>Chưa xếp kệ</span>"))
+                                </td>
+                                <td>@(b.Publisher ?? "N/A")</td>
+                                <td class="fw-bold text-danger">@b.Price.ToString("N0")đ</td>
+                                <td class="text-center">
+                                    <span class="badge bg-danger fs-6 px-3 py-2">@b.StockQuantity</span>
+                                </td>
+                                <td class="text-center">
+                                    <a asp-page="/Warehouse/PurchaseOrders/Create" class="btn btn-sm btn-success rounded-pill px-2 me-1" title="Tạo đơn nhập">
+                                        <i class="fa-solid fa-plus me-1"></i>Nhập
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-2"
+                                            title="Kiểm kê"
+                                            onclick="openAdjustStockModal(@b.Id, '@Html.Raw(Html.Encode(b.Title))', @b.StockQuantity, '@(b.LocationCode ?? "")')">
+                                        <i class="fa-solid fa-pen"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ADJUST STOCK MODAL -->
+<div class="modal fade" id="adjustStockModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-pen-to-square me-2"></i>Điều Chỉnh Tồn Kho Nhanh</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-page-handler="AdjustStock">
+                <div class="modal-body p-4">
+                    <input type="hidden" name="bookId" id="modalBookId" />
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-muted small">Tên sách</label>
+                        <input type="text" id="modalBookTitle" class="form-control fw-bold bg-light" readonly />
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-6">
+                            <label class="form-label fw-bold small text-muted">Số lượng tồn mới *</label>
+                            <input type="number" name="newQuantity" id="modalQuantity" class="form-control fw-bold fs-5 text-danger" min="0" required />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-bold small text-muted">Vị trí kệ kho</label>
+                            <input type="text" name="locationCode" id="modalLocationCode" class="form-control text-uppercase" placeholder="VD: A-01-01" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">Lý do điều chỉnh</label>
+                        <textarea name="reason" class="form-control" rows="2" placeholder="Ghi chú điều chỉnh tồn..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary rounded-pill px-3" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-warning rounded-pill px-4 fw-bold text-dark">Lưu Thay Đổi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openAdjustStockModal(id, title, qty, loc) {
+            document.getElementById('modalBookId').value = id;
+            document.getElementById('modalBookTitle').value = title;
+            document.getElementById('modalQuantity').value = qty;
+            document.getElementById('modalLocationCode').value = loc;
+            new bootstrap.Modal(document.getElementById('adjustStockModal')).show();
+        }
+    </script>
+}

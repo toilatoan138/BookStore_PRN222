@@ -1,0 +1,171 @@
+﻿@page
+@model BookStore.Pages.Cart.IndexModel
+@{
+    ViewData["Title"] = "Giỏ hàng của bạn";
+}
+
+<div class="container py-4">
+    <!-- BREADCRUMB -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb small">
+            <li class="breadcrumb-item"><a asp-page="/Index" class="text-danger text-decoration-none">Trang chủ</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Giỏ hàng (@Model.CartItems.Count)</li>
+        </ol>
+    </nav>
+
+    <h4 class="fw-bold mb-4 text-dark"><i class="fa-solid fa-cart-shopping text-danger me-2"></i>Giỏ hàng của bạn</h4>
+
+    @if (!Model.CartItems.Any())
+    {
+        <div class="card border-0 shadow-sm rounded-4 p-5 bg-white text-center">
+            <i class="fa-solid fa-cart-arrow-down fa-4x text-muted mb-3"></i>
+            <h5 class="fw-bold text-dark">Giỏ hàng của bạn đang trống</h5>
+            <p class="text-muted small">Hãy dạo một vòng và chọn những cuốn sách bạn yêu thích nhé!</p>
+            <a asp-page="/Index" class="btn btn-danger rounded-pill px-4 py-2 fw-bold align-self-center mt-2">
+                Tiếp tục mua sắm
+            </a>
+        </div>
+    }
+    else
+    {
+        <form method="post" asp-page-handler="ProceedToCheckout" id="cartForm">
+            <div class="row g-4">
+                <!-- CART ITEMS TABLE -->
+                <div class="col-lg-8">
+                    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
+                            <div class="form-check">
+                                <input type="checkbox" id="selectAll" class="form-check-input" checked onchange="toggleSelectAll(this)" />
+                                <label for="selectAll" class="form-check-label fw-bold small">Chọn tất cả (@Model.CartItems.Count sản phẩm)</label>
+                            </div>
+                            <button type="submit" asp-page-handler="Clear" class="btn btn-link text-danger p-0 text-decoration-none small"
+                                    onclick="return confirm('Bạn có chắc muốn xóa toàn bộ giỏ hàng?');">
+                                <i class="fa-solid fa-trash-can me-1"></i>Xóa tất cả
+                            </button>
+                        </div>
+
+                        <div class="d-flex flex-column gap-3">
+                            @foreach (var item in Model.CartItems)
+                            {
+                                <div class="card border rounded-3 p-3 cart-item-row" data-price="@item.Book.Price">
+                                    <div class="row align-items-center g-3">
+                                        <!-- CHECKBOX -->
+                                        <div class="col-auto">
+                                            <input type="checkbox" name="selectedItems" value="@item.BookId" class="form-check-input item-check" checked onchange="updateSummary()" />
+                                        </div>
+
+                                        <!-- THUMBNAIL -->
+                                        <div class="col-auto" style="width: 70px;">
+                                            <img src="@(string.IsNullOrEmpty(item.Book.ImageUrl) ? "https://via.placeholder.com/70x95" : item.Book.ImageUrl)"
+                                                 alt="@item.Book.Title" class="img-fluid rounded border" style="max-height: 90px; object-fit: cover;" />
+                                        </div>
+
+                                        <!-- INFO -->
+                                        <div class="col">
+                                            <h6 class="fw-bold mb-1">
+                                                <a asp-page="/Products/Detail" asp-route-id="@item.BookId" class="text-dark text-decoration-none">
+                                                    @item.Book.Title
+                                                </a>
+                                            </h6>
+                                            <div class="text-danger fw-bold small">@item.Book.Price.ToString("N0")đ</div>
+                                            @if (item.Book.StockQuantity < item.Quantity)
+                                            {
+                                                <div class="badge bg-warning text-dark mt-1">Chỉ còn @item.Book.StockQuantity sản phẩm trong kho</div>
+                                            }
+                                        </div>
+
+                                        <!-- QUANTITY SPINNER -->
+                                        <div class="col-auto">
+                                            <div class="input-group input-group-sm" style="width: 110px;">
+                                                <button type="button" class="btn btn-outline-secondary" onclick="updateItemQty(@item.BookId, @(item.Quantity - 1))">-</button>
+                                                <input type="number" value="@item.Quantity" min="1" max="@item.Book.StockQuantity" class="form-control text-center fw-bold item-qty"
+                                                       onchange="updateItemQty(@item.BookId, this.value)" />
+                                                <button type="button" class="btn btn-outline-secondary" onclick="updateItemQty(@item.BookId, @(item.Quantity + 1))">+</button>
+                                            </div>
+                                        </div>
+
+                                        <!-- LINE TOTAL -->
+                                        <div class="col-auto text-end" style="min-width: 100px;">
+                                            <div class="fw-bold text-dark item-line-total">@((item.Quantity * item.Book.Price).ToString("N0"))đ</div>
+                                            <button type="submit" asp-page-handler="Remove" asp-route-bookId="@item.BookId" class="btn btn-link text-danger p-0 text-decoration-none small mt-1">
+                                                <i class="fa-regular fa-trash-can"></i> Xóa
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ORDER SUMMARY SIDEBAR -->
+                <div class="col-lg-4">
+                    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white sticky-top" style="top: 140px;">
+                        <h5 class="fw-bold mb-3 text-dark">Tóm tắt đơn hàng</h5>
+
+                        <div class="d-flex justify-content-between mb-2 small text-muted">
+                            <span>Sản phẩm được chọn:</span>
+                            <span id="selectedCount" class="fw-bold text-dark">@Model.CartItems.Count</span>
+                        </div>
+
+                        <div class="d-flex justify-content-between mb-3 text-muted small">
+                            <span>Tạm tính tiền hàng:</span>
+                            <span id="subTotalDisplay" class="fw-bold text-danger fs-5">@Model.GrandTotal.ToString("N0")đ</span>
+                        </div>
+
+                        <hr />
+
+                        <div class="alert alert-success py-2 small mb-3">
+                            <i class="fa-solid fa-truck-fast me-1"></i>Miễn phí vận chuyển cho đơn từ <strong>299.000đ</strong>!
+                        </div>
+
+                        <button type="submit" class="btn btn-danger w-100 py-3 rounded-pill fw-bold shadow-sm">
+                            <i class="fa-solid fa-credit-card me-2"></i>Tiến hành thanh toán
+                        </button>
+
+                        <a asp-page="/Index" class="btn btn-link text-muted small w-100 text-center text-decoration-none mt-2">
+                            <i class="fa-solid fa-arrow-left me-1"></i>Tiếp tục chọn thêm sách
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <!-- Hidden form for quantity updates -->
+        <form method="post" asp-page-handler="UpdateQuantity" id="qtyForm" style="display:none;">
+            <input type="hidden" name="bookId" id="qtyBookId" />
+            <input type="hidden" name="quantity" id="qtyVal" />
+        </form>
+    }
+</div>
+
+<script>
+    function toggleSelectAll(master) {
+        document.querySelectorAll('.item-check').forEach(cb => cb.checked = master.checked);
+        updateSummary();
+    }
+
+    function updateSummary() {
+        let total = 0;
+        let count = 0;
+        document.querySelectorAll('.cart-item-row').forEach(row => {
+            const cb = row.querySelector('.item-check');
+            if (cb && cb.checked) {
+                const price = parseFloat(row.dataset.price) || 0;
+                const qty = parseInt(row.querySelector('.item-qty').value) || 0;
+                total += price * qty;
+                count++;
+            }
+        });
+
+        document.getElementById('selectedCount').innerText = count;
+        document.getElementById('subTotalDisplay').innerText = total.toLocaleString('vi-VN') + 'đ';
+    }
+
+    function updateItemQty(bookId, qty) {
+        if (qty < 0) return;
+        document.getElementById('qtyBookId').value = bookId;
+        document.getElementById('qtyVal').value = qty;
+        document.getElementById('qtyForm').submit();
+    }
+</script>

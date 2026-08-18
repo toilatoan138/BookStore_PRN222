@@ -1,0 +1,161 @@
+﻿@page
+@model BookStore.Pages.Admin.Returns.IndexModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Quản lý Yêu cầu Trả hàng & Hoàn tiền";
+    ViewData["Subtitle"] = "Kiểm duyệt lý do trả hàng, xác nhận nhập lại kho và hoàn tiền cho khách";
+}
+
+<div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+    <!-- STATUS TABS -->
+    <div class="d-flex gap-2 mb-4">
+        <a asp-page="/Admin/Returns/Index" class="btn btn-sm rounded-pill px-3 @(!Model.Status.HasValue ? "btn-danger fw-bold" : "btn-light text-dark border")">
+            Tất cả (@Model.Returns.Count)
+        </a>
+        <a asp-page="/Admin/Returns/Index" asp-route-status="0" class="btn btn-sm rounded-pill px-3 @(Model.Status == 0 ? "btn-danger fw-bold" : "btn-light text-dark border")">
+            Chờ duyệt (0)
+        </a>
+        <a asp-page="/Admin/Returns/Index" asp-route-status="1" class="btn btn-sm rounded-pill px-3 @(Model.Status == 1 ? "btn-danger fw-bold" : "btn-light text-dark border")">
+            Đã duyệt trả
+        </a>
+        <a asp-page="/Admin/Returns/Index" asp-route-status="3" class="btn btn-sm rounded-pill px-3 @(Model.Status == 3 ? "btn-danger fw-bold" : "btn-light text-dark border")">
+            Đã hoàn tiền
+        </a>
+        <a asp-page="/Admin/Returns/Index" asp-route-status="2" class="btn btn-sm rounded-pill px-3 @(Model.Status == 2 ? "btn-danger fw-bold" : "btn-light text-dark border")">
+            Từ chối
+        </a>
+    </div>
+
+    <!-- RETURNS TABLE -->
+    <div class="table-responsive">
+        <table class="table table-hover align-middle small">
+            <thead class="table-light">
+                <tr>
+                    <th>Mã</th>
+                    <th>Đơn hàng</th>
+                    <th>Khách hàng</th>
+                    <th>Sản phẩm trả</th>
+                    <th>Lý do của khách</th>
+                    <th>Hoàn tiền tối đa</th>
+                    <th>Trạng thái</th>
+                    <th class="text-end">Tác vụ</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in Model.Returns)
+                {
+                    <tr>
+                        <td class="fw-bold">#@r.ReturnId</td>
+                        <td>
+                            <a asp-page="/Admin/Orders/Detail" asp-route-id="@r.OrderId" class="fw-bold text-danger">
+                                #@r.OrderId
+                            </a>
+                        </td>
+                        <td>
+                            <div>@r.Order?.FullName</div>
+                            <small class="text-muted">@r.Order?.PhoneNumber</small>
+                        </td>
+                        <td>
+                            <div class="fw-semibold">@r.Book?.Title</div>
+                            <small class="text-muted">SL: x@r.Quantity</small>
+                        </td>
+                        <td class="text-muted" style="max-width: 250px;">
+                            @r.CustomerReason
+                        </td>
+                        <td class="fw-bold text-success">@r.MaxRefundableAmount.ToString("N0")đ</td>
+                        <td>
+                            @switch (r.Status)
+                            {
+                                case 0:
+                                    <span class="badge bg-warning text-dark">Chờ duyệt</span>
+                                    break;
+                                case 1:
+                                    <span class="badge bg-info text-dark">Đã duyệt - Chờ nhận sách</span>
+                                    break;
+                                case 3:
+                                    <span class="badge bg-success">Đã hoàn tiền</span>
+                                    break;
+                                case 2:
+                                    <span class="badge bg-secondary">Từ chối</span>
+                                    break;
+                            }
+                        </td>
+                        <td class="text-end">
+                            @if (r.Status == 0)
+                            {
+                                <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3"
+                                        onclick="openReviewModal(@r.ReturnId, @r.OrderId, '@r.Book?.Title', @r.Quantity, @r.MaxRefundableAmount, '@(r.BankName ?? "")', '@(r.AccountNumber ?? "")', '@(r.AccountOwner ?? "")')">
+                                    Xử lý yêu cầu
+                                </button>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- REVIEW MODAL -->
+<div class="modal fade" id="reviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title fw-bold">Xử lý Yêu cầu Trả hàng</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-page-handler="Review">
+                <input type="hidden" id="reviewReturnId" name="id" />
+                <div class="modal-body p-4">
+                    <div class="p-3 bg-light rounded-3 mb-3 small">
+                        <div><strong>Sản phẩm:</strong> <span id="revBookTitle"></span></div>
+                        <div><strong>Số lượng trả:</strong> <span id="revQty"></span></div>
+                        <div><strong>Tiền hoàn tối đa:</strong> <span id="revMaxAmount" class="text-danger fw-bold"></span></div>
+                        <div class="mt-2 text-muted" id="revBankInfo"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Quyết định xử lý</label>
+                        <select name="newStatus" class="form-select" required>
+                            <option value="1">1. Duyệt trả hàng (Chờ nhận lại sách tại kho)</option>
+                            <option value="3">3. Duyệt & Hoàn tiền ngay vào Ví BookStore</option>
+                            <option value="2">2. Từ chối yêu cầu trả hàng</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Số tiền hoàn vào Ví (VNĐ)</label>
+                        <input type="number" id="refundAmountInput" name="refundAmount" class="form-control" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Ghi chú phản hồi cho khách hàng</label>
+                        <textarea name="note" rows="3" class="form-control form-control-sm" placeholder="Nhập lý do hoặc hướng dẫn gửi lại sách..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-danger rounded-3 fw-bold px-4">Xác nhận xử lý</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openReviewModal(id, orderId, bookTitle, qty, maxAmount, bank, accNo, owner) {
+        document.getElementById('reviewReturnId').value = id;
+        document.getElementById('revBookTitle').innerText = bookTitle;
+        document.getElementById('revQty').innerText = qty;
+        document.getElementById('revMaxAmount').innerText = maxAmount.toLocaleString('vi-VN') + 'đ';
+        document.getElementById('refundAmountInput').value = maxAmount;
+
+        let bankInfo = '';
+        if (bank && accNo) {
+            bankInfo = `Tài khoản nhận: ${bank} - ${accNo} (${owner})`;
+        }
+        document.getElementById('revBankInfo').innerText = bankInfo;
+
+        new bootstrap.Modal(document.getElementById('reviewModal')).show();
+    }
+</script>

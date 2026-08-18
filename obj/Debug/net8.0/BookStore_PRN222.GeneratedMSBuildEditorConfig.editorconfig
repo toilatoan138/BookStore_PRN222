@@ -1,0 +1,369 @@
+is_global = true
+build_property.TargetFramework = net8.0
+build_property.TargetPlatformMinVersion = 
+build_property.UsingMicrosoftNETSdkWeb = true
+build_property.ProjectTypeGuids = 
+build_property.InvariantGlobalization = 
+build_property.PlatformNeutralAssembly = 
+build_property.EnforceExtendedAnalyzerRules = 
+build_property._SupportedPlatformList = Linux,macOS,Windows
+build_property.RootNamespace = BookStore
+build_property.RootNamespace = BookStore
+build_property.ProjectDir = f:\PRN222_Project\BookStore_PRN222\
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 
+build_property.RazorLangVersion = 8.0
+build_property.SupportLocalizedComponentNames = 
+build_property.GenerateRazorMetadataSourceChecksumAttributes = 
+build_property.MSBuildProjectDirectory = f:\PRN222_Project\BookStore_PRN222
+build_property._RazorSourceGeneratorDebug = 
+build_property.EffectiveAnalysisLevelStyle = 8.0
+build_property.EnableCodeStyleSeverity = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Account/AccessDenied.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWNjb3VudFxBY2Nlc3NEZW5pZWQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Account/Addresses/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWNjb3VudFxBZGRyZXNzZXNcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Account/ChangeEmail.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWNjb3VudFxDaGFuZ2VFbWFpbC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Account/ChangePassword.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWNjb3VudFxDaGFuZ2VQYXNzd29yZC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Account/ChangePhone.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWNjb3VudFxDaGFuZ2VQaG9uZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Account/ForgotPassword.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWNjb3VudFxGb3Jnb3RQYXNzd29yZC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Account/Login.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWNjb3VudFxMb2dpbi5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Account/Logout.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWNjb3VudFxMb2dvdXQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Account/MyComments.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWNjb3VudFxNeUNvbW1lbnRzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Account/Profile.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWNjb3VudFxQcm9maWxlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Account/PublicProfile.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWNjb3VudFxQdWJsaWNQcm9maWxlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Account/Register.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWNjb3VudFxSZWdpc3Rlci5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Account/VerifyOtp.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWNjb3VudFxWZXJpZnlPdHAuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Account/Wallet.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWNjb3VudFxXYWxsZXQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Admin/Categories/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWRtaW5cQ2F0ZWdvcmllc1xJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Admin/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWRtaW5cSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Admin/Orders/Detail.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWRtaW5cT3JkZXJzXERldGFpbC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Admin/Orders/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWRtaW5cT3JkZXJzXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Admin/Products/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWRtaW5cUHJvZHVjdHNcQ3JlYXRlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Admin/Products/Edit.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWRtaW5cUHJvZHVjdHNcRWRpdC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Admin/Products/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWRtaW5cUHJvZHVjdHNcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Admin/PurchaseOrders/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWRtaW5cUHVyY2hhc2VPcmRlcnNcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Admin/Reports/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWRtaW5cUmVwb3J0c1xJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Admin/Returns/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWRtaW5cUmV0dXJuc1xJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Admin/Users/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWRtaW5cVXNlcnNcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Admin/Vouchers/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWRtaW5cVm91Y2hlcnNcQ3JlYXRlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Admin/Vouchers/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQWRtaW5cVm91Y2hlcnNcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Cart/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ2FydFxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Checkout/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ2hlY2tvdXRcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Checkout/VnPayReturn.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ2hlY2tvdXRcVm5QYXlSZXR1cm4uY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Collections/Detail.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ29sbGVjdGlvbnNcRGV0YWlsLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Collections/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcQ29sbGVjdGlvbnNcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Error.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcRXJyb3IuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Notifications/All.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTm90aWZpY2F0aW9uc1xBbGwuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Notifications/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcTm90aWZpY2F0aW9uc1xJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Orders/Detail.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcT3JkZXJzXERldGFpbC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Orders/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcT3JkZXJzXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Privacy.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUHJpdmFjeS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Products/Conan.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUHJvZHVjdHNcQ29uYW4uY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Products/Detail.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUHJvZHVjdHNcRGV0YWlsLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Products/FlashSale.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUHJvZHVjdHNcRmxhc2hTYWxlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Products/OnePiece.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcUHJvZHVjdHNcT25lUGllY2UuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Search.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU2VhcmNoLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Shared/_AdminLayout.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU2hhcmVkXF9BZG1pbkxheW91dC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Shared/_AdminSidebarPartial.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU2hhcmVkXF9BZG1pblNpZGViYXJQYXJ0aWFsLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Shared/_FooterPartial.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU2hhcmVkXF9Gb290ZXJQYXJ0aWFsLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Shared/_HeaderPartial.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU2hhcmVkXF9IZWFkZXJQYXJ0aWFsLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Shared/_SidebarPartial.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU2hhcmVkXF9TaWRlYmFyUGFydGlhbC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Shared/_StaffSidebarPartial.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU2hhcmVkXF9TdGFmZlNpZGViYXJQYXJ0aWFsLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Shared/_ValidationScriptsPartial.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU2hhcmVkXF9WYWxpZGF0aW9uU2NyaXB0c1BhcnRpYWwuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Shared/_WarehouseSidebarPartial.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU2hhcmVkXF9XYXJlaG91c2VTaWRlYmFyUGFydGlhbC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Staff/Chat.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU3RhZmZcQ2hhdC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Staff/Customers/Detail.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU3RhZmZcQ3VzdG9tZXJzXERldGFpbC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Staff/Customers/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU3RhZmZcQ3VzdG9tZXJzXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Staff/FPoints/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU3RhZmZcRlBvaW50c1xJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Staff/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU3RhZmZcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Staff/Marketing/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU3RhZmZcTWFya2V0aW5nXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Staff/Orders/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU3RhZmZcT3JkZXJzXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Staff/Promotions/Books.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU3RhZmZcUHJvbW90aW9uc1xCb29rcy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Staff/Promotions/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU3RhZmZcUHJvbW90aW9uc1xDcmVhdGUuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Staff/Promotions/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU3RhZmZcUHJvbW90aW9uc1xJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Staff/Reports/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU3RhZmZcUmVwb3J0c1xJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Staff/Reviews/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU3RhZmZcUmV2aWV3c1xJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Staff/Tickets/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU3RhZmZcVGlja2V0c1xJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Staff/Vouchers/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU3RhZmZcVm91Y2hlcnNcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Support/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU3VwcG9ydFxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Vouchers/Hub.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcVm91Y2hlcnNcSHViLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Vouchers/Wallet.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcVm91Y2hlcnNcV2FsbGV0LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Warehouse/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcV2FyZWhvdXNlXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Warehouse/Inventory/History.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcV2FyZWhvdXNlXEludmVudG9yeVxIaXN0b3J5LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Warehouse/Inventory/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcV2FyZWhvdXNlXEludmVudG9yeVxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Warehouse/Inventory/LowStock.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcV2FyZWhvdXNlXEludmVudG9yeVxMb3dTdG9jay5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Warehouse/Invoices/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcV2FyZWhvdXNlXEludm9pY2VzXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Warehouse/Locations/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcV2FyZWhvdXNlXExvY2F0aW9uc1xJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Warehouse/Orders/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcV2FyZWhvdXNlXE9yZGVyc1xJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Warehouse/Orders/Picking.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcV2FyZWhvdXNlXE9yZGVyc1xQaWNraW5nLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Warehouse/PickingList.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcV2FyZWhvdXNlXFBpY2tpbmdMaXN0LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Warehouse/PurchaseOrders/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcV2FyZWhvdXNlXFB1cmNoYXNlT3JkZXJzXENyZWF0ZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Warehouse/PurchaseOrders/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcV2FyZWhvdXNlXFB1cmNoYXNlT3JkZXJzXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Warehouse/PurchaseOrders/Receive.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcV2FyZWhvdXNlXFB1cmNoYXNlT3JkZXJzXFJlY2VpdmUuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Warehouse/Returns/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcV2FyZWhvdXNlXFJldHVybnNcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Warehouse/Returns/Inspect.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcV2FyZWhvdXNlXFJldHVybnNcSW5zcGVjdC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Warehouse/Suppliers/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcV2FyZWhvdXNlXFN1cHBsaWVyc1xJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/_ViewImports.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcX1ZpZXdJbXBvcnRzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/_ViewStart.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcX1ZpZXdTdGFydC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[f:/PRN222_Project/BookStore_PRN222/Pages/Shared/_Layout.cshtml]
+build_metadata.AdditionalFiles.TargetPath = UGFnZXNcU2hhcmVkXF9MYXlvdXQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = b-ci5z70chxj

@@ -1,0 +1,97 @@
+﻿@page
+@model BookStore.Pages.Vouchers.WalletModel
+@{
+    ViewData["Title"] = "Ví Voucher của tôi";
+}
+
+<div class="container py-4">
+    <div class="row g-4">
+        <!-- SIDEBAR -->
+        <div class="col-lg-3">
+            <partial name="_SidebarPartial" />
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="col-lg-9">
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h4 class="fw-bold mb-1 text-dark"><i class="fa-solid fa-ticket text-danger me-2"></i>Ví Voucher của tôi</h4>
+                        <p class="text-muted small mb-0">Các mã giảm giá bạn đã thu thập và sẵn sàng sử dụng khi mua sách</p>
+                    </div>
+                    <a asp-page="/Vouchers/Hub" class="btn btn-outline-danger btn-sm rounded-pill fw-bold">
+                        <i class="fa-solid fa-plus me-1"></i>Săn thêm voucher
+                    </a>
+                </div>
+
+                @if (!Model.UserVouchers.Any())
+                {
+                    <div class="text-center py-5 bg-light rounded-4">
+                        <i class="fa-solid fa-ticket-simple fa-4x text-muted mb-3"></i>
+                        <h5 class="fw-bold text-dark">Ví voucher của bạn đang trống</h5>
+                        <p class="text-muted small">Hãy ghé thăm Trạm Săn Voucher để thu thập những ưu đãi giảm giá hấp dẫn nhé!</p>
+                        <a asp-page="/Vouchers/Hub" class="btn btn-danger btn-sm rounded-pill px-4">
+                            Đến Trạm Săn Voucher
+                        </a>
+                    </div>
+                }
+                else
+                {
+                    <div class="row row-cols-1 row-cols-md-2 g-3">
+                        @foreach (var uv in Model.UserVouchers)
+                        {
+                            bool isExpired = uv.Voucher.EndDate < DateTime.UtcNow;
+                            <div class="col">
+                                <div class="card border rounded-3 p-3 h-100 @(uv.IsUsed || isExpired ? "bg-light text-muted opacity-75" : "")"
+                                     style="border-left: 5px solid @(uv.IsUsed || isExpired ? "#6b7280" : "#C92127") !important;">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <span class="badge @(uv.IsUsed || isExpired ? "bg-secondary" : "bg-danger") fw-bold fs-6">
+                                            @uv.Voucher.Code
+                                        </span>
+                                        @if (uv.IsUsed)
+                                        {
+                                            <span class="badge bg-secondary">Đã sử dụng</span>
+                                        }
+                                        else if (isExpired)
+                                        {
+                                            <span class="badge bg-danger">Hết hạn</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-success">Có hiệu lực</span>
+                                        }
+                                    </div>
+
+                                    <div class="fs-5 fw-bold @(uv.IsUsed || isExpired ? "text-muted" : "text-danger") mb-1">
+                                        @(uv.Voucher.DiscountPercent > 0 ? $"Giảm {uv.Voucher.DiscountPercent}%" : $"Giảm {uv.Voucher.DiscountAmount:N0}đ")
+                                    </div>
+
+                                    <div class="small mb-2">
+                                        Đơn tối thiểu: <strong>@uv.Voucher.MinOrderValue.ToString("N0")đ</strong>
+                                    </div>
+
+                                    <div class="small text-muted mb-3">
+                                        HSD: @uv.Voucher.EndDate.ToString("dd/MM/yyyy") | Lưu ngày: @uv.SavedDate.ToString("dd/MM/yyyy")
+                                    </div>
+
+                                    @if (!uv.IsUsed && !isExpired)
+                                    {
+                                        <div class="mt-auto pt-2 border-top d-flex gap-2">
+                                            <a asp-page="/Cart/Index" class="btn btn-sm btn-danger rounded-pill px-3 fw-bold flex-grow-1">
+                                                <i class="fa-solid fa-cart-shopping me-1"></i>Dùng ngay
+                                            </a>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3"
+                                                    onclick="navigator.clipboard.writeText('@uv.Voucher.Code'); alert('Đã sao chép mã voucher: @uv.Voucher.Code');">
+                                                <i class="fa-regular fa-copy"></i>
+                                            </button>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

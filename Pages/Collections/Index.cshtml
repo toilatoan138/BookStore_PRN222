@@ -1,0 +1,123 @@
+﻿@page
+@model BookStore.Pages.Collections.IndexModel
+@{
+    ViewData["Title"] = "Bộ sưu tập sách của tôi";
+}
+
+<div class="container py-4">
+    <div class="row g-4">
+        <!-- SIDEBAR -->
+        <div class="col-lg-3">
+            <partial name="_SidebarPartial" />
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="col-lg-9">
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h4 class="fw-bold mb-1 text-dark"><i class="fa-solid fa-bookmark text-danger me-2"></i>Bộ sưu tập của tôi</h4>
+                        <p class="text-muted small mb-0">Tạo các danh sách sách yêu thích và chia sẻ cùng cộng đồng</p>
+                    </div>
+                    <button class="btn btn-danger rounded-3 fw-bold" data-bs-toggle="modal" data-bs-target="#createCollectionModal">
+                        <i class="fa-solid fa-plus me-1"></i>Tạo bộ sưu tập mới
+                    </button>
+                </div>
+
+                @if (!Model.Collections.Any())
+                {
+                    <div class="text-center py-5 bg-light rounded-4">
+                        <i class="fa-solid fa-book-bookmark fa-4x text-muted mb-3"></i>
+                        <h5 class="fw-bold text-dark">Bạn chưa có bộ sưu tập nào</h5>
+                        <p class="text-muted small">Hãy tạo bộ sưu tập đầu tiên để gom những cuốn sách bạn yêu thích.</p>
+                        <button class="btn btn-danger rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#createCollectionModal">
+                            Tạo ngay
+                        </button>
+                    </div>
+                }
+                else
+                {
+                    <div class="row g-3">
+                        @foreach (var col in Model.Collections)
+                        {
+                            <div class="col-md-6">
+                                <div class="card h-100 border rounded-3 p-3 position-relative" style="border-left: 5px solid @(string.IsNullOrEmpty(col.CoverColor) ? "#C92127" : col.CoverColor) !important;">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h5 class="fw-bold mb-0 text-dark">
+                                            <a asp-page="/Collections/Detail" asp-route-id="@col.Id" class="text-dark text-decoration-none">
+                                                @col.Name
+                                            </a>
+                                        </h5>
+                                        <span class="badge @(col.IsPublic ? "bg-success-subtle text-success border border-success-subtle" : "bg-secondary-subtle text-secondary border")">
+                                            @(col.IsPublic ? "Công khai" : "Riêng tư")
+                                        </span>
+                                    </div>
+                                    <p class="text-muted small mb-3 flex-grow-1">@(col.Description ?? "Không có mô tả")</p>
+
+                                    <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                                        <span class="badge bg-light text-dark border">@col.TotalBooks quyển sách</span>
+
+                                        <div class="d-flex gap-2">
+                                            <a asp-page="/Collections/Detail" asp-route-id="@col.Id" class="btn btn-sm btn-outline-danger rounded-pill">
+                                                Xem chi tiết
+                                            </a>
+                                            <form method="post" asp-page-handler="Delete" asp-route-id="@col.Id" class="d-inline"
+                                                  onsubmit="return confirm('Bạn có chắc muốn xóa bộ sưu tập này?');">
+                                                <button type="submit" class="btn btn-sm btn-link text-danger p-0 ms-2 text-decoration-none">
+                                                    <i class="fa-regular fa-trash-can"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CREATE COLLECTION MODAL -->
+<div class="modal fade" id="createCollectionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-bookmark me-2"></i>Tạo bộ sưu tập mới</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-page-handler="Create">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label asp-for="Input.Name" class="form-label fw-semibold">Tên bộ sưu tập</label>
+                        <input asp-for="Input.Name" class="form-control" placeholder="VD: Sách tâm lý học hay nhất" required />
+                        <span asp-validation-for="Input.Name" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Input.Description" class="form-label fw-semibold">Mô tả</label>
+                        <textarea asp-for="Input.Description" class="form-control" rows="3" placeholder="Mô tả nội dung của bộ sưu tập này..."></textarea>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <label asp-for="Input.CoverColor" class="form-label fw-semibold">Màu chủ đạo</label>
+                            <input asp-for="Input.CoverColor" type="color" class="form-control form-control-color w-100" />
+                        </div>
+                        <div class="col-6 d-flex align-items-center pt-3">
+                            <div class="form-check">
+                                <input asp-for="Input.IsPublic" class="form-check-input" />
+                                <label asp-for="Input.IsPublic" class="form-check-label small fw-semibold">Công khai bộ sưu tập</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-danger rounded-3 fw-bold px-4">Tạo bộ sưu tập</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
