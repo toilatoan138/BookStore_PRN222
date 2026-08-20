@@ -31,7 +31,7 @@ namespace BookStore.Migrations
                 name: "AspNetRoles",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Id = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
                     Name = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     ConcurrencyStamp = table.Column<string>(type: "nvarchar(max)", nullable: true)
@@ -45,7 +45,7 @@ namespace BookStore.Migrations
                 name: "AspNetUsers",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Id = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
                     FullName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     Status = table.Column<bool>(type: "bit", nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime", nullable: false),
@@ -137,10 +137,10 @@ namespace BookStore.Migrations
                     voucher_id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     code = table.Column<string>(type: "varchar(50)", maxLength: 50, nullable: false),
-                    discount_amount = table.Column<decimal>(type: "decimal(18,0)", nullable: false),
+                    discount_amount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     discount_percent = table.Column<int>(type: "int", nullable: false),
-                    min_order_value = table.Column<decimal>(type: "decimal(18,0)", nullable: false),
-                    max_discount = table.Column<double>(type: "float", nullable: true),
+                    min_order_value = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    max_discount = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
                     start_date = table.Column<DateTime>(type: "datetime", nullable: false),
                     end_date = table.Column<DateTime>(type: "datetime", nullable: false),
                     usage_limit = table.Column<int>(type: "int", nullable: false),
@@ -157,7 +157,7 @@ namespace BookStore.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    RoleId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    RoleId = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
                     ClaimType = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ClaimValue = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
@@ -178,7 +178,7 @@ namespace BookStore.Migrations
                 {
                     address_id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    user_id = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    user_id = table.Column<string>(type: "nvarchar(128)", nullable: true),
                     fullname = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     phone = table.Column<string>(type: "varchar(20)", maxLength: 20, nullable: false),
                     city = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
@@ -205,7 +205,7 @@ namespace BookStore.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    UserId = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
                     ClaimType = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ClaimValue = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
@@ -224,10 +224,10 @@ namespace BookStore.Migrations
                 name: "AspNetUserLogins",
                 columns: table => new
                 {
-                    LoginProvider = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    ProviderKey = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    LoginProvider = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
+                    ProviderKey = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
                     ProviderDisplayName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                    UserId = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -244,8 +244,8 @@ namespace BookStore.Migrations
                 name: "AspNetUserRoles",
                 columns: table => new
                 {
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    RoleId = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                    UserId = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
+                    RoleId = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -268,9 +268,9 @@ namespace BookStore.Migrations
                 name: "AspNetUserTokens",
                 columns: table => new
                 {
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    LoginProvider = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    UserId = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
+                    LoginProvider = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
                     Value = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
@@ -290,7 +290,7 @@ namespace BookStore.Migrations
                 {
                     cart_id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    user_id = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    user_id = table.Column<string>(type: "nvarchar(128)", nullable: true),
                     create_at = table.Column<DateTime>(type: "datetime", nullable: false)
                 },
                 constraints: table =>
@@ -310,7 +310,7 @@ namespace BookStore.Migrations
                 {
                     collection_id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    user_id = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    user_id = table.Column<string>(type: "nvarchar(128)", nullable: true),
                     collection_name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
                     is_public = table.Column<bool>(type: "bit", nullable: false),
@@ -334,7 +334,7 @@ namespace BookStore.Migrations
                 {
                     note_id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    user_id = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    user_id = table.Column<string>(type: "nvarchar(128)", nullable: true),
                     contact_channel = table.Column<string>(type: "varchar(50)", maxLength: 50, nullable: true),
                     note_content = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: false),
                     follow_up_date = table.Column<DateTime>(type: "date", nullable: true),
@@ -357,7 +357,7 @@ namespace BookStore.Migrations
                 {
                     history_id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    user_id = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    user_id = table.Column<string>(type: "nvarchar(128)", nullable: true),
                     customer_info = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
                     action_type = table.Column<string>(type: "varchar(10)", maxLength: 10, nullable: false),
                     amount = table.Column<int>(type: "int", nullable: false),
@@ -381,7 +381,7 @@ namespace BookStore.Migrations
                 {
                     notification_id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    user_id = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    user_id = table.Column<string>(type: "nvarchar(128)", nullable: true),
                     message = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
                     link = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: true),
                     is_read = table.Column<bool>(type: "bit", nullable: false),
@@ -404,7 +404,7 @@ namespace BookStore.Migrations
                 {
                     ticket_id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    user_id = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    user_id = table.Column<string>(type: "nvarchar(128)", nullable: true),
                     issue_type = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     ticket_subject = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
                     ticket_message = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: false),
@@ -455,8 +455,8 @@ namespace BookStore.Migrations
                     purchase_order_id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     supplier_id = table.Column<int>(type: "int", nullable: false),
-                    user_id = table.Column<string>(type: "nvarchar(450)", nullable: true),
-                    approved_by = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    user_id = table.Column<string>(type: "nvarchar(128)", nullable: true),
+                    approved_by = table.Column<string>(type: "nvarchar(128)", nullable: true),
                     order_date = table.Column<DateTime>(type: "datetime", nullable: false),
                     total_quantity = table.Column<int>(type: "int", nullable: false),
                     total_amount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
@@ -492,7 +492,7 @@ namespace BookStore.Migrations
                 {
                     order_id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    user_id = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    user_id = table.Column<string>(type: "nvarchar(128)", nullable: true),
                     order_date = table.Column<DateTime>(type: "datetime", nullable: false),
                     total_amount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     status = table.Column<int>(type: "int", nullable: false),
@@ -501,8 +501,8 @@ namespace BookStore.Migrations
                     receiver_name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
                     payment_method = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
                     status_note = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    shipping_fee = table.Column<double>(type: "float", nullable: false),
-                    discount_amount = table.Column<decimal>(type: "decimal(18,0)", nullable: false),
+                    shipping_fee = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    discount_amount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     voucher_id = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
@@ -526,7 +526,7 @@ namespace BookStore.Migrations
                 name: "User_Vouchers",
                 columns: table => new
                 {
-                    user_id = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    user_id = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
                     voucher_id = table.Column<int>(type: "int", nullable: false),
                     is_used = table.Column<bool>(type: "bit", nullable: false),
                     saved_date = table.Column<DateTime>(type: "datetime", nullable: false)
@@ -631,8 +631,8 @@ namespace BookStore.Migrations
                 {
                     transaction_id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    user_id = table.Column<string>(type: "nvarchar(450)", nullable: true),
-                    amount = table.Column<double>(type: "float", nullable: false),
+                    user_id = table.Column<string>(type: "nvarchar(128)", nullable: true),
+                    amount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     transaction_type = table.Column<string>(type: "varchar(50)", maxLength: 50, nullable: false),
                     description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
                     order_id = table.Column<int>(type: "int", nullable: true),
@@ -739,7 +739,7 @@ namespace BookStore.Migrations
                     quantity_changed = table.Column<int>(type: "int", nullable: false),
                     related_id = table.Column<int>(type: "int", nullable: true),
                     created_at = table.Column<DateTime>(type: "datetime", nullable: false),
-                    created_by = table.Column<string>(type: "nvarchar(450)", nullable: true)
+                    created_by = table.Column<string>(type: "nvarchar(128)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -849,8 +849,8 @@ namespace BookStore.Migrations
                     book_id = table.Column<int>(type: "int", nullable: false),
                     quantity = table.Column<int>(type: "int", nullable: false),
                     customer_reason = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    return_method = table.Column<string>(type: "varchar(50)", maxLength: 50, nullable: true),
-                    refund_preference = table.Column<string>(type: "varchar(50)", maxLength: 50, nullable: true),
+                    return_method = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    refund_preference = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
                     status = table.Column<int>(type: "int", nullable: false),
                     admin_note = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
                     created_at = table.Column<DateTime>(type: "datetime", nullable: false),
@@ -885,7 +885,7 @@ namespace BookStore.Migrations
                 {
                     review_id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    user_id = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    user_id = table.Column<string>(type: "nvarchar(128)", nullable: true),
                     book_id = table.Column<int>(type: "int", nullable: false),
                     rating = table.Column<int>(type: "int", nullable: false),
                     comment = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true),
@@ -916,9 +916,9 @@ namespace BookStore.Migrations
                     transaction_id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     return_id = table.Column<int>(type: "int", nullable: false),
-                    refund_amount = table.Column<double>(type: "float", nullable: false),
+                    refund_amount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     bank_reference = table.Column<string>(type: "varchar(255)", maxLength: 255, nullable: true),
-                    processed_by = table.Column<string>(type: "varchar(100)", maxLength: 100, nullable: true),
+                    processed_by = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
                     processed_at = table.Column<DateTime>(type: "datetime", nullable: true),
                     admin_note = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
@@ -940,7 +940,7 @@ namespace BookStore.Migrations
                     report_id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     review_id = table.Column<int>(type: "int", nullable: true),
-                    user_id = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    user_id = table.Column<string>(type: "nvarchar(128)", nullable: true),
                     reason = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
                     status = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
                     created_at = table.Column<DateTime>(type: "datetime", nullable: true)

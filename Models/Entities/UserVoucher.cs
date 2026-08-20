@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BookStore.Models.Entities
@@ -10,6 +10,7 @@ namespace BookStore.Models.Entities
     public class UserVoucher
     {
         [Required]
+        [StringLength(128)]
         [Column("user_id")]
         public string UserId { get; set; } = string.Empty;
 

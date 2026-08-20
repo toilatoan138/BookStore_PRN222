@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BookStore.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260820014650_InitialCreate")]
+    [Migration("20260820034608_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -73,7 +73,7 @@ namespace BookStore.Migrations
                         .HasColumnName("phone");
 
                     b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)")
+                        .HasColumnType("nvarchar(128)")
                         .HasColumnName("user_id");
 
                     b.Property<string>("Ward")
@@ -125,7 +125,8 @@ namespace BookStore.Migrations
             modelBuilder.Entity("BookStore.Models.Entities.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
 
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
@@ -353,7 +354,7 @@ namespace BookStore.Migrations
                         .HasColumnName("create_at");
 
                     b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)")
+                        .HasColumnType("nvarchar(128)")
                         .HasColumnName("user_id");
 
                     b.HasKey("CartId");
@@ -468,7 +469,7 @@ namespace BookStore.Migrations
                         .HasColumnName("collection_name");
 
                     b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)")
+                        .HasColumnType("nvarchar(128)")
                         .HasColumnName("user_id");
 
                     b.HasKey("Id");
@@ -528,7 +529,7 @@ namespace BookStore.Migrations
                         .HasColumnName("note_content");
 
                     b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)")
+                        .HasColumnType("nvarchar(128)")
                         .HasColumnName("user_id");
 
                     b.HasKey("NoteId");
@@ -572,7 +573,7 @@ namespace BookStore.Migrations
                         .HasColumnName("reason");
 
                     b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)")
+                        .HasColumnType("nvarchar(128)")
                         .HasColumnName("user_id");
 
                     b.HasKey("HistoryId");
@@ -600,7 +601,7 @@ namespace BookStore.Migrations
                         .HasColumnName("created_at");
 
                     b.Property<string>("CreatedById")
-                        .HasColumnType("nvarchar(450)")
+                        .HasColumnType("nvarchar(128)")
                         .HasColumnName("created_by");
 
                     b.Property<int>("QuantityChanged")
@@ -761,7 +762,7 @@ namespace BookStore.Migrations
                         .HasColumnName("message");
 
                     b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)")
+                        .HasColumnType("nvarchar(128)")
                         .HasColumnName("user_id");
 
                     b.HasKey("Id");
@@ -781,7 +782,7 @@ namespace BookStore.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<decimal>("DiscountAmount")
-                        .HasColumnType("decimal(18,0)")
+                        .HasColumnType("decimal(18,2)")
                         .HasColumnName("discount_amount");
 
                     b.Property<string>("FullName")
@@ -808,8 +809,8 @@ namespace BookStore.Migrations
                         .HasColumnType("nvarchar(500)")
                         .HasColumnName("shipping_address");
 
-                    b.Property<double>("ShippingFee")
-                        .HasColumnType("float")
+                    b.Property<decimal>("ShippingFee")
+                        .HasColumnType("decimal(18,2)")
                         .HasColumnName("shipping_fee");
 
                     b.Property<int>("Status")
@@ -826,7 +827,7 @@ namespace BookStore.Migrations
                         .HasColumnName("total_amount");
 
                     b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)")
+                        .HasColumnType("nvarchar(128)")
                         .HasColumnName("user_id");
 
                     b.Property<int?>("VoucherId")
@@ -943,7 +944,7 @@ namespace BookStore.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("PurchaseOrderId"));
 
                     b.Property<string>("ApprovedById")
-                        .HasColumnType("nvarchar(450)")
+                        .HasColumnType("nvarchar(128)")
                         .HasColumnName("approved_by");
 
                     b.Property<DateTime>("OrderDate")
@@ -972,7 +973,7 @@ namespace BookStore.Migrations
                         .HasColumnName("total_quantity");
 
                     b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)")
+                        .HasColumnType("nvarchar(128)")
                         .HasColumnName("user_id");
 
                     b.HasKey("PurchaseOrderId");
@@ -1050,11 +1051,11 @@ namespace BookStore.Migrations
 
                     b.Property<string>("ProcessedBy")
                         .HasMaxLength(100)
-                        .HasColumnType("varchar(100)")
+                        .HasColumnType("nvarchar(100)")
                         .HasColumnName("processed_by");
 
-                    b.Property<double>("RefundAmount")
-                        .HasColumnType("float")
+                    b.Property<decimal>("RefundAmount")
+                        .HasColumnType("decimal(18,2)")
                         .HasColumnName("refund_amount");
 
                     b.Property<int>("ReturnId")
@@ -1096,7 +1097,7 @@ namespace BookStore.Migrations
                         .HasColumnName("status");
 
                     b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)")
+                        .HasColumnType("nvarchar(128)")
                         .HasColumnName("user_id");
 
                     b.HasKey("ReportId");
@@ -1179,12 +1180,12 @@ namespace BookStore.Migrations
 
                     b.Property<string>("RefundPreference")
                         .HasMaxLength(50)
-                        .HasColumnType("varchar(50)")
+                        .HasColumnType("nvarchar(50)")
                         .HasColumnName("refund_preference");
 
                     b.Property<string>("ReturnMethod")
                         .HasMaxLength(50)
-                        .HasColumnType("varchar(50)")
+                        .HasColumnType("nvarchar(50)")
                         .HasColumnName("return_method");
 
                     b.Property<int>("Status")
@@ -1232,7 +1233,7 @@ namespace BookStore.Migrations
                         .HasColumnName("staff_reply");
 
                     b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)")
+                        .HasColumnType("nvarchar(128)")
                         .HasColumnName("user_id");
 
                     b.HasKey("ReviewId");
@@ -1332,7 +1333,7 @@ namespace BookStore.Migrations
                         .HasColumnName("ticket_subject");
 
                     b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)")
+                        .HasColumnType("nvarchar(128)")
                         .HasColumnName("user_id");
 
                     b.HasKey("TicketId");
@@ -1345,7 +1346,8 @@ namespace BookStore.Migrations
             modelBuilder.Entity("BookStore.Models.Entities.UserVoucher", b =>
                 {
                     b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)")
                         .HasColumnName("user_id");
 
                     b.Property<int>("VoucherId")
@@ -1383,7 +1385,7 @@ namespace BookStore.Migrations
                         .HasColumnName("code");
 
                     b.Property<decimal>("DiscountAmount")
-                        .HasColumnType("decimal(18,0)")
+                        .HasColumnType("decimal(18,2)")
                         .HasColumnName("discount_amount");
 
                     b.Property<int>("DiscountPercent")
@@ -1394,12 +1396,12 @@ namespace BookStore.Migrations
                         .HasColumnType("datetime")
                         .HasColumnName("end_date");
 
-                    b.Property<double?>("MaxDiscount")
-                        .HasColumnType("float")
+                    b.Property<decimal?>("MaxDiscount")
+                        .HasColumnType("decimal(18,2)")
                         .HasColumnName("max_discount");
 
                     b.Property<decimal>("MinOrderValue")
-                        .HasColumnType("decimal(18,0)")
+                        .HasColumnType("decimal(18,2)")
                         .HasColumnName("min_order_value");
 
                     b.Property<DateTime>("StartDate")
@@ -1431,8 +1433,8 @@ namespace BookStore.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("TransactionId"));
 
-                    b.Property<double>("Amount")
-                        .HasColumnType("float")
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)")
                         .HasColumnName("amount");
 
                     b.Property<DateTime>("CreatedAt")
@@ -1455,7 +1457,7 @@ namespace BookStore.Migrations
                         .HasColumnName("transaction_type");
 
                     b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)")
+                        .HasColumnType("nvarchar(128)")
                         .HasColumnName("user_id");
 
                     b.HasKey("TransactionId");
@@ -1470,7 +1472,8 @@ namespace BookStore.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
                 {
                     b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
@@ -1510,7 +1513,8 @@ namespace BookStore.Migrations
 
                     b.Property<string>("RoleId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
 
                     b.HasKey("Id");
 
@@ -1535,7 +1539,8 @@ namespace BookStore.Migrations
 
                     b.Property<string>("UserId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
 
                     b.HasKey("Id");
 
@@ -1547,17 +1552,20 @@ namespace BookStore.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
                     b.Property<string>("LoginProvider")
-                        .HasColumnType("nvarchar(450)");
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
 
                     b.Property<string>("ProviderKey")
-                        .HasColumnType("nvarchar(450)");
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
 
                     b.Property<string>("ProviderDisplayName")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UserId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(450)");
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
 
                     b.HasKey("LoginProvider", "ProviderKey");
 
@@ -1569,10 +1577,12 @@ namespace BookStore.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
                 {
                     b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
 
                     b.Property<string>("RoleId")
-                        .HasColumnType("nvarchar(450)");
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
 
                     b.HasKey("UserId", "RoleId");
 
@@ -1584,13 +1594,16 @@ namespace BookStore.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
                 {
                     b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
 
                     b.Property<string>("LoginProvider")
-                        .HasColumnType("nvarchar(450)");
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
 
                     b.Property<string>("Name")
-                        .HasColumnType("nvarchar(450)");
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
 
                     b.Property<string>("Value")
                         .HasColumnType("nvarchar(max)");

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using BookStore.Models.Entities;
 
@@ -50,6 +51,47 @@ namespace BookStore.Data
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder); // Identity tables config
+
+            // Cấu hình độ dài khóa Identity & Foreign Keys để tránh cảnh báo SQL Server 900 bytes clustered index
+            builder.Entity<ApplicationUser>(b =>
+            {
+                b.Property(u => u.Id).HasMaxLength(128);
+            });
+
+            builder.Entity<IdentityRole>(b =>
+            {
+                b.Property(r => r.Id).HasMaxLength(128);
+            });
+
+            builder.Entity<IdentityUserRole<string>>(b =>
+            {
+                b.Property(r => r.UserId).HasMaxLength(128);
+                b.Property(r => r.RoleId).HasMaxLength(128);
+            });
+
+            builder.Entity<IdentityUserLogin<string>>(b =>
+            {
+                b.Property(l => l.LoginProvider).HasMaxLength(128);
+                b.Property(l => l.ProviderKey).HasMaxLength(128);
+                b.Property(l => l.UserId).HasMaxLength(128);
+            });
+
+            builder.Entity<IdentityUserToken<string>>(b =>
+            {
+                b.Property(t => t.UserId).HasMaxLength(128);
+                b.Property(t => t.LoginProvider).HasMaxLength(128);
+                b.Property(t => t.Name).HasMaxLength(128);
+            });
+
+            builder.Entity<IdentityUserClaim<string>>(b =>
+            {
+                b.Property(c => c.UserId).HasMaxLength(128);
+            });
+
+            builder.Entity<IdentityRoleClaim<string>>(b =>
+            {
+                b.Property(c => c.RoleId).HasMaxLength(128);
+            });
 
             // script.sql dùng kiểu [datetime] (không phải [datetime2] mặc định của EF Core)
             // cho toàn bộ cột ngày giờ — áp dụng quy ước chung cho mọi property DateTime.
@@ -251,6 +293,7 @@ namespace BookStore.Data
             builder.Entity<UserVoucher>(entity =>
             {
                 entity.ToTable("User_Vouchers");
+                entity.Property(uv => uv.UserId).HasMaxLength(128);
                 entity.HasKey(uv => new { uv.UserId, uv.VoucherId });
 
                 entity.HasOne(uv => uv.User)
