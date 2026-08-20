@@ -16,9 +16,9 @@ namespace BookStore.Models.Entities
         [Column("user_id")]
         public string? UserId { get; set; }
 
-        [StringLength(100)]
+        [StringLength(50)]
         [Display(Name = "Kênh liên hệ")]
-        [Column("contact_channel")]
+        [Column("contact_channel", TypeName = "varchar(50)")]
         public string? ContactChannel { get; set; }
 
         [Required(ErrorMessage = "Nội dung ghi chú là bắt buộc")]

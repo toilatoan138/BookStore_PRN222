@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BookStore.Models.Entities
@@ -7,6 +7,7 @@ namespace BookStore.Models.Entities
     /// Danh mục sách — hỗ trợ cây phân cấp qua parent_id.
     /// Mapped to [dbo].[Categories] from script.sql.
     /// </summary>
+    [Table("Categories")]
     public class Category
     {
         [Key]
@@ -20,7 +21,7 @@ namespace BookStore.Models.Entities
         public string Name { get; set; } = string.Empty;
 
         [Display(Name = "Ảnh danh mục")]
-        [Column("category_image")]
+        [Column("category_image", TypeName = "varchar(max)")]
         public string? ImageUrl { get; set; }
 
         [Display(Name = "Mô tả")]

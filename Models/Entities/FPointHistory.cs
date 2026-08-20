@@ -24,7 +24,7 @@ namespace BookStore.Models.Entities
         [Required]
         [StringLength(10)]
         [Display(Name = "Loại")]
-        [Column("action_type")]
+        [Column("action_type", TypeName = "varchar(10)")]
         public string ActionType { get; set; } = string.Empty; // "add" hoặc "sub"
 
         [Required]

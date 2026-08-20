@@ -38,9 +38,8 @@ namespace BookStore.Models.Entities
         [Column("description")]
         public string? Description { get; set; }
 
-        [StringLength(500)]
         [Display(Name = "Ảnh bìa")]
-        [Column("image")]
+        [Column("image", TypeName = "varchar(max)")]
         public string? ImageUrl { get; set; }
 
         [NotMapped]
@@ -69,7 +68,7 @@ namespace BookStore.Models.Entities
 
         [StringLength(20)]
         [Display(Name = "ISBN")]
-        [Column("ISBN")]
+        [Column("ISBN", TypeName = "varchar(20)")]
         public string? Isbn { get; set; }
 
         [Display(Name = "Năm xuất bản")]

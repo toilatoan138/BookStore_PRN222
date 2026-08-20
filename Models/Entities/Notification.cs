@@ -22,9 +22,9 @@ namespace BookStore.Models.Entities
         [Column("message")]
         public string Message { get; set; } = string.Empty;
 
-        [StringLength(500)]
+        [StringLength(255)]
         [Display(Name = "Liên kết")]
-        [Column("link")]
+        [Column("link", TypeName = "varchar(255)")]
         public string? Link { get; set; }
 
         [Display(Name = "Đã đọc")]

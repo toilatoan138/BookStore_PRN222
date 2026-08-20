@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BookStore.Models.Entities
@@ -16,7 +16,7 @@ namespace BookStore.Models.Entities
         [Required(ErrorMessage = "Mã voucher là bắt buộc")]
         [StringLength(50)]
         [Display(Name = "Mã voucher")]
-        [Column("code")]
+        [Column("code", TypeName = "varchar(50)")]
         public string Code { get; set; } = string.Empty;
 
         [Column("discount_amount", TypeName = "decimal(18,2)")]

@@ -16,7 +16,7 @@ namespace BookStore.Models.Entities
         [Required]
         [StringLength(20)]
         [Display(Name = "Loại hóa đơn")]
-        [Column("invoice_type")]
+        [Column("invoice_type", TypeName = "varchar(20)")]
         public string InvoiceType { get; set; } = string.Empty; // SALE, PURCHASE
 
         [Column("order_id")]
@@ -35,7 +35,7 @@ namespace BookStore.Models.Entities
 
         [StringLength(50)]
         [Display(Name = "Trạng thái")]
-        [Column("status")]
+        [Column("status", TypeName = "varchar(50)")]
         public string Status { get; set; } = string.Empty;
 
         // FK

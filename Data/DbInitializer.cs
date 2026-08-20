@@ -1,4 +1,4 @@
-﻿using BookStore.Models.Entities;
+using BookStore.Models.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,8 +12,8 @@ namespace BookStore.Data
             RoleManager<IdentityRole> roleManager,
             ILogger logger)
         {
-            // 1. Check or apply migrations
-            await context.Database.EnsureCreatedAsync();
+            // 1. Áp dụng migrations (đồng bộ với script.sql — script.sql được generate từ chính các migration này)
+            await context.Database.MigrateAsync();
 
             // 2. Seed Roles
             string[] roles = { "Admin", "Staff", "Warehouse", "Customer" };
@@ -119,6 +119,10 @@ namespace BookStore.Data
                 var kinhTe = await context.Categories.FirstOrDefaultAsync(c => c.Name.Contains("Kinh tế"));
                 var manga = await context.Categories.FirstOrDefaultAsync(c => c.Name.Contains("Manga"));
 
+                var locA1 = await context.Locations.FirstOrDefaultAsync(l => l.LocationCode == "A-01-01");
+                var locB1 = await context.Locations.FirstOrDefaultAsync(l => l.LocationCode == "B-01-01");
+                var locM1 = await context.Locations.FirstOrDefaultAsync(l => l.LocationCode == "M-01-01");
+
                 var books = new List<Book>
                 {
                     new Book
@@ -126,13 +130,13 @@ namespace BookStore.Data
                         Title = "Đắc Nhân Tâm (How to Win Friends and Influence People)",
                         Author = "Dale Carnegie",
                         CategoryId = tamLy?.Id ?? 1,
+                        LocationId = locB1?.Id,
                         Price = 86000,
                         ImportPrice = 50000,
                         StockQuantity = 45,
                         SoldQuantity = 120,
                         ImageUrl = "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&q=80",
                         Publisher = "NXB Tổng Hợp TP.HCM",
-                        LocationCode = "B-01-01",
                         IsActive = true,
                         Description = "Đắc Nhân Tâm là cuốn sách nổi tiếng nhất, có tầm ảnh hưởng lớn nhất mọi thời đại về nghệ thuật đối nhân xử thế và thu phục lòng người."
                     },
@@ -141,13 +145,13 @@ namespace BookStore.Data
                         Title = "Nhà Giả Kim (The Alchemist)",
                         Author = "Paulo Coelho",
                         CategoryId = vanHoc?.Id ?? 1,
+                        LocationId = locA1?.Id,
                         Price = 79000,
                         ImportPrice = 45000,
                         StockQuantity = 30,
                         SoldQuantity = 95,
                         ImageUrl = "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=400&q=80",
                         Publisher = "NXB Hội Nhà Văn",
-                        LocationCode = "A-01-01",
                         IsActive = true,
                         Description = "Hành trình tìm kiếm kho báu của chàng chăn cừu Santiago là câu chuyện truyền cảm hứng sâu sắc về việc theo đuổi ước mơ và lắng nghe trái tim mình."
                     },
@@ -156,13 +160,13 @@ namespace BookStore.Data
                         Title = "Thám Tử Lừng Danh Conan - Tập 100",
                         Author = "Gosho Aoyama",
                         CategoryId = manga?.Id ?? 1,
+                        LocationId = locM1?.Id,
                         Price = 30000,
                         ImportPrice = 18000,
                         StockQuantity = 80,
                         SoldQuantity = 250,
                         ImageUrl = "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=400&q=80",
                         Publisher = "NXB Kim Đồng",
-                        LocationCode = "M-01-01",
                         IsActive = true,
                         Description = "Tập 100 kỷ niệm cột mốc lịch sử với những vụ án gay cấn và cuộc đối đầu nghẹt thở giữa Conan và Tổ chức Áo đen."
                     },
@@ -171,13 +175,13 @@ namespace BookStore.Data
                         Title = "One Piece - Tập 105: Giấc mơ của Luffy",
                         Author = "Eiichiro Oda",
                         CategoryId = manga?.Id ?? 1,
+                        LocationId = locM1?.Id,
                         Price = 35000,
                         ImportPrice = 20000,
                         StockQuantity = 90,
                         SoldQuantity = 310,
                         ImageUrl = "https://images.unsplash.com/photo-1569701813229-33284b643e3c?w=400&q=80",
                         Publisher = "NXB Kim Đồng",
-                        LocationCode = "M-01-01",
                         IsActive = true,
                         Description = "Sau chiến thắng lịch sử tại Vương quốc Wano, Luffy chính thức trở thành Tứ Hoàng và bắt đầu hành trình đến hòn đảo tương lai Egghead."
                     },
@@ -186,13 +190,13 @@ namespace BookStore.Data
                         Title = "Cha Giàu Cha Nghèo (Rich Dad Poor Dad)",
                         Author = "Robert T. Kiyosaki",
                         CategoryId = kinhTe?.Id ?? 1,
+                        LocationId = locB1?.Id,
                         Price = 115000,
                         ImportPrice = 65000,
                         StockQuantity = 25,
                         SoldQuantity = 78,
                         ImageUrl = "https://images.unsplash.com/photo-1592496431122-2349e0fbc666?w=400&q=80",
                         Publisher = "NXB Trẻ",
-                        LocationCode = "B-01-01",
                         IsActive = true,
                         Description = "Cuốn sách số 1 thế giới về tài chính cá nhân, giúp bạn hiểu rõ sự khác biệt giữa tài sản và tiêu sản để đạt tự do tài chính."
                     },
@@ -201,13 +205,13 @@ namespace BookStore.Data
                         Title = "Tuổi Trẻ Đáng Giá Bao Nhiêu?",
                         Author = "Rosie Nguyễn",
                         CategoryId = tamLy?.Id ?? 1,
+                        LocationId = locB1?.Id,
                         Price = 75000,
                         ImportPrice = 42000,
                         StockQuantity = 4, // Low stock test
                         SoldQuantity = 140,
                         ImageUrl = "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=400&q=80",
                         Publisher = "NXB Nhã Nam",
-                        LocationCode = "B-01-01",
                         IsActive = true,
                         Description = "Cuốn sách kim chỉ nam dành cho những người trẻ đang băn khoăn tìm kiếm định hướng và giá trị của bản thân."
                     }

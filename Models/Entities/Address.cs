@@ -26,7 +26,7 @@ namespace BookStore.Models.Entities
         [StringLength(20)]
         [Phone]
         [Display(Name = "Số điện thoại")]
-        [Column("phone")]
+        [Column("phone", TypeName = "varchar(20)")]
         public string Phone { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Thành phố là bắt buộc")]

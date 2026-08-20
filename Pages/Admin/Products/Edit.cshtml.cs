@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using BookStore.Data;
 using BookStore.Models.Entities;
 using Microsoft.AspNetCore.Authorization;
@@ -63,6 +63,7 @@ namespace BookStore.Pages.Admin.Products
             var book = await _context.Books
                 .Include(b => b.DetailImages)
                 .Include(b => b.Category)
+                .Include(b => b.Location)
                 .FirstOrDefaultAsync(b => b.Id == id);
 
             if (book == null) return NotFound();
@@ -115,7 +116,18 @@ namespace BookStore.Pages.Admin.Products
             book.Isbn = Input.Isbn;
             book.YearOfPublish = Input.YearOfPublish;
             book.NumberOfPages = Input.NumberOfPages;
-            book.LocationCode = Input.LocationCode;
+            
+            if (!string.IsNullOrWhiteSpace(Input.LocationCode))
+            {
+                string formattedCode = Input.LocationCode.Trim().ToUpper();
+                var loc = await _context.Locations.FirstOrDefaultAsync(l => l.LocationCode == formattedCode);
+                book.LocationId = loc?.Id;
+            }
+            else
+            {
+                book.LocationId = null;
+            }
+
             book.Description = Input.Description;
             book.IsActive = Input.IsActive;
 

@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BookStore.Models.Entities
@@ -35,12 +35,12 @@ namespace BookStore.Models.Entities
 
         [StringLength(50)]
         [Display(Name = "Phương thức trả")]
-        [Column("return_method")]
+        [Column("return_method", TypeName = "nvarchar(50)")]
         public string? ReturnMethod { get; set; }
 
         [StringLength(50)]
         [Display(Name = "Ưu tiên hoàn tiền")]
-        [Column("refund_preference")]
+        [Column("refund_preference", TypeName = "nvarchar(50)")]
         public string? RefundPreference { get; set; }
 
         [Display(Name = "Trạng thái")]
@@ -62,7 +62,7 @@ namespace BookStore.Models.Entities
         public string? ProofImage { get; set; }
 
         [StringLength(50)]
-        [Column("image_mime_type")]
+        [Column("image_mime_type", TypeName = "varchar(50)")]
         public string? ImageMimeType { get; set; }
 
         [StringLength(100)]
@@ -72,7 +72,7 @@ namespace BookStore.Models.Entities
 
         [StringLength(50)]
         [Display(Name = "Số tài khoản")]
-        [Column("account_number")]
+        [Column("account_number", TypeName = "varchar(50)")]
         public string? AccountNumber { get; set; }
 
         [StringLength(100)]

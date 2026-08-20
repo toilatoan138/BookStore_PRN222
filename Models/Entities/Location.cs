@@ -16,26 +16,25 @@ namespace BookStore.Models.Entities
         [Required]
         [StringLength(10)]
         [Display(Name = "Khu vực")]
-        [Column("zone")]
+        [Column("zone", TypeName = "varchar(10)")]
         public string Zone { get; set; } = string.Empty;
 
         [Required]
         [StringLength(10)]
         [Display(Name = "Kệ")]
-        [Column("rack")]
+        [Column("rack", TypeName = "varchar(10)")]
         public string Rack { get; set; } = string.Empty;
 
         [Required]
         [StringLength(10)]
         [Display(Name = "Tầng")]
-        [Column("shelf")]
+        [Column("shelf", TypeName = "varchar(10)")]
         public string Shelf { get; set; } = string.Empty;
 
-        [StringLength(20)]
         [Display(Name = "Mã vị trí")]
-        [Column("location_code")]
+        [Column("location_code", TypeName = "varchar(32)")]
         [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
-        public string? LocationCode { get; set; } // Computed: zone-rack-shelf
+        public string LocationCode { get; set; } = string.Empty; // Computed persisted NOT NULL: zone-rack-shelf (xem HasComputedColumnSql trong ApplicationDbContext)
 
         [Column("category_id")]
         public int? CategoryId { get; set; }

@@ -51,6 +51,19 @@ namespace BookStore.Data
         {
             base.OnModelCreating(builder); // Identity tables config
 
+            // script.sql dùng kiểu [datetime] (không phải [datetime2] mặc định của EF Core)
+            // cho toàn bộ cột ngày giờ — áp dụng quy ước chung cho mọi property DateTime.
+            foreach (var entityType in builder.Model.GetEntityTypes())
+            {
+                foreach (var property in entityType.GetProperties())
+                {
+                    if (property.ClrType == typeof(DateTime) || property.ClrType == typeof(DateTime?))
+                    {
+                        property.SetColumnType("datetime");
+                    }
+                }
+            }
+
             // ====================================================================
             // CATEGORY — Self-referencing (Danh mục cha-con)
             // ====================================================================
@@ -212,7 +225,10 @@ namespace BookStore.Data
                 entity.HasOne(rr => rr.Review)
                       .WithMany()
                       .HasForeignKey(rr => rr.ReviewId)
-                      .OnDelete(DeleteBehavior.Cascade);
+                      // Restrict (không Cascade): Review đồng thời cascade từ User,
+                      // nếu ReportedReview cũng cascade từ Review thì SQL Server sẽ
+                      // từ chối tạo FK vì phát sinh "multiple cascade paths" từ AspNetUsers.
+                      .OnDelete(DeleteBehavior.Restrict);
 
                 entity.HasOne(rr => rr.User)
                       .WithMany()
@@ -354,7 +370,13 @@ namespace BookStore.Data
             builder.Entity<Location>(entity =>
             {
                 entity.ToTable("Warehouse_Locations");
-                entity.HasIndex(l => l.LocationCode).IsUnique().HasFilter("[location_code] IS NOT NULL");
+
+                // Cột computed persisted giống hệt script.sql: zone + '-' + rack + '-' + shelf
+                // (luôn NOT NULL vì zone/rack/shelf đều NOT NULL) — không dùng HasFilter vì
+                // SQL Server không cho phép filtered index tham chiếu computed column.
+                entity.Property(l => l.LocationCode)
+                      .HasComputedColumnSql("(((([zone]+'-')+[rack])+'-')+[shelf])", stored: true);
+                entity.HasIndex(l => l.LocationCode).IsUnique();
 
                 entity.HasOne(l => l.Category)
                       .WithMany(c => c.Locations)
@@ -496,6 +518,10 @@ namespace BookStore.Data
             builder.Entity<CustomerNote>(entity =>
             {
                 entity.ToTable("Customer_Notes");
+
+                // script.sql khai báo follow_up_date là [date] (không phải [datetime])
+                entity.Property(cn => cn.FollowUpDate).HasColumnType("date");
+
                 entity.HasOne(cn => cn.User)
                       .WithMany(u => u.CustomerNotes)
                       .HasForeignKey(cn => cn.UserId)

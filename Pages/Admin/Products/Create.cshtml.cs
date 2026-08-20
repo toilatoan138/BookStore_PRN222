@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using BookStore.Data;
 using BookStore.Models.Entities;
 using Microsoft.AspNetCore.Authorization;
@@ -98,11 +98,20 @@ namespace BookStore.Pages.Admin.Products
                 return Page();
             }
 
+            int? locationId = null;
+            if (!string.IsNullOrWhiteSpace(Input.LocationCode))
+            {
+                string formattedCode = Input.LocationCode.Trim().ToUpper();
+                var loc = await _context.Locations.FirstOrDefaultAsync(l => l.LocationCode == formattedCode);
+                locationId = loc?.Id;
+            }
+
             var book = new Book
             {
                 Title = Input.Title,
                 Author = Input.Author,
                 CategoryId = Input.CategoryId,
+                LocationId = locationId,
                 Price = Input.Price,
                 ImportPrice = Input.ImportPrice,
                 StockQuantity = Input.StockQuantity,
@@ -112,7 +121,6 @@ namespace BookStore.Pages.Admin.Products
                 Isbn = Input.Isbn,
                 YearOfPublish = Input.YearOfPublish,
                 NumberOfPages = Input.NumberOfPages,
-                LocationCode = Input.LocationCode,
                 Description = Input.Description,
                 IsActive = Input.IsActive,
                 SoldQuantity = 0

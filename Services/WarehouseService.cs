@@ -1,4 +1,4 @@
-﻿using BookStore.Data;
+using BookStore.Data;
 using BookStore.Models.Entities;
 using BookStore.Models.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -44,6 +44,7 @@ namespace BookStore.Services
         {
             var query = _context.Books
                 .Include(b => b.Category)
+                .Include(b => b.Location)
                 .AsQueryable();
 
             if (lowStockOnly)
@@ -56,7 +57,7 @@ namespace BookStore.Services
                 string kw = keyword.Trim().ToLower();
                 query = query.Where(b => (b.Title != null && b.Title.ToLower().Contains(kw)) ||
                                          (b.Author != null && b.Author.ToLower().Contains(kw)) ||
-                                         (b.LocationCode != null && b.LocationCode.ToLower().Contains(kw)));
+                                         (b.Location != null && b.Location.LocationCode != null && b.Location.LocationCode.ToLower().Contains(kw)));
             }
 
             return await query.OrderBy(b => b.StockQuantity).ToListAsync();
@@ -73,7 +74,12 @@ namespace BookStore.Services
             book.StockQuantity = newQuantity;
             if (!string.IsNullOrEmpty(locationCode))
             {
-                book.LocationCode = locationCode.Trim().ToUpper();
+                string formattedCode = locationCode.Trim().ToUpper();
+                var loc = await _context.Locations.FirstOrDefaultAsync(l => l.LocationCode == formattedCode);
+                if (loc != null)
+                {
+                    book.LocationId = loc.Id;
+                }
             }
 
             // Log history
@@ -97,7 +103,7 @@ namespace BookStore.Services
 
         public async Task<Location> CreateLocationAsync(Location location)
         {
-            location.LocationCode = location.LocationCode?.Trim().ToUpper();
+            // location_code là computed column (zone-rack-shelf), DB tự tính — không cần gán tay
             _context.Locations.Add(location);
             await _context.SaveChangesAsync();
             return location;

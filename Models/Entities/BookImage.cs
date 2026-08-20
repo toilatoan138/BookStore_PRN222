@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BookStore.Models.Entities
@@ -6,6 +6,7 @@ namespace BookStore.Models.Entities
     /// <summary>
     /// Ảnh chi tiết sách — Mapped to [dbo].[BookImages] from script.sql.
     /// </summary>
+    [Table("BookImages")]
     public class BookImage
     {
         [Key]
@@ -19,7 +20,7 @@ namespace BookStore.Models.Entities
         [Required]
         [StringLength(255)]
         [Display(Name = "URL ảnh")]
-        [Column("image_url")]
+        [Column("image_url", TypeName = "varchar(255)")]
         public string ImageUrl { get; set; } = string.Empty;
 
         // FK

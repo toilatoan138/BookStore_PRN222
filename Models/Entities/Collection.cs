@@ -33,7 +33,7 @@ namespace BookStore.Models.Entities
 
         [StringLength(20)]
         [Display(Name = "Màu bìa")]
-        [Column("cover_color")]
+        [Column("cover_color", TypeName = "varchar(20)")]
         public string? CoverColor { get; set; }
 
         [Display(Name = "Ngày tạo")]

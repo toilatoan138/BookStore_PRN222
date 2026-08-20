@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BookStore.Models.Entities
@@ -23,7 +23,7 @@ namespace BookStore.Models.Entities
         [Required]
         [StringLength(50)]
         [Display(Name = "Loại giao dịch")]
-        [Column("transaction_type")]
+        [Column("transaction_type", TypeName = "varchar(50)")]
         public string TransactionType { get; set; } = string.Empty; // REFUND, PAYMENT
 
         [StringLength(500)]

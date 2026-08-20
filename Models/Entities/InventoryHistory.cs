@@ -18,9 +18,9 @@ namespace BookStore.Models.Entities
         public int BookId { get; set; }
 
         [Required]
-        [StringLength(50)]
+        [StringLength(20)]
         [Display(Name = "Loại giao dịch")]
-        [Column("transaction_type")]
+        [Column("transaction_type", TypeName = "varchar(20)")]
         public string TransactionType { get; set; } = string.Empty; // IMPORT, EXPORT, ADJUSTMENT, RETURN
 
         [Display(Name = "Số lượng thay đổi")]

@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using BookStore.Models.Enums;
 
@@ -37,7 +37,7 @@ namespace BookStore.Models.Entities
 
         [StringLength(15)]
         [Display(Name = "Số điện thoại")]
-        [Column("phone_number")]
+        [Column("phone_number", TypeName = "varchar(15)")]
         public string? PhoneNumber { get; set; }
 
         [StringLength(100)]

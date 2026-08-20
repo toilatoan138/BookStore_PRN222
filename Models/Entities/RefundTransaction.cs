@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BookStore.Models.Entities
@@ -24,12 +24,12 @@ namespace BookStore.Models.Entities
 
         [StringLength(255)]
         [Display(Name = "Mã tham chiếu ngân hàng")]
-        [Column("bank_reference")]
+        [Column("bank_reference", TypeName = "varchar(255)")]
         public string? BankReference { get; set; }
 
         [StringLength(100)]
         [Display(Name = "Người xử lý")]
-        [Column("processed_by")]
+        [Column("processed_by", TypeName = "nvarchar(100)")]
         public string? ProcessedBy { get; set; }
 
         [Display(Name = "Ngày xử lý")]

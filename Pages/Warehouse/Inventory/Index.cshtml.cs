@@ -1,4 +1,4 @@
-﻿using BookStore.Data;
+using BookStore.Data;
 using BookStore.Models.Entities;
 using BookStore.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -66,6 +66,7 @@ namespace BookStore.Pages.Warehouse.Inventory
 
             var query = _context.Books
                 .Include(b => b.Category)
+                .Include(b => b.Location)
                 .AsNoTracking()
                 .AsQueryable();
 
@@ -74,7 +75,7 @@ namespace BookStore.Pages.Warehouse.Inventory
                 string kw = Keyword.Trim().ToLower();
                 query = query.Where(b => (b.Title != null && b.Title.ToLower().Contains(kw)) ||
                                          (b.Author != null && b.Author.ToLower().Contains(kw)) ||
-                                         (b.LocationCode != null && b.LocationCode.ToLower().Contains(kw)));
+                                         (b.Location != null && b.Location.LocationCode != null && b.Location.LocationCode.ToLower().Contains(kw)));
             }
 
             if (CategoryId.HasValue && CategoryId.Value > 0)

@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BookStore.Models.Entities
@@ -6,6 +6,7 @@ namespace BookStore.Models.Entities
     /// <summary>
     /// Thông báo dành cho Admin — Mapped to [dbo].[AdminNotifications] from script.sql.
     /// </summary>
+    [Table("AdminNotifications")]
     public class AdminNotification
     {
         [Key]
@@ -28,7 +29,7 @@ namespace BookStore.Models.Entities
 
         [StringLength(255)]
         [Display(Name = "Liên kết")]
-        [Column("link")]
+        [Column("link", TypeName = "varchar(255)")]
         public string? Link { get; set; }
     }
 }

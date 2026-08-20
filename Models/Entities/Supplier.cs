@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BookStore.Models.Entities
@@ -6,6 +6,7 @@ namespace BookStore.Models.Entities
     /// <summary>
     /// Nhà cung cấp — Mapped to [dbo].[Suppliers] from script.sql.
     /// </summary>
+    [Table("Suppliers")]
     public class Supplier
     {
         [Key]
@@ -26,13 +27,13 @@ namespace BookStore.Models.Entities
         [StringLength(20)]
         [Phone]
         [Display(Name = "Số điện thoại")]
-        [Column("phone")]
+        [Column("phone", TypeName = "varchar(20)")]
         public string? Phone { get; set; }
 
         [StringLength(100)]
         [EmailAddress]
         [Display(Name = "Email")]
-        [Column("email")]
+        [Column("email", TypeName = "varchar(100)")]
         public string? Email { get; set; }
 
         [Display(Name = "Địa chỉ")]
