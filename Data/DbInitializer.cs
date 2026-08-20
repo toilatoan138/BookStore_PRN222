@@ -12,54 +12,101 @@ namespace BookStore.Data
             RoleManager<IdentityRole> roleManager,
             ILogger logger)
         {
-            // 1. Áp dụng migrations (đồng bộ với script.sql — script.sql được generate từ chính các migration này)
-            await context.Database.MigrateAsync();
+            // 1. Áp dụng migrations tự động
+            try
+            {
+                await context.Database.MigrateAsync();
+            }
+            catch (Microsoft.Data.SqlClient.SqlException sqlEx) when (sqlEx.Number == 2714) // 2714 = Object already exists
+            {
+                logger.LogWarning("Một số bảng đã tồn tại trong database từ trước. Đang đăng ký baseline migration vào __EFMigrationsHistory...");
+                try
+                {
+                    await context.Database.ExecuteSqlRawAsync(@"
+                        IF OBJECT_ID(N'[__EFMigrationsHistory]') IS NULL
+                        BEGIN
+                            CREATE TABLE [__EFMigrationsHistory] (
+                                [MigrationId] nvarchar(150) NOT NULL,
+                                [ProductVersion] nvarchar(32) NOT NULL,
+                                CONSTRAINT [PK___EFMigrationsHistory] PRIMARY KEY ([MigrationId])
+                            );
+                        END;
+                        IF NOT EXISTS (SELECT 1 FROM [__EFMigrationsHistory] WHERE [MigrationId] = N'20260820034608_InitialCreate')
+                        BEGIN
+                            INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+                            VALUES (N'20260820034608_InitialCreate', N'8.0.14');
+                        END;
+                    ");
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Không thể ghi bản ghi baseline migration.");
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Lưu ý khi chạy MigrateAsync: {Message}", ex.Message);
+            }
 
             // 2. Seed Roles
-            string[] roles = { "Admin", "Staff", "Warehouse", "Customer" };
-            foreach (var role in roles)
+            try
             {
-                if (!await roleManager.RoleExistsAsync(role))
+                string[] roles = { "Admin", "Staff", "Warehouse", "Customer" };
+                foreach (var role in roles)
                 {
-                    await roleManager.CreateAsync(new IdentityRole(role));
-                    logger.LogInformation("Created role: {Role}", role);
+                    if (!await roleManager.RoleExistsAsync(role))
+                    {
+                        await roleManager.CreateAsync(new IdentityRole(role));
+                        logger.LogInformation("Created role: {Role}", role);
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Lỗi khi khởi tạo roles: {Message}", ex.Message);
             }
 
             // 3. Seed Default Accounts
-            var defaultUsers = new (string UserName, string Email, string FullName, string Role, string Password)[]
+            try
             {
-                ("admin", "admin@bookstore.com", "Quản trị viên Hệ thống", "Admin", "Admin@123"),
-                ("staff", "staff@bookstore.com", "Nhân viên CSKH & Vận hành", "Staff", "Staff@123"),
-                ("warehouse", "warehouse@bookstore.com", "Thủ kho MindBook", "Warehouse", "Warehouse@123"),
-                ("customer", "customer@gmail.com", "Nguyễn Văn Đọc Sách", "Customer", "Customer@123")
-            };
-
-            foreach (var item in defaultUsers)
-            {
-                var user = await userManager.FindByNameAsync(item.UserName);
-                if (user == null)
+                var defaultUsers = new (string UserName, string Email, string FullName, string Role, string Password)[]
                 {
-                    user = new ApplicationUser
-                    {
-                        UserName = item.UserName,
-                        Email = item.Email,
-                        FullName = item.FullName,
-                        EmailConfirmed = true,
-                        Status = true,
-                        WalletBalance = 500000,
-                        FPoints = 250,
-                        TotalSpend = 1500000,
-                        CreatedAt = DateTime.UtcNow
-                    };
+                    ("admin", "admin@bookstore.com", "Quản trị viên Hệ thống", "Admin", "Admin@123"),
+                    ("staff", "staff@bookstore.com", "Nhân viên CSKH & Vận hành", "Staff", "Staff@123"),
+                    ("warehouse", "warehouse@bookstore.com", "Thủ kho MindBook", "Warehouse", "Warehouse@123"),
+                    ("customer", "customer@gmail.com", "Nguyễn Văn Đọc Sách", "Customer", "Customer@123")
+                };
 
-                    var res = await userManager.CreateAsync(user, item.Password);
-                    if (res.Succeeded)
+                foreach (var item in defaultUsers)
+                {
+                    var user = await userManager.FindByNameAsync(item.UserName);
+                    if (user == null)
                     {
-                        await userManager.AddToRoleAsync(user, item.Role);
-                        logger.LogInformation("Seeded default account: {UserName} ({Role})", item.UserName, item.Role);
+                        user = new ApplicationUser
+                        {
+                            UserName = item.UserName,
+                            Email = item.Email,
+                            FullName = item.FullName,
+                            EmailConfirmed = true,
+                            Status = true,
+                            WalletBalance = 500000,
+                            FPoints = 250,
+                            TotalSpend = 1500000,
+                            CreatedAt = DateTime.UtcNow
+                        };
+
+                        var res = await userManager.CreateAsync(user, item.Password);
+                        if (res.Succeeded)
+                        {
+                            await userManager.AddToRoleAsync(user, item.Role);
+                            logger.LogInformation("Seeded default account: {UserName} ({Role})", item.UserName, item.Role);
+                        }
                     }
                 }
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Lỗi khi khởi tạo tài khoản mặc định: {Message}", ex.Message);
             }
 
             // 4. Seed Categories
@@ -122,100 +169,6 @@ namespace BookStore.Data
                 var locA1 = await context.Locations.FirstOrDefaultAsync(l => l.LocationCode == "A-01-01");
                 var locB1 = await context.Locations.FirstOrDefaultAsync(l => l.LocationCode == "B-01-01");
                 var locM1 = await context.Locations.FirstOrDefaultAsync(l => l.LocationCode == "M-01-01");
-
-                var books = new List<Book>
-                {
-                    new Book
-                    {
-                        Title = "Đắc Nhân Tâm (How to Win Friends and Influence People)",
-                        Author = "Dale Carnegie",
-                        CategoryId = tamLy?.Id ?? 1,
-                        LocationId = locB1?.Id,
-                        Price = 86000,
-                        ImportPrice = 50000,
-                        StockQuantity = 45,
-                        SoldQuantity = 120,
-                        ImageUrl = "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=400&q=80",
-                        Publisher = "NXB Tổng Hợp TP.HCM",
-                        IsActive = true,
-                        Description = "Đắc Nhân Tâm là cuốn sách nổi tiếng nhất, có tầm ảnh hưởng lớn nhất mọi thời đại về nghệ thuật đối nhân xử thế và thu phục lòng người."
-                    },
-                    new Book
-                    {
-                        Title = "Nhà Giả Kim (The Alchemist)",
-                        Author = "Paulo Coelho",
-                        CategoryId = vanHoc?.Id ?? 1,
-                        LocationId = locA1?.Id,
-                        Price = 79000,
-                        ImportPrice = 45000,
-                        StockQuantity = 30,
-                        SoldQuantity = 95,
-                        ImageUrl = "https://images.unsplash.com/photo-1512820790803-83ca734da794?w=400&q=80",
-                        Publisher = "NXB Hội Nhà Văn",
-                        IsActive = true,
-                        Description = "Hành trình tìm kiếm kho báu của chàng chăn cừu Santiago là câu chuyện truyền cảm hứng sâu sắc về việc theo đuổi ước mơ và lắng nghe trái tim mình."
-                    },
-                    new Book
-                    {
-                        Title = "Thám Tử Lừng Danh Conan - Tập 100",
-                        Author = "Gosho Aoyama",
-                        CategoryId = manga?.Id ?? 1,
-                        LocationId = locM1?.Id,
-                        Price = 30000,
-                        ImportPrice = 18000,
-                        StockQuantity = 80,
-                        SoldQuantity = 250,
-                        ImageUrl = "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=400&q=80",
-                        Publisher = "NXB Kim Đồng",
-                        IsActive = true,
-                        Description = "Tập 100 kỷ niệm cột mốc lịch sử với những vụ án gay cấn và cuộc đối đầu nghẹt thở giữa Conan và Tổ chức Áo đen."
-                    },
-                    new Book
-                    {
-                        Title = "One Piece - Tập 105: Giấc mơ của Luffy",
-                        Author = "Eiichiro Oda",
-                        CategoryId = manga?.Id ?? 1,
-                        LocationId = locM1?.Id,
-                        Price = 35000,
-                        ImportPrice = 20000,
-                        StockQuantity = 90,
-                        SoldQuantity = 310,
-                        ImageUrl = "https://images.unsplash.com/photo-1569701813229-33284b643e3c?w=400&q=80",
-                        Publisher = "NXB Kim Đồng",
-                        IsActive = true,
-                        Description = "Sau chiến thắng lịch sử tại Vương quốc Wano, Luffy chính thức trở thành Tứ Hoàng và bắt đầu hành trình đến hòn đảo tương lai Egghead."
-                    },
-                    new Book
-                    {
-                        Title = "Cha Giàu Cha Nghèo (Rich Dad Poor Dad)",
-                        Author = "Robert T. Kiyosaki",
-                        CategoryId = kinhTe?.Id ?? 1,
-                        LocationId = locB1?.Id,
-                        Price = 115000,
-                        ImportPrice = 65000,
-                        StockQuantity = 25,
-                        SoldQuantity = 78,
-                        ImageUrl = "https://images.unsplash.com/photo-1592496431122-2349e0fbc666?w=400&q=80",
-                        Publisher = "NXB Trẻ",
-                        IsActive = true,
-                        Description = "Cuốn sách số 1 thế giới về tài chính cá nhân, giúp bạn hiểu rõ sự khác biệt giữa tài sản và tiêu sản để đạt tự do tài chính."
-                    },
-                    new Book
-                    {
-                        Title = "Tuổi Trẻ Đáng Giá Bao Nhiêu?",
-                        Author = "Rosie Nguyễn",
-                        CategoryId = tamLy?.Id ?? 1,
-                        LocationId = locB1?.Id,
-                        Price = 75000,
-                        ImportPrice = 42000,
-                        StockQuantity = 4, // Low stock test
-                        SoldQuantity = 140,
-                        ImageUrl = "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=400&q=80",
-                        Publisher = "NXB Nhã Nam",
-                        IsActive = true,
-                        Description = "Cuốn sách kim chỉ nam dành cho những người trẻ đang băn khoăn tìm kiếm định hướng và giá trị của bản thân."
-                    }
-                };
 
                 context.Books.AddRange(books);
                 await context.SaveChangesAsync();
