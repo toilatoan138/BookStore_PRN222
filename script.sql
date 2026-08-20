@@ -1,4 +1,4 @@
--- ============================================================================
+﻿-- ============================================================================
 -- script.sql — Auto-generated từ EF Core Migrations
 -- Nguồn: Migrations/*, sinh bởi ApplicationDbContext.
 -- Đảm bảo 100% khớp Table/Column với các Entity Class trong Models/Entities.
