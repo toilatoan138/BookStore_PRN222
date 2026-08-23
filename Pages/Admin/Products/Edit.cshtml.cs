@@ -24,6 +24,7 @@ namespace BookStore.Pages.Admin.Products
         public Book Book { get; set; } = new();
 
         public List<Category> Categories { get; set; } = new();
+        public List<Supplier> Suppliers { get; set; } = new();
 
         public async Task<IActionResult> OnGetAsync(int id)
         {
@@ -48,6 +49,8 @@ namespace BookStore.Pages.Admin.Products
                 .OrderBy(c => c.ParentId).ThenBy(c => c.Name)
                 .ToListAsync();
 
+            Suppliers = await _context.Suppliers.OrderBy(s => s.Name).ToListAsync();
+
             return Page();
         }
 
@@ -63,6 +66,7 @@ namespace BookStore.Pages.Admin.Products
             {
                 Book = await _context.Books.Include(b => b.DetailImages).FirstOrDefaultAsync(b => b.Id == id) ?? new Book();
                 Categories = await _context.Categories.AsNoTracking().ToListAsync();
+                Suppliers = await _context.Suppliers.OrderBy(s => s.Name).ToListAsync();
                 return Page();
             }
 
@@ -92,6 +96,7 @@ namespace BookStore.Pages.Admin.Products
             // Cập nhật các trường dữ liệu
             bookToUpdate.Title = Input.Title;
             bookToUpdate.CategoryId = Input.CategoryId;
+            bookToUpdate.SupplierId = Input.SupplierId;
             bookToUpdate.Author = Input.Author;
             bookToUpdate.Publisher = Input.Publisher;
             bookToUpdate.Price = Input.Price;
