@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using BookStore.Data;
 using BookStore.Models.Entities;
 using Microsoft.AspNetCore.Authorization;
@@ -8,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BookStore.Pages.Admin.Products
 {
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,Staff")]
     public class CreateModel : PageModel
     {
         private readonly ApplicationDbContext _context;
@@ -19,118 +18,63 @@ namespace BookStore.Pages.Admin.Products
         }
 
         [BindProperty]
-        public BookInputModel Input { get; set; } = new();
+        public Book Input { get; set; } = new();
 
+        // Danh sách Category để đổ vào thẻ <select> trên giao diện
         public List<Category> Categories { get; set; } = new();
-
-        public class BookInputModel
-        {
-            [Required(ErrorMessage = "Tiêu đề sách là bắt buộc")]
-            [StringLength(300)]
-            [Display(Name = "Tiêu đề")]
-            public string Title { get; set; } = string.Empty;
-
-            [StringLength(200)]
-            [Display(Name = "Tác giả")]
-            public string? Author { get; set; }
-
-            [Required(ErrorMessage = "Vui lòng chọn danh mục")]
-            [Display(Name = "Danh mục")]
-            public int CategoryId { get; set; }
-
-            [Required(ErrorMessage = "Giá bán là bắt buộc")]
-            [Range(0, 100000000, ErrorMessage = "Giá bán phải từ 0đ trở lên")]
-            [Display(Name = "Giá bán (VNĐ)")]
-            public decimal Price { get; set; }
-
-            [Display(Name = "Giá nhập (VNĐ)")]
-            public decimal ImportPrice { get; set; }
-
-            [Required(ErrorMessage = "Số lượng tồn kho là bắt buộc")]
-            [Range(0, 100000, ErrorMessage = "Số lượng tồn kho phải >= 0")]
-            [Display(Name = "Số lượng tồn kho")]
-            public int StockQuantity { get; set; } = 10;
-
-            [StringLength(500)]
-            [Display(Name = "URL Ảnh bìa chính")]
-            public string? ImageUrl { get; set; }
-
-            [StringLength(200)]
-            [Display(Name = "Nhà xuất bản")]
-            public string? Publisher { get; set; }
-
-            [StringLength(200)]
-            [Display(Name = "Nhà cung cấp")]
-            public string? Supplier { get; set; }
-
-            [StringLength(20)]
-            [Display(Name = "Mã ISBN")]
-            public string? Isbn { get; set; }
-
-            [Range(1900, 2100)]
-            [Display(Name = "Năm xuất bản")]
-            public int? YearOfPublish { get; set; }
-
-            [Display(Name = "Số trang")]
-            public int? NumberOfPages { get; set; }
-
-            [StringLength(20)]
-            [Display(Name = "Mã vị trí kho (VD: A-01-01)")]
-            public string? LocationCode { get; set; }
-
-            [Display(Name = "Mô tả chi tiết sách")]
-            public string? Description { get; set; }
-
-            [Display(Name = "Kích hoạt bán ngay")]
-            public bool IsActive { get; set; } = true;
-        }
 
         public async Task OnGetAsync()
         {
-            Categories = await _context.Categories.OrderBy(c => c.Name).ToListAsync();
+            // Lấy danh sách danh mục (ưu tiên danh mục con)
+            Categories = await _context.Categories
+                .AsNoTracking()
+                .OrderBy(c => c.ParentId).ThenBy(c => c.Name)
+                .ToListAsync();
         }
 
         public async Task<IActionResult> OnPostAsync()
         {
+            // Yêu cầu hệ thống bỏ qua kiểm tra các object liên kết (vì HTML không gửi lên)
+            ModelState.Remove("Input.Category");
+            ModelState.Remove("Input.Location");
+            ModelState.Remove("Input.SupplierEntity");
+
+            // 1. Kiểm tra dữ liệu hợp lệ (không bỏ trống các trường bắt buộc)
             if (!ModelState.IsValid)
             {
-                Categories = await _context.Categories.OrderBy(c => c.Name).ToListAsync();
+                // Nếu lỗi, phải tải lại danh sách Danh mục trước khi trả về form
+                Categories = await _context.Categories.AsNoTracking().ToListAsync();
                 return Page();
             }
 
-            int? locationId = null;
-            if (!string.IsNullOrWhiteSpace(Input.LocationCode))
+            // 2. Xử lý thủ công biến LocationCode do entity Book chặn gán trực tiếp
+            string formLocationCode = Request.Form["Input.LocationCode"].ToString();
+
+            if (!string.IsNullOrWhiteSpace(formLocationCode))
             {
-                string formattedCode = Input.LocationCode.Trim().ToUpper();
-                var loc = await _context.Locations.FirstOrDefaultAsync(l => l.LocationCode == formattedCode);
-                locationId = loc?.Id;
+                formLocationCode = formLocationCode.Trim();
+
+                // Tìm xem kho này có trong hệ thống chưa
+                var location = await _context.Locations.FirstOrDefaultAsync(l => l.LocationCode == formLocationCode);
+
+                if (location == null)
+                {
+                    // Tự động tạo vị trí kho mới nếu chưa tồn tại
+                    location = new Location { LocationCode = formLocationCode };
+                    _context.Locations.Add(location);
+                    await _context.SaveChangesAsync();
+                }
+
+                Input.LocationId = location.Id;
             }
 
-            var book = new Book
-            {
-                Title = Input.Title,
-                Author = Input.Author,
-                CategoryId = Input.CategoryId,
-                LocationId = locationId,
-                Price = Input.Price,
-                ImportPrice = Input.ImportPrice,
-                StockQuantity = Input.StockQuantity,
-                ImageUrl = string.IsNullOrWhiteSpace(Input.ImageUrl) ? "https://via.placeholder.com/200x280?text=MindBook" : Input.ImageUrl,
-                Publisher = Input.Publisher,
-                Supplier = Input.Supplier,
-                Isbn = Input.Isbn,
-                YearOfPublish = Input.YearOfPublish,
-                NumberOfPages = Input.NumberOfPages,
-                Description = Input.Description,
-                IsActive = Input.IsActive,
-                SoldQuantity = 0
-            };
-
-            _context.Books.Add(book);
+            // 3. Đưa sách vào Database
+            _context.Books.Add(Input);
             await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = $"Thêm sách '{book.Title}' thành công!";
-            return RedirectToPage("/Admin/Products/Index");
+            // 4. Báo thành công và quay về trang danh sách
+            TempData["SuccessMessage"] = $"Đã thêm sách '{Input.Title}' thành công!";
+            return RedirectToPage("./Index");
         }
     }
 }

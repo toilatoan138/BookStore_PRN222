@@ -85,7 +85,7 @@
                     }
                     else
                     {
-                        int index = 0;
+                        int index = (Model.CurrentPage - 1) * Model.PageSize;
                         foreach (var o in Model.Orders)
                         {
                             index++;
@@ -155,6 +155,38 @@
                 </tbody>
             </table>
         </div>
+
+        <!-- COMPONENT PHÂN TRANG (PAGINATION) -->
+        @if (Model.TotalPages > 1)
+        {
+            <nav aria-label="Page navigation" class="mt-4 d-flex justify-content-center">
+                <ul class="pagination shadow-sm">
+                    <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                        <a class="page-link" asp-page="./Index"
+                           asp-route-CurrentPage="@(Model.CurrentPage - 1)"
+                           asp-route-Keyword="@Model.Keyword"
+                           asp-route-Status="@Model.Status">Trước</a>
+                    </li>
+
+                    @for (int i = 1; i <= Model.TotalPages; i++)
+                    {
+                        <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                            <a class="page-link" asp-page="./Index"
+                               asp-route-CurrentPage="@i"
+                               asp-route-Keyword="@Model.Keyword"
+                               asp-route-Status="@Model.Status">@i</a>
+                        </li>
+                    }
+
+                    <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                        <a class="page-link" asp-page="./Index"
+                           asp-route-CurrentPage="@(Model.CurrentPage + 1)"
+                           asp-route-Keyword="@Model.Keyword"
+                           asp-route-Status="@Model.Status">Sau</a>
+                    </li>
+                </ul>
+            </nav>
+        }
     </div>
 </div>
 
