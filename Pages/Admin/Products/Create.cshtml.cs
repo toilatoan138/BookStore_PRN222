@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using BookStore.Data;
 using BookStore.Models.Entities;
 using Microsoft.AspNetCore.Authorization;
@@ -8,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BookStore.Pages.Admin.Products
 {
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,Staff")]
     public class CreateModel : PageModel
     {
         private readonly ApplicationDbContext _context;
@@ -19,8 +18,9 @@ namespace BookStore.Pages.Admin.Products
         }
 
         [BindProperty]
-        public BookInputModel Input { get; set; } = new();
+        public Book Input { get; set; } = new();
 
+        // Danh sách Category để đổ vào thẻ <select> trên giao diện
         public List<Category> Categories { get; set; } = new();
         public List<Supplier> Suppliers { get; set; } = new();
 
@@ -89,6 +89,12 @@ namespace BookStore.Pages.Admin.Products
 
         public async Task<IActionResult> OnPostAsync()
         {
+            // Yêu cầu hệ thống bỏ qua kiểm tra các object liên kết (vì HTML không gửi lên)
+            ModelState.Remove("Input.Category");
+            ModelState.Remove("Input.Location");
+            ModelState.Remove("Input.SupplierEntity");
+
+            // 1. Kiểm tra dữ liệu hợp lệ (không bỏ trống các trường bắt buộc)
             if (!ModelState.IsValid)
             {
                 Categories = await _context.Categories.OrderBy(c => c.Name).ToListAsync();
@@ -96,16 +102,26 @@ namespace BookStore.Pages.Admin.Products
                 return Page();
             }
 
-            int? locationId = null;
-            if (!string.IsNullOrWhiteSpace(Input.LocationCode))
-            {
-                string formattedCode = Input.LocationCode.Trim().ToUpper();
-                var loc = await _context.Locations.FirstOrDefaultAsync(l => l.LocationCode == formattedCode);
-                locationId = loc?.Id;
-            }
+            // 2. Xử lý thủ công biến LocationCode do entity Book chặn gán trực tiếp
+            string formLocationCode = Request.Form["Input.LocationCode"].ToString();
 
-            var book = new Book
+            if (!string.IsNullOrWhiteSpace(formLocationCode))
             {
+                formLocationCode = formLocationCode.Trim();
+
+                // Tìm xem kho này có trong hệ thống chưa
+                var location = await _context.Locations.FirstOrDefaultAsync(l => l.LocationCode == formLocationCode);
+
+                if (location == null)
+                {
+                    // Tự động tạo vị trí kho mới nếu chưa tồn tại
+                    location = new Location { LocationCode = formLocationCode };
+                    _context.Locations.Add(location);
+                    await _context.SaveChangesAsync();
+                }
+
+                Input.LocationId = location.Id;
+            }
                 Title = Input.Title,
                 Author = Input.Author,
                 CategoryId = Input.CategoryId,
@@ -124,11 +140,13 @@ namespace BookStore.Pages.Admin.Products
                 SoldQuantity = 0
             };
 
-            _context.Books.Add(book);
+            // 3. Đưa sách vào Database
+            _context.Books.Add(Input);
             await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = $"Thêm sách '{book.Title}' thành công!";
-            return RedirectToPage("/Admin/Products/Index");
+            // 4. Báo thành công và quay về trang danh sách
+            TempData["SuccessMessage"] = $"Đã thêm sách '{Input.Title}' thành công!";
+            return RedirectToPage("./Index");
         }
     }
 }

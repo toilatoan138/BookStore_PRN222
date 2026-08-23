@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using BookStore.Data;
 using BookStore.Models.Entities;
 using Microsoft.AspNetCore.Authorization;
@@ -8,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BookStore.Pages.Admin.Products
 {
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,Staff")]
     public class EditModel : PageModel
     {
         private readonly ApplicationDbContext _context;
@@ -19,153 +18,131 @@ namespace BookStore.Pages.Admin.Products
         }
 
         [BindProperty]
-        public EditBookInputModel Input { get; set; } = new();
+        public Book Input { get; set; } = new();
 
-        public Book Book { get; set; } = null!;
+        // Biến Book dùng để hiển thị dữ liệu gốc lên Sidebar bên phải (Ảnh bìa, Gallery)
+        public Book Book { get; set; } = new();
+
         public List<Category> Categories { get; set; } = new();
-        public List<Supplier> Suppliers { get; set; } = new();
-
-        public class EditBookInputModel
-        {
-            public int Id { get; set; }
-
-            [Required(ErrorMessage = "Tiêu đề sách là bắt buộc")]
-            [StringLength(300)]
-            public string Title { get; set; } = string.Empty;
-
-            public string? Author { get; set; }
-
-            [Required(ErrorMessage = "Vui lòng chọn danh mục")]
-            public int CategoryId { get; set; }
-            
-            [Required(ErrorMessage = "Vui lòng chọn nhà cung cấp")]
-            public int SupplierId { get; set; }
-
-            [Required]
-            [Range(0, 100000000)]
-            public decimal Price { get; set; }
-
-            public decimal ImportPrice { get; set; }
-
-            public int StockQuantity { get; set; } // Read-only in view
-
-            public string? ImageUrl { get; set; }
-            public string? Publisher { get; set; }
-            public string? Isbn { get; set; }
-            public int? YearOfPublish { get; set; }
-            public int? NumberOfPages { get; set; }
-            public string? LocationCode { get; set; }
-            public string? Description { get; set; }
-            public bool IsActive { get; set; }
-        }
 
         public async Task<IActionResult> OnGetAsync(int id)
         {
+            // Tải dữ liệu cuốn sách kèm theo Ảnh phụ và thông tin Kho
             var book = await _context.Books
                 .Include(b => b.DetailImages)
-                .Include(b => b.Category)
                 .Include(b => b.Location)
                 .FirstOrDefaultAsync(b => b.Id == id);
 
-            if (book == null) return NotFound();
-
-            Book = book;
-            Categories = await _context.Categories.OrderBy(c => c.Name).ToListAsync();
-            Suppliers = await _context.Suppliers.Where(s => s.IsActive == true).OrderBy(s => s.Name).ToListAsync();
-
-            Input = new EditBookInputModel
+            if (book == null)
             {
-                Id = book.Id,
-                Title = book.Title,
-                Author = book.Author,
-                CategoryId = book.CategoryId,
-                SupplierId = book.SupplierId ?? 0,
-                Price = book.Price,
-                ImportPrice = book.ImportPrice,
-                StockQuantity = book.StockQuantity,
-                ImageUrl = book.ImageUrl,
-                Publisher = book.Publisher,
-                Isbn = book.Isbn,
-                YearOfPublish = book.YearOfPublish,
-                NumberOfPages = book.NumberOfPages,
-                LocationCode = book.LocationCode,
-                Description = book.Description,
-                IsActive = book.IsActive
-            };
+                TempData["ErrorMessage"] = "Không tìm thấy cuốn sách này!";
+                return RedirectToPage("./Index");
+            }
+
+            // Gán dữ liệu vào biến để hiển thị
+            Book = book;
+            Input = book;
+
+            Categories = await _context.Categories
+                .AsNoTracking()
+                .OrderBy(c => c.ParentId).ThenBy(c => c.Name)
+                .ToListAsync();
 
             return Page();
         }
 
+        // 1. HÀM XỬ LÝ LƯU THÔNG TIN CHÍNH (Nút "Lưu thay đổi")
         public async Task<IActionResult> OnPostAsync(int id)
         {
+            // Bỏ qua kiểm tra các liên kết object (Tránh lỗi chớp màn hình)
+            ModelState.Remove("Input.Category");
+            ModelState.Remove("Input.Location");
+            ModelState.Remove("Input.SupplierEntity");
+
             if (!ModelState.IsValid)
             {
-                return await OnGetAsync(id);
+                Book = await _context.Books.Include(b => b.DetailImages).FirstOrDefaultAsync(b => b.Id == id) ?? new Book();
+                Categories = await _context.Categories.AsNoTracking().ToListAsync();
+                return Page();
             }
 
-            var book = await _context.Books.FindAsync(id);
-            if (book == null) return NotFound();
+            var bookToUpdate = await _context.Books.FirstOrDefaultAsync(b => b.Id == id);
+            if (bookToUpdate == null) return RedirectToPage("./Index");
 
-            book.Title = Input.Title;
-            book.Author = Input.Author;
-            book.CategoryId = Input.CategoryId;
-            book.SupplierId = Input.SupplierId == 0 ? null : Input.SupplierId;
-            book.Price = Input.Price;
-            book.ImportPrice = Input.ImportPrice;
-            // Bỏ qua cập nhật book.StockQuantity ở đây
-            book.ImageUrl = Input.ImageUrl;
-            book.Publisher = Input.Publisher;
-            book.Isbn = Input.Isbn;
-            book.YearOfPublish = Input.YearOfPublish;
-            book.NumberOfPages = Input.NumberOfPages;
-            
-            if (!string.IsNullOrWhiteSpace(Input.LocationCode))
+            // Xử lý biến vị trí kho thủ công
+            string? formLocationCode = Request.Form["Input.LocationCode"].ToString();
+            if (!string.IsNullOrWhiteSpace(formLocationCode))
             {
-                string formattedCode = Input.LocationCode.Trim().ToUpper();
-                var loc = await _context.Locations.FirstOrDefaultAsync(l => l.LocationCode == formattedCode);
-                book.LocationId = loc?.Id;
+                formLocationCode = formLocationCode.Trim();
+                var location = await _context.Locations.FirstOrDefaultAsync(l => l.LocationCode == formLocationCode);
+
+                if (location == null)
+                {
+                    location = new Location { LocationCode = formLocationCode };
+                    _context.Locations.Add(location);
+                    await _context.SaveChangesAsync();
+                }
+                bookToUpdate.LocationId = location.Id;
             }
             else
             {
-                book.LocationId = null;
+                bookToUpdate.LocationId = null;
             }
 
-            book.Description = Input.Description;
-            book.IsActive = Input.IsActive;
+            // Cập nhật các trường dữ liệu
+            bookToUpdate.Title = Input.Title;
+            bookToUpdate.CategoryId = Input.CategoryId;
+            bookToUpdate.Author = Input.Author;
+            bookToUpdate.Publisher = Input.Publisher;
+            bookToUpdate.Price = Input.Price;
+            bookToUpdate.ImportPrice = Input.ImportPrice;
+            bookToUpdate.StockQuantity = Input.StockQuantity;
+            bookToUpdate.ImageUrl = Input.ImageUrl;
+            bookToUpdate.Isbn = Input.Isbn;
+            bookToUpdate.YearOfPublish = Input.YearOfPublish;
+            bookToUpdate.NumberOfPages = Input.NumberOfPages;
+            bookToUpdate.Description = Input.Description;
+            bookToUpdate.IsActive = Input.IsActive;
 
             await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = $"Cập nhật thông tin sách '{book.Title}' thành công!";
-            return RedirectToPage("/Admin/Products/Index");
+            TempData["SuccessMessage"] = "Đã cập nhật thông tin sách thành công!";
+            // Cập nhật xong thì load lại trang Edit này để xem thành quả
+            return RedirectToPage(new { id = id });
         }
 
+        // 2. HÀM XỬ LÝ THÊM ẢNH PHỤ (Nút "Thêm")
         public async Task<IActionResult> OnPostAddDetailImageAsync(int id, string detailImageUrl)
         {
-            if (!string.IsNullOrWhiteSpace(detailImageUrl))
-            {
-                _context.BookImages.Add(new BookImage
-                {
-                    BookId = id,
-                    ImageUrl = detailImageUrl.Trim()
-                });
-                await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = "Đã thêm ảnh chi tiết mới!";
-            }
+            if (string.IsNullOrWhiteSpace(detailImageUrl))
+                return RedirectToPage(new { id = id });
 
-            return RedirectToPage(new { id });
+            var newImage = new BookImage
+            {
+                BookId = id,
+                ImageUrl = detailImageUrl
+            };
+
+            _context.Add(newImage);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Đã thêm ảnh phụ thành công!";
+            return RedirectToPage(new { id = id });
         }
 
+        // 3. HÀM XỬ LÝ XÓA ẢNH PHỤ (Nút thùng rác nhỏ)
         public async Task<IActionResult> OnPostDeleteDetailImageAsync(int id, int imageId)
         {
-            var img = await _context.BookImages.FirstOrDefaultAsync(bi => bi.Id == imageId && bi.BookId == id);
-            if (img != null)
+            var image = await _context.FindAsync<BookImage>(imageId);
+
+            if (image != null && image.BookId == id)
             {
-                _context.BookImages.Remove(img);
+                _context.Remove(image);
                 await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = "Đã xóa ảnh chi tiết!";
+                TempData["SuccessMessage"] = "Đã xóa ảnh phụ!";
             }
 
-            return RedirectToPage(new { id });
+            return RedirectToPage(new { id = id });
         }
     }
 }

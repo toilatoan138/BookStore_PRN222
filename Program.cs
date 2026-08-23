@@ -168,4 +168,42 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+// --- CODE SEED DATA: Tự động tạo Admin ---
+using (var scope = app.Services.CreateScope())
+{
+    var userManager = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<BookStore.Models.Entities.ApplicationUser>>();
+    var roleManager = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Identity.RoleManager<Microsoft.AspNetCore.Identity.IdentityRole>>();
+
+    // Kiểm tra và tạo Role Admin nếu chưa có
+    if (!await roleManager.RoleExistsAsync("Admin"))
+    {
+        await roleManager.CreateAsync(new Microsoft.AspNetCore.Identity.IdentityRole("Admin"));
+    }
+
+    // Kiểm tra và tạo tài khoản Admin nếu chưa có
+    string adminEmail = "admin@bookstore.com";
+    if (await userManager.FindByEmailAsync(adminEmail) == null)
+    {
+        var adminUser = new BookStore.Models.Entities.ApplicationUser
+        {
+            UserName = "admin",
+            Email = adminEmail,
+            FullName = "Nguyễn Nhật Anh - Quản Trị Viên",
+            EmailConfirmed = true,
+            Status = true,
+            FPoints = 1000,
+            WalletBalance = 500000
+        };
+
+        // Hệ thống sẽ TỰ ĐỘNG mã hóa mật khẩu này cho đúng chuẩn
+        var result = await userManager.CreateAsync(adminUser, "Admin@123");
+
+        if (result.Succeeded)
+        {
+            await userManager.AddToRoleAsync(adminUser, "Admin");
+        }
+    }
+}
+// ------------------------------------------
+
 app.Run();

@@ -1,19 +1,20 @@
-﻿using BookStore.Models.Entities;
-using BookStore.Services;
+﻿using BookStore.Data;
+using BookStore.Models.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 
 namespace BookStore.Pages.Admin.Returns
 {
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,Staff")]
     public class IndexModel : PageModel
     {
-        private readonly IAdminService _adminService;
+        private readonly ApplicationDbContext _context;
 
-        public IndexModel(IAdminService adminService)
+        public IndexModel(ApplicationDbContext context)
         {
-            _adminService = adminService;
+            _context = context;
         }
 
         public List<ReturnRequest> Returns { get; set; } = new();
@@ -23,21 +24,53 @@ namespace BookStore.Pages.Admin.Returns
 
         public async Task OnGetAsync()
         {
-            Returns = await _adminService.GetReturnRequestsAsync(Status);
+            var query = _context.ReturnRequests
+                .Include(r => r.Order)
+                .Include(r => r.Book)
+                .AsNoTracking()
+                .AsQueryable();
+
+            if (Status.HasValue)
+            {
+                query = query.Where(r => r.Status == Status.Value);
+            }
+
+            Returns = await query
+                .OrderByDescending(r => r.ReturnId)
+                .ToListAsync();
         }
 
-        public async Task<IActionResult> OnPostReviewAsync(int id, int newStatus, string? note, decimal? refundAmount)
+        // Xử lý quyết định duyệt/từ chối/hoàn tiền yêu cầu trả hàng từ Modal
+        // Xử lý quyết định duyệt/từ chối/hoàn tiền yêu cầu trả hàng từ Modal
+        public async Task<IActionResult> OnPostReviewAsync(int id, int newStatus, decimal? refundAmount, string note)
         {
-            bool success = await _adminService.ReviewReturnRequestAsync(id, newStatus, note, refundAmount);
-            if (success)
+            var returnReq = await _context.ReturnRequests
+                .Include(r => r.Order)
+                .FirstOrDefaultAsync(r => r.ReturnId == id);
+
+            if (returnReq == null)
             {
-                TempData["SuccessMessage"] = "Đã cập nhật xử lý yêu cầu trả hàng & hoàn tiền!";
-            }
-            else
-            {
-                TempData["ErrorMessage"] = "Không tìm thấy yêu cầu trả hàng.";
+                TempData["ErrorMessage"] = "Không tìm thấy yêu cầu trả hàng!";
+                return RedirectToPage();
             }
 
+            // Cập nhật trạng thái yêu cầu
+            returnReq.Status = newStatus;
+
+            // Nếu Admin/Staff chọn hoàn tiền vào ví (newStatus == 3) và có phát sinh số tiền
+            if (newStatus == 3 && refundAmount.HasValue && refundAmount.Value > 0)
+            {
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == returnReq.Order.UserId);
+                if (user != null)
+                {
+                    // Cộng tiền trực tiếp vào số dư ví của khách
+                    user.WalletBalance += refundAmount.Value;
+                }
+            }
+
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = $"Đã xử lý thành công yêu cầu trả hàng #{returnReq.ReturnId}!";
             return RedirectToPage(new { status = Status });
         }
     }
