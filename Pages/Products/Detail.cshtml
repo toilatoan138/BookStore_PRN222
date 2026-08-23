@@ -1,4 +1,4 @@
-﻿@page "{id:int}"
+@page "{id:int}"
 @model BookStore.Pages.Products.DetailModel
 @{
     ViewData["Title"] = Model.Book.Title;
@@ -65,21 +65,80 @@
                     </div>
                 </div>
 
-                <!-- STOCK STATUS -->
-                <div class="mb-4">
-                    <span class="text-muted small">Tình trạng: </span>
-                    @if (Model.Book.StockQuantity > 0)
-                    {
-                        <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1">
-                            <i class="fa-solid fa-check me-1"></i>Còn hàng (@Model.Book.StockQuantity sản phẩm)
-                        </span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-1">
-                            <i class="fa-solid fa-xmark me-1"></i>Tạm hết hàng
-                        </span>
-                    }
+                <!-- ======================== CELLPHONES-STYLE MULTI-WAREHOUSE STOCK WIDGET ======================== -->
+                <div class="card border border-danger-subtle rounded-4 p-3 bg-light-subtle mb-4 shadow-sm">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                        <div class="fw-bold text-dark fs-6">
+                            <i class="fa-solid fa-warehouse text-danger me-2"></i>Số lượng sách tại các kho hàng:
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-danger dropdown-toggle rounded-pill px-3 fw-semibold" type="button" data-bs-toggle="dropdown">
+                                <i class="fa-solid fa-location-dot me-1"></i>Khu vực xem: @Model.CurrentRegion
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-3">
+                                <li><a class="dropdown-item py-2" href="javascript:selectHeaderRegion('Miền Bắc (Hà Nội)')"><i class="fa-solid fa-building text-danger me-2"></i>Miền Bắc (Hà Nội)</a></li>
+                                <li><a class="dropdown-item py-2" href="javascript:selectHeaderRegion('Miền Trung (Đà Nẵng)')"><i class="fa-solid fa-building text-warning me-2"></i>Miền Trung (Đà Nẵng)</a></li>
+                                <li><a class="dropdown-item py-2" href="javascript:selectHeaderRegion('Miền Nam (TP.HCM)')"><i class="fa-solid fa-building text-primary me-2"></i>Miền Nam (TP.HCM)</a></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- 3 Regional Warehouse Cards -->
+                    <div class="row g-2 mb-2">
+                        @foreach (var wh in Model.WarehouseStocks)
+                        {
+                            string targetRegion = wh.WarehouseCode == "HN" 
+                                ? "Miền Bắc (Hà Nội)" 
+                                : (wh.WarehouseCode == "DN" ? "Miền Trung (Đà Nẵng)" : "Miền Nam (TP.HCM)");
+
+                            <div class="col-md-4">
+                                <div class="warehouse-card p-2 px-3 border rounded-3 h-100 d-flex flex-column justify-content-between @(wh.IsUserRegion ? "bg-danger-subtle border-danger border-2 shadow-sm" : "bg-white border-light-subtle")"
+                                     onclick="selectHeaderRegion('@targetRegion')"
+                                     role="button"
+                                     tabindex="0"
+                                     style="cursor: pointer; transition: all 0.2s ease-in-out; position: relative;"
+                                     title="Bấm để chọn khu vực @targetRegion">
+                                    <div>
+                                        <div class="d-flex align-items-center justify-content-between mb-1">
+                                            <span class="fw-bold small text-dark">@wh.WarehouseName</span>
+                                            @if (wh.IsUserRegion)
+                                            {
+                                                <span class="badge bg-danger rounded-pill px-2" style="font-size: 0.65rem;">
+                                                    <i class="fa-solid fa-circle-check me-1"></i>Đang chọn
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-light text-muted border rounded-pill px-2 card-switch-hint" style="font-size: 0.65rem;">
+                                                    <i class="fa-solid fa-hand-pointer me-1"></i>Bấm để chọn
+                                                </span>
+                                            }
+                                        </div>
+                                        <div class="text-muted small mb-2" style="font-size: 0.75rem;">
+                                            <i class="fa-solid fa-cubes-stacked me-1"></i>@wh.ZoneLetter
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex align-items-center justify-content-between pt-2 border-top">
+                                        <span class="badge @wh.BadgeClass px-2 py-1">
+                                            @(wh.StockQuantity > 0 ? $"Còn {wh.StockQuantity} cuốn" : "Hết hàng")
+                                        </span>
+                                        <span class="text-muted small" style="font-size: 0.75rem;">
+                                            <i class="fa-solid fa-truck-fast text-secondary me-1"></i>@wh.DeliveryEstimate
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Dynamic cross-warehouse notice -->
+                    <div id="crossWarehouseAlert" class="alert alert-info py-2 px-3 mt-2 mb-0 small d-flex align-items-center gap-2 @(Model.WarehouseStocks.FirstOrDefault(w => w.IsUserRegion)?.StockQuantity > 0 ? "d-none" : "")">
+                        <i class="fa-solid fa-circle-info text-primary fs-5"></i>
+                        <div>
+                            <strong>Lưu ý giao hàng liên kho:</strong> Sách sẽ được điều chuyển từ tổng kho khác đến địa chỉ của bạn. Thời gian nhận hàng cam kết từ <strong>3 - 5 ngày (tối đa trong 5 ngày)</strong>.
+                        </div>
+                    </div>
                 </div>
 
                 <!-- QUANTITY & BUY BUTTONS -->
@@ -90,9 +149,10 @@
                             <label class="form-label mb-0 fw-semibold">Số lượng:</label>
                             <div class="input-group" style="width: 130px;">
                                 <button type="button" class="btn btn-outline-secondary btn-sm" onclick="changeQty(-1)">-</button>
-                                <input type="number" id="qtyInput" name="quantity" value="1" min="1" max="@Model.Book.StockQuantity" class="form-control form-control-sm text-center fw-bold" />
+                                <input type="number" id="qtyInput" name="quantity" value="1" min="1" max="@Model.Book.StockQuantity" oninput="checkCrossWarehouseStock(this.value)" class="form-control form-control-sm text-center fw-bold" />
                                 <button type="button" class="btn btn-outline-secondary btn-sm" onclick="changeQty(1)">+</button>
                             </div>
+                            <span class="text-muted small">Tổng tồn toàn hệ thống: <strong>@Model.Book.StockQuantity</strong> cuốn</span>
                         </div>
 
                         <div class="d-flex flex-wrap gap-3">
@@ -104,6 +164,12 @@
                             </button>
                         </div>
                     </form>
+                }
+                else
+                {
+                    <div class="alert alert-danger py-3 rounded-4 mb-4">
+                        <i class="fa-solid fa-triangle-exclamation me-2"></i>Sản phẩm tạm thời hết hàng trên toàn bộ các kho. Vui lòng quay lại sau!
+                    </div>
                 }
 
                 <!-- POLICIES -->
@@ -257,14 +323,47 @@
     </div>
 </div>
 
+<style>
+    .warehouse-card {
+        cursor: pointer;
+        transition: all 0.2s ease-in-out;
+        user-select: none;
+    }
+    .warehouse-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(220, 38, 38, 0.15) !important;
+        border-color: #dc3545 !important;
+    }
+    .warehouse-card:hover .card-switch-hint {
+        background-color: #dc3545 !important;
+        color: #fff !important;
+        border-color: #dc3545 !important;
+    }
+</style>
+
 <script>
     function changeQty(delta) {
         const input = document.getElementById('qtyInput');
+        if (!input) return;
         let current = parseInt(input.value) || 1;
         let max = parseInt(input.max) || 999;
         let next = current + delta;
         if (next >= 1 && next <= max) {
             input.value = next;
+            checkCrossWarehouseStock(next);
+        }
+    }
+
+    function checkCrossWarehouseStock(val) {
+        let quantity = parseInt(val) || 1;
+        let localStock = @(Model.WarehouseStocks.FirstOrDefault(w => w.IsUserRegion)?.StockQuantity ?? 0);
+        let alertBox = document.getElementById('crossWarehouseAlert');
+        if (alertBox) {
+            if (quantity > localStock) {
+                alertBox.classList.remove('d-none');
+            } else if (localStock > 0) {
+                alertBox.classList.add('d-none');
+            }
         }
     }
 </script>

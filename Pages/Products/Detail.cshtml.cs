@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using BookStore.Models.Entities;
 using BookStore.Services;
 using Microsoft.AspNetCore.Identity;
@@ -12,19 +12,24 @@ namespace BookStore.Pages.Products
         private readonly IBookService _bookService;
         private readonly ICartService _cartService;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IWarehouseFulfillmentService _fulfillmentService;
 
         public DetailModel(
             IBookService bookService,
             ICartService cartService,
-            UserManager<ApplicationUser> userManager)
+            UserManager<ApplicationUser> userManager,
+            IWarehouseFulfillmentService fulfillmentService)
         {
             _bookService = bookService;
             _cartService = cartService;
             _userManager = userManager;
+            _fulfillmentService = fulfillmentService;
         }
 
         public Book Book { get; set; } = null!;
         public List<Book> SuggestedBooks { get; set; } = new();
+        public List<WarehouseStockInfo> WarehouseStocks { get; set; } = new();
+        public string CurrentRegion { get; set; } = "Miền Bắc (Hà Nội)";
 
         [BindProperty]
         public int Quantity { get; set; } = 1;
@@ -55,6 +60,10 @@ namespace BookStore.Pages.Products
 
             Book = book;
             SuggestedBooks = await _bookService.GetSuggestedBooksAsync(book.Id, book.CategoryId, 6);
+
+            var user = await _userManager.GetUserAsync(User);
+            CurrentRegion = _fulfillmentService.GetUserSelectedRegion(HttpContext, user?.Addresses?.FirstOrDefault(a => a.IsDefaultShipping)?.City);
+            WarehouseStocks = await _fulfillmentService.GetWarehouseStocksForBookAsync(book.Id, CurrentRegion);
 
             return Page();
         }

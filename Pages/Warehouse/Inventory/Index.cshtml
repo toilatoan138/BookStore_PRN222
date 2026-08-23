@@ -1,4 +1,4 @@
-﻿@page
+@page
 @model BookStore.Pages.Warehouse.Inventory.IndexModel
 @{
     Layout = "_AdminLayout";
@@ -79,17 +79,17 @@
             <table class="table table-bordered table-striped table-hover align-middle w-100 mb-0">
                 <thead class="table-dark">
                     <tr>
-                        <th class="text-center" style="width: 5%;">STT</th>
-                        <th class="text-center" style="width: 7%;">Ảnh</th>
-                        <th style="width: 22%;">Tên sách</th>
-                        <th style="width: 12%;">Thể loại</th>
-                        <th class="text-center" style="width: 10%;">Vị trí kệ</th>
-                        <th style="width: 13%;">Tác giả</th>
-                        <th style="width: 13%;">Nhà xuất bản</th>
-                        <th style="width: 10%;">Giá bán</th>
-                        <th class="text-center" style="width: 8%;">Tồn kho</th>
-                        <th class="text-center" style="width: 10%;">Trạng thái</th>
-                        <th class="text-center" style="width: 8%;">Thao tác</th>
+                        <th class="text-center" style="width: 4%;">STT</th>
+                        <th class="text-center" style="width: 5%;">Ảnh</th>
+                        <th style="width: 18%;">Tên sách</th>
+                        <th style="width: 10%;">Thể loại</th>
+                        <th class="text-center" style="width: 12%;">Khu vực & Vị trí</th>
+                        <th class="text-end" style="width: 9%;">Giá nhập (Đầu vào)</th>
+                        <th class="text-end" style="width: 9%;">Giá bán (Đầu ra)</th>
+                        <th class="text-center" style="width: 7%;">Biên lãi</th>
+                        <th class="text-center" style="width: 7%;">Tồn kho</th>
+                        <th class="text-center" style="width: 8%;">Trạng thái</th>
+                        <th class="text-center" style="width: 7%;">Thao tác</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -105,6 +105,8 @@
                         foreach (var b in Model.Books)
                         {
                             index++;
+                            string warehouseName = b.Location?.Zone == "A" ? "Kho Hà Nội" : (b.Location?.Zone == "B" ? "Kho Đà Nẵng" : (b.Location?.Zone == "C" || b.Location?.Zone == "D" ? "Kho TP.HCM" : "Chưa phân kho"));
+                            decimal marginPercent = b.Price > 0 ? ((b.Price - b.ImportPrice) / b.Price) * 100 : 0;
                             <tr>
                                 <td class="text-center fw-bold text-muted">@index</td>
                                 <td class="text-center">
@@ -114,14 +116,30 @@
                                          class="rounded border"
                                          onerror="this.src='https://placehold.co/45x65?text=Img'" />
                                 </td>
-                                <td class="fw-bold text-primary">@b.Title</td>
-                                <td>@(b.Category?.Name ?? "Chưa phân loại")</td>
-                                <td class="text-center fw-bold text-info">
-                                    @(b.LocationCode != null ? b.LocationCode : Html.Raw("<span class='text-muted small'>Chưa xếp kệ</span>"))
+                                <td>
+                                    <strong class="text-primary d-block">@b.Title</strong>
+                                    <small class="text-muted">@(b.Author ?? "N/A") | @(b.Publisher ?? "N/A")</small>
                                 </td>
-                                <td>@(b.Author ?? "N/A")</td>
-                                <td>@(b.Publisher ?? "N/A")</td>
-                                <td class="fw-bold text-danger">@b.Price.ToString("N0")đ</td>
+                                <td>@(b.Category?.Name ?? "Chưa phân loại")</td>
+                                <td class="text-center">
+                                    <span class="badge bg-secondary-subtle text-secondary border px-2 py-1 d-block mb-1">
+                                        @(b.LocationCode != null ? b.LocationCode : "Chưa xếp kệ")
+                                    </span>
+                                    <span class="badge bg-danger-subtle text-danger small">
+                                        <i class="fa-solid fa-warehouse me-1"></i>@warehouseName
+                                    </span>
+                                </td>
+                                <td class="text-end text-muted fw-semibold">
+                                    @b.ImportPrice.ToString("N0")đ
+                                </td>
+                                <td class="text-end fw-bold text-danger">
+                                    @b.Price.ToString("N0")đ
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge @(marginPercent >= 20 ? "bg-success-subtle text-success" : "bg-warning-subtle text-warning")">
+                                        @marginPercent.ToString("N1")%
+                                    </span>
+                                </td>
                                 <td class="text-center fs-5 fw-bold text-secondary">@b.StockQuantity</td>
                                 <td class="text-center text-nowrap">
                                     @if (b.StockQuantity <= 0)

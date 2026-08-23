@@ -1,4 +1,4 @@
-﻿using BookStore.Data;
+using BookStore.Data;
 using BookStore.Models.Entities;
 using BookStore.Models.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -10,12 +10,18 @@ namespace BookStore.Services
         private readonly ApplicationDbContext _context;
         private readonly IUserService _userService;
         private readonly ICartService _cartService;
+        private readonly IWarehouseFulfillmentService _fulfillmentService;
 
-        public OrderService(ApplicationDbContext context, IUserService userService, ICartService cartService)
+        public OrderService(
+            ApplicationDbContext context, 
+            IUserService userService, 
+            ICartService cartService,
+            IWarehouseFulfillmentService fulfillmentService)
         {
             _context = context;
             _userService = userService;
             _cartService = cartService;
+            _fulfillmentService = fulfillmentService;
         }
 
         public async Task<CheckoutCalculationResult> CalculateCheckoutAsync(
@@ -159,6 +165,14 @@ namespace BookStore.Services
 
             string shippingAddressStr = $"{address.FullName} | {address.Phone} | {address.AddressDetail}, {address.Ward}, {address.District}, {address.City}";
 
+            // Calculate fulfillment plan (1-2 days standard vs 3-5 days cross-warehouse transfer)
+            var itemsTuple = cartItems.Select(ci => (ci.BookId, ci.Quantity)).ToList();
+            var fulfillmentPlan = await _fulfillmentService.EvaluateFulfillmentPlanAsync(itemsTuple, address.City, null);
+
+            string fulfillmentStatusNote = fulfillmentPlan.RequiresInterWarehouseTransfer
+                ? $"[ĐIỀU CHUYỂN LIÊN KHO - GIAO 3-5 NGÀY] {fulfillmentPlan.FulfillmentWarehouseName} -> Giao {address.City}. {fulfillmentPlan.DeliveryNotice}"
+                : $"[GIAO TIÊU CHUẨN 1-2 NGÀY] Xuất kho {fulfillmentPlan.FulfillmentWarehouseName}";
+
             // Create Order
             var order = new Order
             {
@@ -172,7 +186,8 @@ namespace BookStore.Services
                 PaymentMethod = request.PaymentMethod,
                 ShippingFee = calc.ShippingFee,
                 DiscountAmount = calc.TotalDiscount,
-                VoucherId = calc.AppliedVoucherId
+                VoucherId = calc.AppliedVoucherId,
+                StatusNote = fulfillmentStatusNote
             };
 
             foreach (var item in cartItems)
@@ -192,14 +207,14 @@ namespace BookStore.Services
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
 
-            // Log EXPORT in Inventory History for each purchased book
+            // Log EXPORT (and TRANSFER if cross-region) in Inventory History
             foreach (var item in cartItems)
             {
                 _context.InventoryHistories.Add(new InventoryHistory
                 {
                     BookId = item.BookId,
                     CreatedById = request.UserId,
-                    TransactionType = "EXPORT",
+                    TransactionType = fulfillmentPlan.RequiresInterWarehouseTransfer ? "TRANSFER" : "EXPORT",
                     QuantityChanged = -item.Quantity,
                     RelatedId = order.Id,
                     CreatedAt = DateTime.UtcNow

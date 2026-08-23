@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using BookStore.Data;
 using BookStore.Models.Entities;
 using BookStore.Services;
@@ -19,6 +19,7 @@ namespace BookStore.Pages.Checkout
         private readonly IVnPayService _vnPayService;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ApplicationDbContext _context;
+        private readonly IWarehouseFulfillmentService _fulfillmentService;
 
         public IndexModel(
             IOrderService orderService,
@@ -26,7 +27,8 @@ namespace BookStore.Pages.Checkout
             ICartService cartService,
             IVnPayService vnPayService,
             UserManager<ApplicationUser> userManager,
-            ApplicationDbContext context)
+            ApplicationDbContext context,
+            IWarehouseFulfillmentService fulfillmentService)
         {
             _orderService = orderService;
             _userService = userService;
@@ -34,6 +36,7 @@ namespace BookStore.Pages.Checkout
             _vnPayService = vnPayService;
             _userManager = userManager;
             _context = context;
+            _fulfillmentService = fulfillmentService;
         }
 
         public ApplicationUser CurrentUser { get; set; } = null!;
@@ -41,6 +44,7 @@ namespace BookStore.Pages.Checkout
         public List<CartItem> CheckoutItems { get; set; } = new();
         public List<UserVoucher> AvailableVouchers { get; set; } = new();
         public CheckoutCalculationResult Calculation { get; set; } = new();
+        public RegionalFulfillmentResult FulfillmentPlan { get; set; } = new();
 
         [BindProperty]
         public CheckoutFormModel Form { get; set; } = new();
@@ -114,6 +118,11 @@ namespace BookStore.Pages.Checkout
                 Form.VoucherCode,
                 Form.PaymentMethod
             );
+
+            var selectedAddr = Addresses.FirstOrDefault(a => a.Id == Form.SelectedAddressId) ?? Addresses.FirstOrDefault();
+            var itemsTuple = CheckoutItems.Select(ci => (ci.BookId, ci.Quantity)).ToList();
+            var userRegion = _fulfillmentService.GetUserSelectedRegion(HttpContext, selectedAddr?.City);
+            FulfillmentPlan = await _fulfillmentService.EvaluateFulfillmentPlanAsync(itemsTuple, selectedAddr?.City, userRegion);
 
             return Page();
         }

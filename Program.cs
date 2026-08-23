@@ -1,4 +1,4 @@
-﻿using BookStore.Data;
+using BookStore.Data;
 using BookStore.Models.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -70,6 +70,7 @@ builder.Services.AddScoped<BookStore.Services.IAdminService, BookStore.Services.
 builder.Services.AddScoped<BookStore.Services.ICategoryService, BookStore.Services.CategoryService>();
 builder.Services.AddScoped<BookStore.Services.IStaffService, BookStore.Services.StaffService>();
 builder.Services.AddScoped<BookStore.Services.IWarehouseService, BookStore.Services.WarehouseService>();
+builder.Services.AddScoped<BookStore.Services.IWarehouseFulfillmentService, BookStore.Services.WarehouseFulfillmentService>();
 builder.Services.AddSignalR();
 
 // ====================================================================

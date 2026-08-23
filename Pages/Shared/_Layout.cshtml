@@ -61,6 +61,27 @@
                 lastScrollY = window.scrollY;
             }
         });
+
+        // Regional Warehouse Selector
+        function getRegionCookie(name) {
+            let matches = document.cookie.match(new RegExp("(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"));
+            return matches ? decodeURIComponent(matches[1]) : undefined;
+        }
+
+        function selectHeaderRegion(region) {
+            document.cookie = "MindBook_Selected_Region=" + encodeURIComponent(region) + ";path=/;max-age=2592000;SameSite=Lax";
+            let lbl = document.getElementById('lblCurrentRegion');
+            if (lbl) lbl.innerText = region;
+            location.reload();
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            let saved = getRegionCookie("MindBook_Selected_Region");
+            if (saved) {
+                let lbl = document.getElementById('lblCurrentRegion');
+                if (lbl) lbl.innerText = saved;
+            }
+        });
     </script>
 
     <!-- FLOATING LIVE CHAT WIDGET -->
