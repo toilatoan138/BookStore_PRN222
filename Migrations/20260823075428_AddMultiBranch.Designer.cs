@@ -4,6 +4,7 @@ using BookStore.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BookStore.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260823075428_AddMultiBranch")]
+    partial class AddMultiBranch
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1010,10 +1013,6 @@ namespace BookStore.Migrations
                         .HasColumnType("nvarchar(128)")
                         .HasColumnName("approved_by");
 
-                    b.Property<int>("BranchId")
-                        .HasColumnType("int")
-                        .HasColumnName("branch_id");
-
                     b.Property<DateTime>("OrderDate")
                         .HasColumnType("datetime")
                         .HasColumnName("order_date");
@@ -1046,8 +1045,6 @@ namespace BookStore.Migrations
                     b.HasKey("PurchaseOrderId");
 
                     b.HasIndex("ApprovedById");
-
-                    b.HasIndex("BranchId");
 
                     b.HasIndex("Status");
 
@@ -1958,12 +1955,6 @@ namespace BookStore.Migrations
                         .HasForeignKey("ApprovedById")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("BookStore.Models.Entities.Branch", "Branch")
-                        .WithMany()
-                        .HasForeignKey("BranchId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("BookStore.Models.Entities.Supplier", "Supplier")
                         .WithMany("PurchaseOrders")
                         .HasForeignKey("SupplierId")
@@ -1976,8 +1967,6 @@ namespace BookStore.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("ApprovedBy");
-
-                    b.Navigation("Branch");
 
                     b.Navigation("CreatedBy");
 

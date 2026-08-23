@@ -47,6 +47,8 @@ namespace BookStore.Data
         public DbSet<WalletHistory> WalletHistories => Set<WalletHistory>();
         public DbSet<FPointHistory> FPointHistories => Set<FPointHistory>();
         public DbSet<CustomerNote> CustomerNotes => Set<CustomerNote>();
+        public DbSet<Branch> Branches => Set<Branch>();
+        public DbSet<BranchInventory> BranchInventories => Set<BranchInventory>();
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -568,6 +570,23 @@ namespace BookStore.Data
                 entity.HasOne(cn => cn.User)
                       .WithMany(u => u.CustomerNotes)
                       .HasForeignKey(cn => cn.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // ====================================================================
+            // BRANCH INVENTORY
+            // ====================================================================
+            builder.Entity<BranchInventory>(entity =>
+            {
+                entity.ToTable("Branch_Inventory");
+                entity.HasOne(bi => bi.Branch)
+                      .WithMany(b => b.Inventories)
+                      .HasForeignKey(bi => bi.BranchId)
+                      .OnDelete(DeleteBehavior.Cascade);
+                
+                entity.HasOne(bi => bi.Book)
+                      .WithMany()
+                      .HasForeignKey(bi => bi.BookId)
                       .OnDelete(DeleteBehavior.Cascade);
             });
         }

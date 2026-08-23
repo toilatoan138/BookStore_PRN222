@@ -1,4 +1,4 @@
-﻿@page "{id:int}"
+@page "{id:int}"
 @model BookStore.Pages.Products.DetailModel
 @{
     ViewData["Title"] = Model.Book.Title;
@@ -65,14 +65,35 @@
                     </div>
                 </div>
 
-                <!-- STOCK STATUS -->
+                <!-- STOCK STATUS & BRANCHES -->
                 <div class="mb-4">
                     <span class="text-muted small">Tình trạng: </span>
-                    @if (Model.Book.StockQuantity > 0)
+                    @{
+                        int totalStock = Model.BranchInventories.Sum(bi => bi.StockQuantity);
+                    }
+                    @if (totalStock > 0)
                     {
-                        <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1">
-                            <i class="fa-solid fa-check me-1"></i>Còn hàng (@Model.Book.StockQuantity sản phẩm)
+                        <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1 mb-2">
+                            <i class="fa-solid fa-check me-1"></i>Còn hàng (@totalStock sản phẩm)
                         </span>
+                        
+                        <div class="card border-info shadow-sm mt-2">
+                            <div class="card-header bg-info-subtle text-info-emphasis fw-bold py-2">
+                                <i class="fa-solid fa-store me-1"></i> Khả dụng tại các chi nhánh
+                            </div>
+                            <ul class="list-group list-group-flush">
+                                @foreach (var bi in Model.BranchInventories.Where(b => b.StockQuantity > 0))
+                                {
+                                    <li class="list-group-item d-flex justify-content-between align-items-center py-2">
+                                        <div>
+                                            <strong>@bi.Branch.Name</strong>
+                                            <div class="text-muted small"><i class="fa-solid fa-location-dot me-1"></i> @bi.Branch.Address, @bi.Branch.City</div>
+                                        </div>
+                                        <span class="badge bg-primary rounded-pill">@bi.StockQuantity</span>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
                     }
                     else
                     {
@@ -83,14 +104,14 @@
                 </div>
 
                 <!-- QUANTITY & BUY BUTTONS -->
-                @if (Model.Book.StockQuantity > 0)
+                @if (totalStock > 0)
                 {
                     <form method="post" asp-page-handler="AddToCart" asp-route-id="@Model.Book.Id" class="mb-4">
                         <div class="d-flex align-items-center gap-3 mb-4">
                             <label class="form-label mb-0 fw-semibold">Số lượng:</label>
                             <div class="input-group" style="width: 130px;">
                                 <button type="button" class="btn btn-outline-secondary btn-sm" onclick="changeQty(-1)">-</button>
-                                <input type="number" id="qtyInput" name="quantity" value="1" min="1" max="@Model.Book.StockQuantity" class="form-control form-control-sm text-center fw-bold" />
+                                <input type="number" id="qtyInput" name="quantity" value="1" min="1" max="@totalStock" class="form-control form-control-sm text-center fw-bold" />
                                 <button type="button" class="btn btn-outline-secondary btn-sm" onclick="changeQty(1)">+</button>
                             </div>
                         </div>

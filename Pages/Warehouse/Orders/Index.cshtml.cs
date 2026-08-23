@@ -1,4 +1,4 @@
-﻿using BookStore.Data;
+using BookStore.Data;
 using BookStore.Models.Entities;
 using BookStore.Models.Enums;
 using Microsoft.AspNetCore.Authorization;
@@ -30,6 +30,7 @@ namespace BookStore.Pages.Warehouse.Orders
         {
             var query = _context.Orders
                 .Include(o => o.User)
+                .Include(o => o.Branch)
                 .Include(o => o.Details)
                     .ThenInclude(d => d.Book)
                 .AsNoTracking()

@@ -1,4 +1,4 @@
-﻿@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Identity
 @using BookStore.Models.Entities
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
@@ -68,6 +68,50 @@
             <a class="navbar-brand site-logo" asp-page="/Index">
                 <span class="logo-text">MIND<span class="logo-accent">BOOK</span></span>
             </a>
+
+            <!-- REGIONAL WAREHOUSE SELECTOR (CELLPHONES STYLE) -->
+            <div class="dropdown d-none d-md-block me-3">
+                <button class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-1 dropdown-toggle d-flex align-items-center gap-2" 
+                        type="button" data-bs-toggle="dropdown" id="btnHeaderRegion" style="border-color: #e2e8f0; background: #f8fafc; font-size: 0.85rem;">
+                    <i class="fa-solid fa-location-dot text-danger"></i>
+                    <div class="text-start lh-1">
+                        <span class="d-block text-muted" style="font-size: 0.68rem;">Khu vực:</span>
+                        <strong id="lblCurrentRegion" class="text-dark" style="font-size: 0.8rem;">Miền Bắc (Hà Nội)</strong>
+                    </div>
+                </button>
+                <ul class="dropdown-menu shadow-lg border-0 rounded-4 py-2 mt-2" style="min-width: 280px; z-index: 1060;">
+                    <li class="dropdown-header text-uppercase small fw-bold text-muted px-3">
+                        <i class="fa-solid fa-warehouse text-danger me-1"></i>Chọn kho hàng gần bạn
+                    </li>
+                    <li>
+                        <a class="dropdown-item py-2 px-3 d-flex justify-content-between align-items-center" href="javascript:selectHeaderRegion('Miền Bắc (Hà Nội)')">
+                            <div>
+                                <strong class="d-block text-dark"><i class="fa-solid fa-building text-danger me-2"></i>Miền Bắc (Hà Nội)</strong>
+                                <small class="text-muted" style="font-size: 0.75rem;">Phục vụ Hà Nội & Phía Bắc</small>
+                            </div>
+                            <span class="badge bg-success-subtle text-success small">Giao 1-2 ngày</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item py-2 px-3 d-flex justify-content-between align-items-center" href="javascript:selectHeaderRegion('Miền Trung (Đà Nẵng)')">
+                            <div>
+                                <strong class="d-block text-dark"><i class="fa-solid fa-building text-warning me-2"></i>Miền Trung (Đà Nẵng)</strong>
+                                <small class="text-muted" style="font-size: 0.75rem;">Phục vụ Đà Nẵng & Miền Trung</small>
+                            </div>
+                            <span class="badge bg-success-subtle text-success small">Giao 1-2 ngày</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item py-2 px-3 d-flex justify-content-between align-items-center" href="javascript:selectHeaderRegion('Miền Nam (TP.HCM)')">
+                            <div>
+                                <strong class="d-block text-dark"><i class="fa-solid fa-building text-primary me-2"></i>Miền Nam (TP.HCM)</strong>
+                                <small class="text-muted" style="font-size: 0.75rem;">Phục vụ TP.HCM & Miền Nam</small>
+                            </div>
+                            <span class="badge bg-success-subtle text-success small">Giao 1-2 ngày</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
 
             <!-- SEARCH BAR (Desktop) -->
             <div class="search-bar-wrapper d-none d-lg-flex">

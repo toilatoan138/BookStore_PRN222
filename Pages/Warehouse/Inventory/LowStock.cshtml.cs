@@ -23,7 +23,7 @@ namespace BookStore.Pages.Warehouse.Inventory
             _userManager = userManager;
         }
 
-        public List<Book> Books { get; set; } = new();
+        public List<BranchInventory> LowStockItems { get; set; } = new();
         public List<Category> Categories { get; set; } = new();
         public List<string> Publishers { get; set; } = new();
 
@@ -46,43 +46,46 @@ namespace BookStore.Pages.Warehouse.Inventory
                 .OrderBy(p => p)
                 .ToListAsync();
 
-            var query = _context.Books
-                .Include(b => b.Category)
-                .Include(b => b.Location)
-                .Where(b => b.StockQuantity <= 5 && b.IsActive)
+            var query = _context.BranchInventories
+                .Include(bi => bi.Book).ThenInclude(b => b.Category)
+                .Include(bi => bi.Book).ThenInclude(b => b.Location)
+                .Include(bi => bi.Branch)
+                .Where(bi => bi.StockQuantity <= 5 && bi.Book.IsActive)
                 .AsNoTracking()
                 .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(Keyword))
             {
                 string kw = Keyword.Trim().ToLower();
-                query = query.Where(b => (b.Title != null && b.Title.ToLower().Contains(kw)) ||
-                                         (b.Author != null && b.Author.ToLower().Contains(kw)) ||
-                                         (b.Location != null && b.Location.LocationCode != null && b.Location.LocationCode.ToLower().Contains(kw)));
+                query = query.Where(bi => (bi.Book.Title != null && bi.Book.Title.ToLower().Contains(kw)) ||
+                                          (bi.Book.Author != null && bi.Book.Author.ToLower().Contains(kw)) ||
+                                          (bi.Book.Location != null && bi.Book.Location.LocationCode != null && bi.Book.Location.LocationCode.ToLower().Contains(kw)) ||
+                                          (bi.Branch.Name.ToLower().Contains(kw)));
             }
 
             if (CategoryId.HasValue && CategoryId.Value > 0)
             {
-                query = query.Where(b => b.CategoryId == CategoryId.Value);
+                query = query.Where(bi => bi.Book.CategoryId == CategoryId.Value);
             }
 
             if (!string.IsNullOrWhiteSpace(Publisher))
             {
-                query = query.Where(b => b.Publisher == Publisher);
+                query = query.Where(bi => bi.Book.Publisher == Publisher);
             }
 
-            Books = await query
-                .OrderBy(b => b.StockQuantity)
-                .ThenBy(b => b.Title)
+            LowStockItems = await query
+                .OrderBy(bi => bi.StockQuantity)
+                .ThenBy(bi => bi.Branch.Name)
+                .ThenBy(bi => bi.Book.Title)
                 .ToListAsync();
         }
 
-        public async Task<IActionResult> OnPostAdjustStockAsync(int bookId, int newQuantity, string? reason, string? locationCode)
+        public async Task<IActionResult> OnPostAdjustStockAsync(int branchId, int bookId, int newQuantity, string? reason, string? locationCode)
         {
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return RedirectToPage("/Account/Login");
 
-            bool success = await _warehouseService.AdjustStockAsync(bookId, newQuantity, reason, user.Id, locationCode);
+            bool success = await _warehouseService.AdjustStockAsync(branchId, bookId, newQuantity, reason, user.Id, locationCode);
             if (success)
             {
                 TempData["SuccessMessage"] = "Đã cập nhật số lượng tồn kho thành công!";

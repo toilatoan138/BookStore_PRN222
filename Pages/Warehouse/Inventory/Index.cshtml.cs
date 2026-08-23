@@ -46,10 +46,12 @@ namespace BookStore.Pages.Warehouse.Inventory
         public int TotalPages { get; set; } = 1;
         public int TotalItems { get; set; } = 0;
         public int PageSize { get; set; } = 10;
+        public List<Branch> Branches { get; set; } = new();
 
         public async Task OnGetAsync()
         {
             Categories = await _context.Categories.OrderBy(c => c.Name).ToListAsync();
+            Branches = await _context.Branches.OrderBy(b => b.Name).ToListAsync();
             Authors = await _context.Books
                 .Where(b => !string.IsNullOrEmpty(b.Author))
                 .Select(b => b.Author!)
@@ -67,6 +69,9 @@ namespace BookStore.Pages.Warehouse.Inventory
             var query = _context.Books
                 .Include(b => b.Category)
                 .Include(b => b.Location)
+                .Include(b => b.BranchInventories)
+                    .ThenInclude(bi => bi.Branch)
+                .AsSplitQuery()
                 .AsNoTracking()
                 .AsQueryable();
 
@@ -106,12 +111,12 @@ namespace BookStore.Pages.Warehouse.Inventory
                 .ToListAsync();
         }
 
-        public async Task<IActionResult> OnPostAdjustStockAsync(int bookId, int newQuantity, string? reason, string? locationCode)
+        public async Task<IActionResult> OnPostAdjustStockAsync(int branchId, int bookId, int newQuantity, string? reason, string? locationCode)
         {
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return RedirectToPage("/Account/Login");
 
-            bool success = await _warehouseService.AdjustStockAsync(bookId, newQuantity, reason, user.Id, locationCode);
+            bool success = await _warehouseService.AdjustStockAsync(branchId, bookId, newQuantity, reason, user.Id, locationCode);
             if (success)
             {
                 TempData["SuccessMessage"] = "Đã cập nhật số lượng tồn kho và vị trí kệ thành công!";

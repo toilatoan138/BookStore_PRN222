@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using BookStore.Models.Entities;
 using BookStore.Services;
 using Microsoft.AspNetCore.Identity;
@@ -12,19 +12,23 @@ namespace BookStore.Pages.Products
         private readonly IBookService _bookService;
         private readonly ICartService _cartService;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly BookStore.Data.ApplicationDbContext _context;
 
         public DetailModel(
             IBookService bookService,
             ICartService cartService,
-            UserManager<ApplicationUser> userManager)
+            UserManager<ApplicationUser> userManager,
+            BookStore.Data.ApplicationDbContext context)
         {
             _bookService = bookService;
             _cartService = cartService;
             _userManager = userManager;
+            _context = context;
         }
 
         public Book Book { get; set; } = null!;
         public List<Book> SuggestedBooks { get; set; } = new();
+        public List<BranchInventory> BranchInventories { get; set; } = new();
 
         [BindProperty]
         public int Quantity { get; set; } = 1;
@@ -55,6 +59,16 @@ namespace BookStore.Pages.Products
 
             Book = book;
             SuggestedBooks = await _bookService.GetSuggestedBooksAsync(book.Id, book.CategoryId, 6);
+
+            // Load branch inventories
+            BranchInventories = _context.BranchInventories
+                .Where(bi => bi.BookId == id)
+                .Select(bi => new BranchInventory
+                {
+                    Branch = bi.Branch,
+                    StockQuantity = bi.StockQuantity
+                })
+                .ToList();
 
             return Page();
         }

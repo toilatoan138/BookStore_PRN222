@@ -1,4 +1,4 @@
-﻿@page
+@page
 @model BookStore.Pages.Warehouse.Inventory.IndexModel
 @{
     Layout = "_AdminLayout";
@@ -122,13 +122,35 @@
                                 <td>@(b.Author ?? "N/A")</td>
                                 <td>@(b.Publisher ?? "N/A")</td>
                                 <td class="fw-bold text-danger">@b.Price.ToString("N0")đ</td>
-                                <td class="text-center fs-5 fw-bold text-secondary">@b.StockQuantity</td>
+                                <td class="p-0">
+                                    @if (b.BranchInventories.Any())
+                                    {
+                                        <table class="table table-sm table-borderless mb-0">
+                                            <tbody>
+                                            @foreach(var bi in b.BranchInventories)
+                                            {
+                                                <tr class="border-bottom">
+                                                    <td class="small fw-bold text-muted">@bi.Branch.Name:</td>
+                                                    <td class="text-end fw-bold">@bi.StockQuantity</td>
+                                                </tr>
+                                            }
+                                            </tbody>
+                                        </table>
+                                    }
+                                    else
+                                    {
+                                        <div class="text-center text-muted small py-2">0</div>
+                                    }
+                                </td>
                                 <td class="text-center text-nowrap">
-                                    @if (b.StockQuantity <= 0)
+                                    @{
+                                        var totalStock = b.BranchInventories.Sum(x => x.StockQuantity);
+                                    }
+                                    @if (totalStock <= 0)
                                     {
                                         <span class="badge bg-secondary">Hết hàng</span>
                                     }
-                                    else if (b.StockQuantity <= 5)
+                                    else if (totalStock <= 5)
                                     {
                                         <span class="badge bg-warning text-dark">Sắp hết</span>
                                     }
@@ -140,7 +162,7 @@
                                 <td class="text-center">
                                     <button type="button" class="btn btn-sm btn-outline-primary"
                                             title="Kiểm kê / Điều chỉnh"
-                                            onclick="openAdjustStockModal(@b.Id, '@Html.Raw(Html.Encode(b.Title))', @b.StockQuantity, '@(b.LocationCode ?? "")')">
+                                            onclick="openAdjustStockModal(@b.Id, '@Html.Raw(Html.Encode(b.Title))', 0, '@(b.LocationCode ?? "")')">
                                         <i class="fa-solid fa-pen"></i>
                                     </button>
                                 </td>
@@ -217,6 +239,17 @@
                     <div class="mb-3">
                         <label class="form-label fw-bold text-muted small">Tên sách</label>
                         <input type="text" id="modalBookTitle" class="form-control fw-bold bg-light" readonly />
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">Chi nhánh cần điều chỉnh *</label>
+                        <select name="branchId" class="form-select" required>
+                            <option value="">-- Chọn chi nhánh --</option>
+                            @foreach (var branch in Model.Branches)
+                            {
+                                <option value="@branch.Id">@branch.Name</option>
+                            }
+                        </select>
                     </div>
 
                     <div class="row g-3 mb-3">

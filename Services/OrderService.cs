@@ -1,4 +1,4 @@
-﻿using BookStore.Data;
+using BookStore.Data;
 using BookStore.Models.Entities;
 using BookStore.Models.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -124,12 +124,18 @@ namespace BookStore.Services
 
             if (!cartItems.Any()) return (false, "Không có sản phẩm nào được chọn để thanh toán.", 0);
 
-            // Stock check
+            // Stock check across branches
+            var bookIds = cartItems.Select(ci => ci.BookId).ToList();
+            var allInventories = await _context.BranchInventories
+                .Where(bi => bookIds.Contains(bi.BookId))
+                .ToListAsync();
+
             foreach (var item in cartItems)
             {
-                if (item.Book.StockQuantity < item.Quantity)
+                int totalAvailable = allInventories.Where(bi => bi.BookId == item.BookId).Sum(bi => bi.StockQuantity);
+                if (totalAvailable < item.Quantity)
                 {
-                    return (false, $"Sản phẩm '{item.Book.Title}' chỉ còn {item.Book.StockQuantity} quyển trong kho.", 0);
+                    return (false, $"Sản phẩm '{item.Book.Title}' chỉ còn {totalAvailable} quyển trên toàn hệ thống.", 0);
                 }
             }
 
@@ -159,62 +165,122 @@ namespace BookStore.Services
 
             string shippingAddressStr = $"{address.FullName} | {address.Phone} | {address.AddressDetail}, {address.Ward}, {address.District}, {address.City}";
 
-            // Create Order
-            var order = new Order
-            {
-                UserId = request.UserId,
-                OrderDate = DateTime.UtcNow,
-                TotalAmount = calc.FinalTotal,
-                Status = initialStatus,
-                ShippingAddress = shippingAddressStr,
-                PhoneNumber = address.Phone,
-                FullName = address.FullName,
-                PaymentMethod = request.PaymentMethod,
-                ShippingFee = calc.ShippingFee,
-                DiscountAmount = calc.TotalDiscount,
-                VoucherId = calc.AppliedVoucherId
-            };
+            string orderGroupId = "G-" + DateTime.UtcNow.Ticks.ToString();
+            var createdOrders = new List<Order>();
 
-            foreach (var item in cartItems)
+            // Convert cart items to a tracking list (so we can mutate quantities)
+            var remainingItems = cartItems.Select(ci => new { 
+                BookId = ci.BookId, 
+                Quantity = ci.Quantity, 
+                Price = ci.Book.Price,
+                Book = ci.Book
+            }).ToList();
+            var tracker = remainingItems.Select(x => new { BookId = x.BookId, Quantity = x.Quantity, Price = x.Price, Book = x.Book }).ToDictionary(x => x.BookId, x => x.Quantity);
+
+            while (tracker.Values.Any(q => q > 0))
             {
-                order.Details.Add(new OrderDetail
+                // Find best branch (can fulfill the most items)
+                var branchScores = allInventories.GroupBy(bi => bi.BranchId)
+                    .Select(g => new
+                    {
+                        BranchId = g.Key,
+                        Fulfillable = g.Sum(bi => Math.Min(bi.StockQuantity, tracker.ContainsKey(bi.BookId) ? tracker[bi.BookId] : 0))
+                    })
+                    .Where(x => x.Fulfillable > 0)
+                    .OrderByDescending(x => x.Fulfillable)
+                    .ToList();
+
+                if (!branchScores.Any()) break;
+
+                int bestBranchId = branchScores.First().BranchId;
+                
+                var subOrder = new Order
                 {
-                    BookId = item.BookId,
-                    Quantity = item.Quantity,
-                    Price = item.Book.Price
-                });
+                    UserId = request.UserId,
+                    OrderDate = DateTime.UtcNow,
+                    Status = initialStatus,
+                    ShippingAddress = shippingAddressStr,
+                    PhoneNumber = address.Phone,
+                    FullName = address.FullName,
+                    PaymentMethod = request.PaymentMethod,
+                    BranchId = bestBranchId,
+                    OrderGroupId = orderGroupId
+                };
 
-                // Deduct stock & increment sold
-                item.Book.StockQuantity -= item.Quantity;
-                item.Book.SoldQuantity += item.Quantity;
+                decimal subTotalAmount = 0;
+
+                foreach (var remainingBookId in tracker.Keys.Where(k => tracker[k] > 0).ToList())
+                {
+                    var inv = allInventories.FirstOrDefault(bi => bi.BranchId == bestBranchId && bi.BookId == remainingBookId);
+                    if (inv != null && inv.StockQuantity > 0)
+                    {
+                        int fulfillQty = Math.Min(inv.StockQuantity, tracker[remainingBookId]);
+                        var bookInfo = remainingItems.First(r => r.BookId == remainingBookId);
+                        
+                        subOrder.Details.Add(new OrderDetail
+                        {
+                            BookId = remainingBookId,
+                            Quantity = fulfillQty,
+                            Price = bookInfo.Price
+                        });
+
+                        subTotalAmount += fulfillQty * bookInfo.Price;
+
+                        // Deduct from branch inventory
+                        inv.StockQuantity -= fulfillQty;
+                        // Deduct from tracking dictionary
+                        tracker[remainingBookId] -= fulfillQty;
+                        
+                        // Deduct main book stock (backward compatibility for views that rely on Book.StockQuantity)
+                        bookInfo.Book.StockQuantity -= fulfillQty;
+                        bookInfo.Book.SoldQuantity += fulfillQty;
+
+                        // Log EXPORT
+                        _context.InventoryHistories.Add(new InventoryHistory
+                        {
+                            BookId = remainingBookId,
+                            CreatedById = request.UserId,
+                            TransactionType = "EXPORT",
+                            QuantityChanged = -fulfillQty,
+                            RelatedId = subOrder.Id,
+                            CreatedAt = DateTime.UtcNow
+                        });
+                    }
+                }
+
+                if (createdOrders.Count == 0)
+                {
+                    subOrder.ShippingFee = calc.ShippingFee;
+                    subOrder.DiscountAmount = calc.TotalDiscount;
+                    subOrder.VoucherId = calc.AppliedVoucherId;
+                    subOrder.TotalAmount = subTotalAmount + calc.ShippingFee - calc.TotalDiscount;
+                }
+                else
+                {
+                    subOrder.ShippingFee = 0;
+                    subOrder.DiscountAmount = 0;
+                    subOrder.TotalAmount = subTotalAmount;
+                }
+                if (subOrder.TotalAmount < 0) subOrder.TotalAmount = 0;
+
+                _context.Orders.Add(subOrder);
+                createdOrders.Add(subOrder);
             }
 
-            _context.Orders.Add(order);
             await _context.SaveChangesAsync();
 
-            // Log EXPORT in Inventory History for each purchased book
-            foreach (var item in cartItems)
+            // Automatically create SALE Invoices for created orders
+            foreach(var o in createdOrders)
             {
-                _context.InventoryHistories.Add(new InventoryHistory
+                _context.Invoices.Add(new Invoice
                 {
-                    BookId = item.BookId,
-                    CreatedById = request.UserId,
-                    TransactionType = "EXPORT",
-                    QuantityChanged = -item.Quantity,
-                    RelatedId = order.Id,
-                    CreatedAt = DateTime.UtcNow
+                    InvoiceType = "SALE",
+                    OrderId = o.Id,
+                    TotalAmount = o.TotalAmount,
+                    Status = (request.PaymentMethod == "WALLET" || request.PaymentMethod == "VNPAY") ? "Paid" : "Pending",
+                    CreatedDate = DateTime.UtcNow
                 });
             }
-
-            // Automatically create SALE Invoice
-            _context.Invoices.Add(new Invoice
-            {
-                InvoiceType = "SALE",
-                OrderId = order.Id,
-                TotalAmount = order.TotalAmount,
-                Status = (request.PaymentMethod == "WALLET" || request.PaymentMethod == "VNPAY") ? "Paid" : "Pending",
-                CreatedDate = DateTime.UtcNow
-            });
 
             // Mark voucher as used if applied
             if (calc.AppliedVoucherId.HasValue)
@@ -258,6 +324,8 @@ namespace BookStore.Services
 
             await _context.SaveChangesAsync();
 
+            var firstOrder = createdOrders.First();
+
             // Deduct Wallet balance if WALLET payment
             if (request.PaymentMethod == "WALLET")
             {
@@ -265,8 +333,8 @@ namespace BookStore.Services
                     user.Id,
                     -calc.FinalTotal,
                     "PAYMENT",
-                    $"Thanh toán đơn hàng #{order.Id} bằng Ví BookStore",
-                    order.Id
+                    $"Thanh toán đơn hàng {(createdOrders.Count > 1 ? orderGroupId : "#" + firstOrder.Id)} bằng Ví BookStore",
+                    firstOrder.Id
                 );
             }
 
@@ -274,16 +342,20 @@ namespace BookStore.Services
             await _cartService.RemovePurchasedItemsAsync(request.UserId, request.SelectedBookIds);
 
             // Add notification
+            string msg = createdOrders.Count > 1 
+                ? $"Giỏ hàng đã được tách thành {createdOrders.Count} kiện (Mã nhóm {orderGroupId}) do nằm ở nhiều kho. Tổng tiền: {calc.FinalTotal:N0}đ"
+                : $"Đơn hàng #{firstOrder.Id} đã được đặt thành công. Tổng tiền: {calc.FinalTotal:N0}đ";
+
             _context.Notifications.Add(new Notification
             {
                 UserId = request.UserId,
-                Message = $"Đơn hàng #{order.Id} đã được đặt thành công. Tổng tiền: {calc.FinalTotal:N0}đ",
-                Link = $"/Orders/Detail/{order.Id}",
+                Message = msg,
+                Link = $"/Orders",
                 CreatedAt = DateTime.UtcNow
             });
             await _context.SaveChangesAsync();
 
-            return (true, "Đặt hàng thành công!", order.Id);
+            return (true, createdOrders.Count > 1 ? "Giỏ hàng đã được tách làm nhiều đơn do hết hàng ở kho gần nhất." : "Đặt hàng thành công.", firstOrder.Id);
         }
 
         public async Task<Order?> GetOrderByIdAsync(int orderId, string? userId = null)
@@ -339,6 +411,16 @@ namespace BookStore.Services
             {
                 detail.Book.StockQuantity += detail.Quantity;
                 detail.Book.SoldQuantity = Math.Max(0, detail.Book.SoldQuantity - detail.Quantity);
+
+                if (order.BranchId.HasValue)
+                {
+                    var branchInv = await _context.BranchInventories
+                        .FirstOrDefaultAsync(bi => bi.BranchId == order.BranchId.Value && bi.BookId == detail.BookId);
+                    if (branchInv != null)
+                    {
+                        branchInv.StockQuantity += detail.Quantity;
+                    }
+                }
 
                 _context.InventoryHistories.Add(new InventoryHistory
                 {

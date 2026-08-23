@@ -1,4 +1,4 @@
-﻿@page
+@page
 @model BookStore.Pages.Warehouse.Orders.PickingModel
 @{
     Layout = "_AdminLayout";
@@ -89,7 +89,7 @@
                                         </td>
                                         <td class="text-center">
                                             <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle px-3 py-2 fw-bold font-monospace fs-6">
-                                                @(item.Book?.LocationCode ?? "A-01-01")
+                                                @(item.Book?.Location?.LocationCode ?? "Chưa xếp kệ")
                                             </span>
                                         </td>
                                         <td class="text-center fs-5 fw-bold text-danger qty-val">

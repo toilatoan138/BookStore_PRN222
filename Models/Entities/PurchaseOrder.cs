@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BookStore.Models.Entities
@@ -16,6 +16,11 @@ namespace BookStore.Models.Entities
         [Required]
         [Column("supplier_id")]
         public int SupplierId { get; set; }
+
+        [Required]
+        [Column("branch_id")]
+        [Display(Name = "Chi nhánh nhập hàng")]
+        public int BranchId { get; set; }
 
         [Column("user_id")]
         public string? UserId { get; set; } // Người tạo (Warehouse)
@@ -48,6 +53,9 @@ namespace BookStore.Models.Entities
         // FK
         [ForeignKey("SupplierId")]
         public virtual Supplier Supplier { get; set; } = null!;
+
+        [ForeignKey("BranchId")]
+        public virtual Branch Branch { get; set; } = null!;
 
         [ForeignKey("UserId")]
         public virtual ApplicationUser? CreatedBy { get; set; }

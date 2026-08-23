@@ -1,4 +1,4 @@
-﻿@page
+@page
 @model BookStore.Pages.Admin.Products.CreateModel
 @{
     Layout = "_AdminLayout";
@@ -51,9 +51,15 @@
                 <input asp-for="Input.ImportPrice" type="number" step="1000" class="form-control" placeholder="50000" />
             </div>
             <div class="col-md-4">
-                <label asp-for="Input.StockQuantity" class="form-label fw-semibold">Số lượng tồn kho</label>
-                <input asp-for="Input.StockQuantity" type="number" class="form-control fw-bold text-success" />
-                <span asp-validation-for="Input.StockQuantity" class="text-danger small"></span>
+                <label asp-for="Input.SupplierId" class="form-label fw-semibold">Nhà cung cấp</label>
+                <select asp-for="Input.SupplierId" class="form-select">
+                    <option value="">-- Chọn Nhà cung cấp --</option>
+                    @foreach (var s in Model.Suppliers)
+                    {
+                        <option value="@s.Id">@s.Name</option>
+                    }
+                </select>
+                <span asp-validation-for="Input.SupplierId" class="text-danger small"></span>
             </div>
         </div>
 

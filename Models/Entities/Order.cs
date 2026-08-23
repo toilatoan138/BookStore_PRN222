@@ -79,6 +79,16 @@ namespace BookStore.Models.Entities
         [ForeignKey("UserId")]
         public virtual ApplicationUser? User { get; set; }
 
+        [Column("branch_id")]
+        public int? BranchId { get; set; }
+
+        [ForeignKey("BranchId")]
+        public virtual Branch? Branch { get; set; }
+
+        [Column("order_group_id")]
+        [StringLength(50)]
+        public string? OrderGroupId { get; set; }
+
         // Navigation
         public virtual ICollection<OrderDetail> Details { get; set; } = new List<OrderDetail>();
         public virtual ICollection<ReturnRequest> ReturnRequests { get; set; } = new List<ReturnRequest>();

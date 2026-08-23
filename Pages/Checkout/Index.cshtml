@@ -1,4 +1,4 @@
-﻿@page
+@page
 @model BookStore.Pages.Checkout.IndexModel
 @{
     ViewData["Title"] = "Thanh toán đơn hàng";
@@ -15,6 +15,19 @@
     </nav>
 
     <h4 class="fw-bold mb-4 text-dark"><i class="fa-solid fa-credit-card text-danger me-2"></i>Thanh toán đơn hàng</h4>
+
+    @if (Model.RequiresOrderSplit)
+    {
+        <div class="alert alert-warning d-flex align-items-center mb-4 border-warning shadow-sm rounded-4">
+            <i class="fa-solid fa-code-branch fs-3 me-3 text-warning"></i>
+            <div>
+                <h5 class="fw-bold mb-1">Cảnh báo tách kiện hàng</h5>
+                <p class="mb-0 text-dark">
+                    Do các sách trong giỏ hàng hiện <strong>không có sẵn đầy đủ tại cùng một chi nhánh</strong>, hệ thống sẽ tự động tách đơn hàng của bạn thành nhiều kiện khác nhau để giao từ các kho gần nhất. Điều này có thể khiến kiện hàng được giao vào các thời điểm khác nhau. Phí vận chuyển (nếu có) sẽ chỉ tính 1 lần.
+                </p>
+            </div>
+        </div>
+    }
 
     <form method="post">
         <input type="hidden" asp-for="Form.SelectedBookIdsCsv" />
