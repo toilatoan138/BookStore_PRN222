@@ -1,108 +1,96 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using BookStore.Data;
 using BookStore.Models.Entities;
-using BookStore.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 
 namespace BookStore.Pages.Admin.Categories
 {
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,Staff")]
     public class IndexModel : PageModel
     {
-        private readonly ICategoryService _categoryService;
+        private readonly ApplicationDbContext _context;
 
-        public IndexModel(ICategoryService categoryService)
+        public IndexModel(ApplicationDbContext context)
         {
-            _categoryService = categoryService;
+            _context = context;
         }
 
         public List<Category> Categories { get; set; } = new();
 
+        // ĐÂY LÀ THUỘC TÍNH BỊ THIẾU GÂY RA LỖI CS1061
         [BindProperty]
-        public CategoryInputModel Input { get; set; } = new();
-
-        public class CategoryInputModel
-        {
-            public int? Id { get; set; }
-
-            [Required(ErrorMessage = "Tên danh mục là bắt buộc")]
-            [StringLength(100)]
-            [Display(Name = "Tên danh mục")]
-            public string Name { get; set; } = string.Empty;
-
-            [StringLength(500)]
-            [Display(Name = "Mô tả")]
-            public string? Description { get; set; }
-
-            [StringLength(500)]
-            [Display(Name = "URL Ảnh minh họa")]
-            public string? ImageUrl { get; set; }
-
-            [Display(Name = "Danh mục cha")]
-            public int? ParentId { get; set; }
-        }
+        public Category Input { get; set; } = new();
 
         public async Task OnGetAsync()
         {
-            Categories = await _categoryService.GetAllCategoriesAsync();
+            Categories = await _context.Categories
+                .Include(c => c.Parent)
+                .Include(c => c.Books)
+                .AsNoTracking()
+                .OrderBy(c => c.ParentId).ThenBy(c => c.Name)
+                .ToListAsync();
         }
 
         public async Task<IActionResult> OnPostCreateAsync()
         {
             if (!ModelState.IsValid)
             {
-                Categories = await _categoryService.GetAllCategoriesAsync();
-                return Page();
+                TempData["ErrorMessage"] = "Vui lòng nhập đầy đủ thông tin.";
+                return RedirectToPage();
             }
 
-            var cat = new Category
-            {
-                Name = Input.Name,
-                Description = Input.Description,
-                ImageUrl = Input.ImageUrl,
-                ParentId = Input.ParentId > 0 ? Input.ParentId : null
-            };
+            if (Input.ParentId == 0) Input.ParentId = null;
 
-            await _categoryService.CreateCategoryAsync(cat);
-            TempData["SuccessMessage"] = $"Thêm danh mục '{cat.Name}' thành công!";
+            _context.Categories.Add(Input);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Đã thêm danh mục mới thành công!";
             return RedirectToPage();
         }
 
         public async Task<IActionResult> OnPostEditAsync()
         {
-            if (!Input.Id.HasValue || Input.Id <= 0)
+            var categoryToUpdate = await _context.Categories.FindAsync(Input.Id);
+            if (categoryToUpdate == null)
             {
-                TempData["ErrorMessage"] = "Không tìm thấy danh mục cần sửa.";
+                TempData["ErrorMessage"] = "Không tìm thấy danh mục để sửa!";
                 return RedirectToPage();
             }
 
-            var cat = new Category
-            {
-                Id = Input.Id.Value,
-                Name = Input.Name,
-                Description = Input.Description,
-                ImageUrl = Input.ImageUrl,
-                ParentId = Input.ParentId > 0 ? Input.ParentId : null
-            };
+            categoryToUpdate.Name = Input.Name;
+            categoryToUpdate.Description = Input.Description;
+            categoryToUpdate.ImageUrl = Input.ImageUrl;
 
-            await _categoryService.UpdateCategoryAsync(cat);
-            TempData["SuccessMessage"] = "Cập nhật danh mục thành công!";
+            if (Input.ParentId == 0) categoryToUpdate.ParentId = null;
+            else categoryToUpdate.ParentId = Input.ParentId;
+
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Đã cập nhật danh mục thành công!";
             return RedirectToPage();
         }
 
         public async Task<IActionResult> OnPostDeleteAsync(int id)
         {
-            bool success = await _categoryService.DeleteCategoryAsync(id);
-            if (success)
+            var category = await _context.Categories
+                .Include(c => c.Children)
+                .Include(c => c.Books)
+                .FirstOrDefaultAsync(c => c.Id == id);
+
+            if (category == null) return RedirectToPage();
+
+            if (category.Children.Any() || category.Books.Any())
             {
-                TempData["SuccessMessage"] = "Đã xóa danh mục thành công!";
-            }
-            else
-            {
-                TempData["ErrorMessage"] = "Không thể xóa danh mục này vì đang chứa sách hoặc danh mục con.";
+                TempData["ErrorMessage"] = $"Không thể xóa: '{category.Name}' đang chứa sách hoặc danh mục con!";
+                return RedirectToPage();
             }
 
+            _context.Categories.Remove(category);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Đã xóa danh mục thành công!";
             return RedirectToPage();
         }
     }

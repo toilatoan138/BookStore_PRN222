@@ -26,6 +26,12 @@ namespace BookStore.Pages.Staff.Orders
         [BindProperty(SupportsGet = true)]
         public int Status { get; set; } = 0;
 
+        // THÊM BIẾN PHÂN TRANG Ở ĐÂY
+        [BindProperty(SupportsGet = true)]
+        public int CurrentPage { get; set; } = 1;
+        public int TotalPages { get; set; }
+        public int PageSize { get; set; } = 10; // Đúng 10 đơn/trang theo RDS
+
         public async Task OnGetAsync()
         {
             var query = _context.Orders
@@ -49,8 +55,17 @@ namespace BookStore.Pages.Staff.Orders
                 query = query.Where(o => (int)o.Status == Status);
             }
 
+            // TÍNH TOÁN PHÂN TRANG
+            int totalCount = await query.CountAsync();
+            TotalPages = (int)Math.Ceiling(totalCount / (double)PageSize);
+            if (CurrentPage < 1) CurrentPage = 1;
+            if (CurrentPage > TotalPages && TotalPages > 0) CurrentPage = TotalPages;
+
+            // SỬA LẠI ĐOẠN LẤY DỮ LIỆU BẰNG SKIP VÀ TAKE
             Orders = await query
                 .OrderByDescending(o => o.OrderDate)
+                .Skip((CurrentPage - 1) * PageSize)
+                .Take(PageSize)
                 .ToListAsync();
         }
 
@@ -64,7 +79,7 @@ namespace BookStore.Pages.Staff.Orders
                 await _context.SaveChangesAsync();
                 TempData["SuccessMessage"] = $"Đã duyệt đơn hàng #{orderId} và chuyển xuống kho để soạn hàng!";
             }
-            return RedirectToPage(new { keyword = Keyword, status = Status });
+            return RedirectToPage(new { Keyword, Status, CurrentPage });
         }
 
         public async Task<IActionResult> OnPostCancelAsync(int orderId, string? cancelReason)
@@ -77,7 +92,7 @@ namespace BookStore.Pages.Staff.Orders
                 await _context.SaveChangesAsync();
                 TempData["SuccessMessage"] = $"Đã hủy đơn hàng #{orderId}!";
             }
-            return RedirectToPage(new { keyword = Keyword, status = Status });
+            return RedirectToPage(new { Keyword, Status, CurrentPage });
         }
     }
 }
