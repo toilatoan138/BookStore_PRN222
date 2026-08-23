@@ -22,9 +22,9 @@
                 </select>
                 <span asp-validation-for="Input.BranchId" class="text-danger small"></span>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-6" id="supplierBlock" style="display: none;">
                 <label class="form-label fw-bold">Nhà cung cấp <span class="text-danger">*</span></label>
-                <select asp-for="Input.SupplierId" class="form-select" id="globalSupplierSelect" onchange="onGlobalSupplierChange()">
+                <select asp-for="Input.SupplierId" class="form-select bg-light" id="globalSupplierSelect" style="pointer-events: none;" onchange="onGlobalSupplierChange()">
                     <option value="">-- Chọn Nhà cung cấp --</option>
                     @foreach (var s in Model.Suppliers)
                     {
@@ -53,7 +53,7 @@
                     {
                         <tr>
                             <td>
-                                <select name="Input.Items[@i].BookId" class="form-select form-select-sm book-select">
+                                <select name="Input.Items[@i].BookId" class="form-select form-select-sm book-select" onchange="onBookChange(this)">
                                     <option value="0" data-supplier-id="">-- Chọn sách --</option>
                                     @foreach (var b in Model.Books)
                                     {
@@ -98,6 +98,33 @@
 <script>
     let rowIndex = 3;
     const booksOptions = `<option value="0" data-supplier-id="">-- Chọn sách --</option>` + `@Html.Raw(string.Join("", Model.Books.Select(b => $"<option value='{b.Id}' data-supplier-id='{b.SupplierId}'>{b.Title.Replace("'", "\\'")} (Tồn: {b.StockQuantity})</option>")))`;
+
+    function onBookChange(selectElement) {
+        const selectedOption = selectElement.options[selectElement.selectedIndex];
+        const supplierId = selectedOption.getAttribute('data-supplier-id');
+        
+        const globalSupplierSelect = document.getElementById('globalSupplierSelect');
+        const supplierBlock = document.getElementById('supplierBlock');
+
+        if (supplierId && supplierId !== "0" && supplierId !== "") {
+            if (globalSupplierSelect.value !== supplierId) {
+                globalSupplierSelect.value = supplierId;
+                onGlobalSupplierChange();
+            }
+            supplierBlock.style.display = 'block';
+        } else {
+            // Check if all book selects are empty, if so, we can clear global supplier
+            let anyBookSelected = false;
+            document.querySelectorAll('.book-select').forEach(sel => {
+                if(sel.value !== "0" && sel.value !== "") anyBookSelected = true;
+            });
+            if(!anyBookSelected) {
+                globalSupplierSelect.value = "";
+                supplierBlock.style.display = 'none';
+                onGlobalSupplierChange();
+            }
+        }
+    }
 
     function onGlobalSupplierChange() {
         const selectedSupplierId = document.getElementById('globalSupplierSelect').value;
@@ -144,7 +171,7 @@
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>
-                <select name="Input.Items[${rowIndex}].BookId" class="form-select form-select-sm book-select">
+                <select name="Input.Items[${rowIndex}].BookId" class="form-select form-select-sm book-select" onchange="onBookChange(this)">
                     ${booksOptions}
                 </select>
             </td>
