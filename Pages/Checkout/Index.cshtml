@@ -74,7 +74,32 @@
                     }
                 </div>
 
-                <!-- 2. PAYMENT METHODS -->
+                <!-- 2. FULFILLMENT ROUTE & DELIVERY ESTIMATE CARD -->
+                <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <h6 class="fw-bold text-dark mb-0">
+                            <i class="fa-solid fa-truck-fast text-danger me-2"></i>Lộ trình Giao hàng & Cam kết Thời gian
+                        </h6>
+                        <span class="badge @(Model.FulfillmentPlan.RequiresInterWarehouseTransfer ? "bg-warning text-dark" : "bg-success text-white") px-3 py-2 rounded-pill fs-6">
+                            <i class="fa-solid @(Model.FulfillmentPlan.RequiresInterWarehouseTransfer ? "fa-arrows-rotate" : "fa-bolt") me-1"></i>
+                            Thời gian nhận: @Model.FulfillmentPlan.DeliveryTimeEstimate
+                        </span>
+                    </div>
+
+                    <div class="p-3 rounded-3 @(Model.FulfillmentPlan.RequiresInterWarehouseTransfer ? "bg-warning-subtle border border-warning-subtle" : "bg-light border")">
+                        <div class="fw-bold text-dark mb-1">
+                            <i class="fa-solid fa-box-open text-primary me-2"></i>Xuất kho: @Model.FulfillmentPlan.FulfillmentWarehouseName
+                        </div>
+                        <div class="text-secondary small">
+                            @Model.FulfillmentPlan.DeliveryNotice
+                        </div>
+                        <div class="text-danger small mt-2 fw-semibold">
+                            <i class="fa-solid fa-shield-halved me-1"></i> Cam kết nhận hàng tối đa trong 5 ngày đối với mọi đơn hàng chuyển kho liên tỉnh.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. PAYMENT METHODS -->
                 <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
                     <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-wallet text-danger me-2"></i>2. Phương thức thanh toán</h5>
 
