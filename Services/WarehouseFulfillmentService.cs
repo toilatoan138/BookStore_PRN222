@@ -59,45 +59,14 @@ namespace BookStore.Services
             int totalStock = book?.StockQuantity ?? 0;
             string zone = book?.Location?.Zone?.ToUpper() ?? "A";
 
-            // Phân bổ tồn kho thực tế cho 3 kho sao cho tổng tồn luôn bằng totalStock
-            int stockHN = 0;
-            int stockDN = 0;
-            int stockHCM = 0;
+            // Đọc tồn kho thực tế từ bảng BranchInventories
+            var branchInventories = await _context.BranchInventories
+                .Where(bi => bi.BookId == bookId)
+                .ToListAsync();
 
-            if (totalStock > 0)
-            {
-                if (totalStock == 1)
-                {
-                    if (zone == "B") stockDN = 1;
-                    else if (zone == "C" || zone == "D") stockHCM = 1;
-                    else stockHN = 1;
-                }
-                else if (totalStock <= 3)
-                {
-                    stockHN = 1;
-                    stockHCM = totalStock - 1;
-                }
-                else
-                {
-                    // Phân bổ thực tế dựa trên quy mô 3 tổng kho:
-                    // Kho Hà Nội: 20-30% (tối thiểu 2 cuốn nếu totalStock >= 5)
-                    // Kho Đà Nẵng: 15-20% (tối thiểu 1 cuốn)
-                    // Kho TP.HCM: Phần còn lại (50-65%)
-                    stockHN = Math.Max(2, (int)Math.Round(totalStock * 0.25));
-                    stockDN = Math.Max(1, (int)Math.Round(totalStock * 0.15));
-
-                    if (stockHN + stockDN >= totalStock)
-                    {
-                        stockHN = totalStock / 2;
-                        stockDN = totalStock - stockHN;
-                        stockHCM = 0;
-                    }
-                    else
-                    {
-                        stockHCM = totalStock - stockHN - stockDN;
-                    }
-                }
-            }
+            int stockHN = branchInventories.FirstOrDefault(bi => bi.BranchId == 1)?.StockQuantity ?? 0;
+            int stockHCM = branchInventories.FirstOrDefault(bi => bi.BranchId == 2)?.StockQuantity ?? 0;
+            int stockDN = branchInventories.FirstOrDefault(bi => bi.BranchId == 3)?.StockQuantity ?? 0;
 
             bool isNorth = userRegion.Contains("Bắc") || userRegion.Contains("Hà Nội");
             bool isCentral = userRegion.Contains("Trung") || userRegion.Contains("Đà Nẵng");

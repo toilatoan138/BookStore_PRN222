@@ -1,4 +1,4 @@
-﻿using BookStore.Data;
+using BookStore.Data;
 using BookStore.Models.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -59,6 +59,28 @@ namespace BookStore.Pages.Warehouse.Returns
                 if (returnReq.Book != null)
                 {
                     returnReq.Book.StockQuantity += returnReq.Quantity;
+
+                    // Hoàn số lượng về đúng chi nhánh (BranchInventory)
+                    if (returnReq.Order != null && returnReq.Order.BranchId.HasValue)
+                    {
+                        var branchInventory = await _context.BranchInventories
+                            .FirstOrDefaultAsync(bi => bi.BookId == returnReq.BookId && bi.BranchId == returnReq.Order.BranchId.Value);
+
+                        if (branchInventory != null)
+                        {
+                            branchInventory.StockQuantity += returnReq.Quantity;
+                        }
+                        else
+                        {
+                            // Nếu chi nhánh này chưa từng chứa sách này, tạo mới bản ghi
+                            _context.BranchInventories.Add(new BranchInventory
+                            {
+                                BookId = returnReq.BookId,
+                                BranchId = returnReq.Order.BranchId.Value,
+                                StockQuantity = returnReq.Quantity
+                            });
+                        }
+                    }
 
                     // Ghi lịch sử biến động kho
                     _context.InventoryHistories.Add(new InventoryHistory
