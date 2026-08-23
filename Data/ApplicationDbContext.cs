@@ -585,7 +585,7 @@ namespace BookStore.Data
                       .OnDelete(DeleteBehavior.Cascade);
                 
                 entity.HasOne(bi => bi.Book)
-                      .WithMany()
+                      .WithMany(b => b.BranchInventories)
                       .HasForeignKey(bi => bi.BookId)
                       .OnDelete(DeleteBehavior.Cascade);
             });
