@@ -59,34 +59,44 @@ namespace BookStore.Services
             int totalStock = book?.StockQuantity ?? 0;
             string zone = book?.Location?.Zone?.ToUpper() ?? "A";
 
-            // Phân bổ tồn kho theo các Zone trong Warehouse_Locations:
-            // Zone A = Hà Nội (Miền Bắc), Zone B = Đà Nẵng (Miền Trung), Zone C, D = TP.HCM (Miền Nam)
+            // Phân bổ tồn kho thực tế cho 3 kho sao cho tổng tồn luôn bằng totalStock
             int stockHN = 0;
             int stockDN = 0;
             int stockHCM = 0;
 
-            if (zone == "A")
+            if (totalStock > 0)
             {
-                // Sách được lưu trữ chính tại Zone A (Hà Nội)
-                // Phân bổ số lượng tại kho địa phương và kho phụ TP.HCM
-                if (totalStock <= 2)
+                if (totalStock == 1)
                 {
-                    stockHN = totalStock;
-                    stockHCM = 0;
+                    if (zone == "B") stockDN = 1;
+                    else if (zone == "C" || zone == "D") stockHCM = 1;
+                    else stockHN = 1;
+                }
+                else if (totalStock <= 3)
+                {
+                    stockHN = 1;
+                    stockHCM = totalStock - 1;
                 }
                 else
                 {
-                    stockHN = 2;
-                    stockHCM = totalStock - 2;
+                    // Phân bổ thực tế dựa trên quy mô 3 tổng kho:
+                    // Kho Hà Nội: 20-30% (tối thiểu 2 cuốn nếu totalStock >= 5)
+                    // Kho Đà Nẵng: 15-20% (tối thiểu 1 cuốn)
+                    // Kho TP.HCM: Phần còn lại (50-65%)
+                    stockHN = Math.Max(2, (int)Math.Round(totalStock * 0.25));
+                    stockDN = Math.Max(1, (int)Math.Round(totalStock * 0.15));
+
+                    if (stockHN + stockDN >= totalStock)
+                    {
+                        stockHN = totalStock / 2;
+                        stockDN = totalStock - stockHN;
+                        stockHCM = 0;
+                    }
+                    else
+                    {
+                        stockHCM = totalStock - stockHN - stockDN;
+                    }
                 }
-            }
-            else if (zone == "B")
-            {
-                stockDN = totalStock;
-            }
-            else
-            {
-                stockHCM = totalStock;
             }
 
             bool isNorth = userRegion.Contains("Bắc") || userRegion.Contains("Hà Nội");
@@ -101,6 +111,8 @@ namespace BookStore.Services
                     WarehouseName = "Kho Hà Nội (Tổng kho Miền Bắc)",
                     Region = "Miền Bắc",
                     ZoneLetter = "Zone A",
+                    Address = "Số 18 Phạm Hùng, Q. Cầu Giấy, Hà Nội",
+                    Hotline = "1800 2097 (Nhánh 1)",
                     StockQuantity = stockHN,
                     IsUserRegion = isNorth,
                     DeliveryEstimate = isNorth ? "Giao nhanh 1-2 ngày" : "Chuyển kho 3-5 ngày"
@@ -111,6 +123,8 @@ namespace BookStore.Services
                     WarehouseName = "Kho Đà Nẵng (Tổng kho Miền Trung)",
                     Region = "Miền Trung",
                     ZoneLetter = "Zone B",
+                    Address = "Số 135 Nguyễn Văn Linh, Q. Hải Châu, Đà Nẵng",
+                    Hotline = "1800 2097 (Nhánh 2)",
                     StockQuantity = stockDN,
                     IsUserRegion = isCentral,
                     DeliveryEstimate = isCentral ? "Giao nhanh 1-2 ngày" : "Chuyển kho 3-5 ngày"
@@ -121,6 +135,8 @@ namespace BookStore.Services
                     WarehouseName = "Kho TP. Hồ Chí Minh (Tổng kho Miền Nam)",
                     Region = "Miền Nam",
                     ZoneLetter = "Zone C, D",
+                    Address = "Số 218 Võ Văn Ngân, TP. Thủ Đức, TP. Hồ Chí Minh",
+                    Hotline = "1800 2097 (Nhánh 3)",
                     StockQuantity = stockHCM,
                     IsUserRegion = isSouth,
                     DeliveryEstimate = isSouth ? "Giao nhanh 1-2 ngày" : "Chuyển kho 3-5 ngày"
@@ -154,6 +170,7 @@ namespace BookStore.Services
 
             result.PreferredRegion = region;
             bool isCross = false;
+            var transferNotes = new List<string>();
 
             foreach (var item in items)
             {
@@ -172,21 +189,37 @@ namespace BookStore.Services
                 if (item.Quantity > localStock)
                 {
                     isCross = true;
+                    int needTransfer = item.Quantity - localStock;
+                    string helperWh = region.Contains("Nam") ? "Kho Hà Nội" : "Kho TP.HCM";
+                    if (localStock > 0)
+                    {
+                        transferNotes.Add($"{item.Quantity} cuốn '{book.Title}' ({localStock} cuốn tại {stocks.First(s => s.IsUserRegion).WarehouseName} + {needTransfer} cuốn điều chuyển từ {helperWh})");
+                    }
+                    else
+                    {
+                        transferNotes.Add($"{item.Quantity} cuốn '{book.Title}' (Điều chuyển toàn bộ từ {helperWh})");
+                    }
+                }
+                else
+                {
+                    transferNotes.Add($"{item.Quantity} cuốn '{book.Title}' (Có sẵn tại {stocks.First(s => s.IsUserRegion).WarehouseName})");
                 }
             }
 
             result.RequiresInterWarehouseTransfer = isCross;
+            result.TransferDetails = string.Join("; ", transferNotes);
+
             if (isCross)
             {
                 result.FulfillmentWarehouseName = "Kho TP. Hồ Chí Minh ➔ Điều chuyển đến " + region;
                 result.DeliveryTimeEstimate = "3-5 ngày";
-                result.DeliveryNotice = $"Đơn hàng có sản phẩm được điều chuyển từ kho liên tỉnh đến {shippingCity ?? region}. Cam kết giao hàng tối đa trong 3 - 5 ngày làm việc.";
+                result.DeliveryNotice = $"Đơn hàng có sản phẩm cần gom & điều chuyển liên kho đến {shippingCity ?? region}. Cam kết giao hàng tối đa trong 3 - 5 ngày làm việc.";
             }
             else
             {
                 result.FulfillmentWarehouseName = region.Contains("Bắc") ? "Kho Hà Nội" : (region.Contains("Trung") ? "Kho Đà Nẵng" : "Kho TP.HCM");
                 result.DeliveryTimeEstimate = "1-2 ngày";
-                result.DeliveryNotice = $"Sách có sẵn tại {result.FulfillmentWarehouseName}. Giao hàng nhanh tiêu chuẩn từ 1 - 2 ngày.";
+                result.DeliveryNotice = $"Sách có sẵn đầy đủ tại {result.FulfillmentWarehouseName}. Giao hàng nhanh tiêu chuẩn từ 1 - 2 ngày.";
             }
 
             return result;

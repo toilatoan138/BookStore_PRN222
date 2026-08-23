@@ -1,4 +1,4 @@
-﻿using BookStore.Data;
+using BookStore.Data;
 using BookStore.Models.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -54,9 +54,9 @@ namespace BookStore.Pages.Admin.Products
             {
                 string kw = Keyword.Trim().ToLower();
                 query = query.Where(b =>
-                    b.Title.ToLower().Contains(kw) ||
-                    b.Author.ToLower().Contains(kw) ||
-                    b.Isbn.ToLower() == kw ||
+                    (b.Title != null && b.Title.ToLower().Contains(kw)) ||
+                    (b.Author != null && b.Author.ToLower().Contains(kw)) ||
+                    (b.Isbn != null && b.Isbn.ToLower() == kw) ||
                     b.Id.ToString() == kw);
             }
 

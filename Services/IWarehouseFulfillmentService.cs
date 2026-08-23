@@ -9,6 +9,8 @@ namespace BookStore.Services
         public string WarehouseName { get; set; } = string.Empty; // Kho Hà Nội, Kho Đà Nẵng, Kho TP.HCM
         public string Region { get; set; } = string.Empty; // Miền Bắc, Miền Trung, Miền Nam
         public string ZoneLetter { get; set; } = string.Empty; // Zone A, Zone B, Zone C-D
+        public string Address { get; set; } = string.Empty; // Địa chỉ chi tiết tổng kho
+        public string Hotline { get; set; } = string.Empty; // Hotline hỗ trợ kho
         public int StockQuantity { get; set; } = 0;
         public bool IsUserRegion { get; set; } = false;
         public string DeliveryEstimate { get; set; } = "1-2 ngày";
@@ -25,6 +27,7 @@ namespace BookStore.Services
         public bool RequiresInterWarehouseTransfer { get; set; } = false;
         public string DeliveryTimeEstimate { get; set; } = "1-2 ngày"; // "1-2 ngày" hoặc "3-5 ngày"
         public string DeliveryNotice { get; set; } = string.Empty;
+        public string TransferDetails { get; set; } = string.Empty; // Chi tiết phân bổ kho
     }
 
     public interface IWarehouseFulfillmentService

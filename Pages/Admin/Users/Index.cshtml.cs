@@ -1,4 +1,4 @@
-﻿using BookStore.Data;
+using BookStore.Data;
 using BookStore.Models.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -40,9 +40,9 @@ namespace BookStore.Pages.Admin.Users
             {
                 string kw = Keyword.Trim().ToLower();
                 query = query.Where(u =>
-                    u.FullName.ToLower().Contains(kw) ||
-                    u.Email.ToLower().Contains(kw) ||
-                    u.UserName.ToLower().Contains(kw));
+                    (u.FullName != null && u.FullName.ToLower().Contains(kw)) ||
+                    (u.Email != null && u.Email.ToLower().Contains(kw)) ||
+                    (u.UserName != null && u.UserName.ToLower().Contains(kw)));
             }
 
             var baseUsers = await query.OrderByDescending(u => u.CreatedAt).ToListAsync();

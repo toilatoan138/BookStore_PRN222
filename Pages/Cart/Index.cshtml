@@ -1,4 +1,4 @@
-﻿@page
+@page
 @model BookStore.Pages.Cart.IndexModel
 @{
     ViewData["Title"] = "Giỏ hàng của bạn";
@@ -102,6 +102,22 @@
                 <div class="col-lg-4">
                     <div class="card border-0 shadow-sm rounded-4 p-4 bg-white sticky-top" style="top: 140px;">
                         <h5 class="fw-bold mb-3 text-dark">Tóm tắt đơn hàng</h5>
+
+                        <!-- FULFILLMENT NOTICE IN CART -->
+                        <div class="p-3 rounded-3 mb-3 @(Model.FulfillmentPlan.RequiresInterWarehouseTransfer ? "bg-warning-subtle border border-warning-subtle" : "bg-light border")">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="fw-bold text-dark small"><i class="fa-solid fa-truck-fast text-danger me-1"></i>Vận chuyển:</span>
+                                <span class="badge @(Model.FulfillmentPlan.RequiresInterWarehouseTransfer ? "bg-warning text-dark" : "bg-success") rounded-pill">
+                                    @Model.FulfillmentPlan.DeliveryTimeEstimate
+                                </span>
+                            </div>
+                            <div class="text-secondary small" style="font-size: 0.78rem;">
+                                <i class="fa-solid fa-warehouse me-1"></i>Xuất: <strong>@Model.FulfillmentPlan.FulfillmentWarehouseName</strong>
+                            </div>
+                            <div class="text-danger small mt-1 fw-semibold" style="font-size: 0.75rem;">
+                                <i class="fa-solid fa-clock-rotate-left me-1"></i>Cam kết nhận hàng tối đa trong 5 ngày.
+                            </div>
+                        </div>
 
                         <div class="d-flex justify-content-between mb-2 small text-muted">
                             <span>Sản phẩm được chọn:</span>

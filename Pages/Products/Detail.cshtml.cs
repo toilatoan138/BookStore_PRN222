@@ -12,23 +12,24 @@ namespace BookStore.Pages.Products
         private readonly IBookService _bookService;
         private readonly ICartService _cartService;
         private readonly UserManager<ApplicationUser> _userManager;
-        private readonly BookStore.Data.ApplicationDbContext _context;
+        private readonly IWarehouseFulfillmentService _fulfillmentService;
 
         public DetailModel(
             IBookService bookService,
             ICartService cartService,
             UserManager<ApplicationUser> userManager,
-            BookStore.Data.ApplicationDbContext context)
+            IWarehouseFulfillmentService fulfillmentService)
         {
             _bookService = bookService;
             _cartService = cartService;
             _userManager = userManager;
-            _context = context;
+            _fulfillmentService = fulfillmentService;
         }
 
         public Book Book { get; set; } = null!;
         public List<Book> SuggestedBooks { get; set; } = new();
-        public List<BranchInventory> BranchInventories { get; set; } = new();
+        public List<WarehouseStockInfo> WarehouseStocks { get; set; } = new();
+        public string CurrentRegion { get; set; } = "Miền Bắc (Hà Nội)";
 
         [BindProperty]
         public int Quantity { get; set; } = 1;
@@ -60,15 +61,9 @@ namespace BookStore.Pages.Products
             Book = book;
             SuggestedBooks = await _bookService.GetSuggestedBooksAsync(book.Id, book.CategoryId, 6);
 
-            // Load branch inventories
-            BranchInventories = _context.BranchInventories
-                .Where(bi => bi.BookId == id)
-                .Select(bi => new BranchInventory
-                {
-                    Branch = bi.Branch,
-                    StockQuantity = bi.StockQuantity
-                })
-                .ToList();
+            var user = await _userManager.GetUserAsync(User);
+            CurrentRegion = _fulfillmentService.GetUserSelectedRegion(HttpContext, user?.Addresses?.FirstOrDefault(a => a.IsDefaultShipping)?.City);
+            WarehouseStocks = await _fulfillmentService.GetWarehouseStocksForBookAsync(book.Id, CurrentRegion);
 
             return Page();
         }

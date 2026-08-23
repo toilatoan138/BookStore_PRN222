@@ -1,4 +1,4 @@
-﻿using BookStore.Models.Entities;
+using BookStore.Models.Entities;
 using BookStore.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -12,14 +12,21 @@ namespace BookStore.Pages.Cart
     {
         private readonly ICartService _cartService;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IWarehouseFulfillmentService _fulfillmentService;
 
-        public IndexModel(ICartService cartService, UserManager<ApplicationUser> userManager)
+        public IndexModel(
+            ICartService cartService, 
+            UserManager<ApplicationUser> userManager,
+            IWarehouseFulfillmentService fulfillmentService)
         {
             _cartService = cartService;
             _userManager = userManager;
+            _fulfillmentService = fulfillmentService;
         }
 
         public List<CartItem> CartItems { get; set; } = new();
+        public RegionalFulfillmentResult FulfillmentPlan { get; set; } = new();
+        public string CurrentRegion { get; set; } = "Miền Bắc (Hà Nội)";
         public decimal GrandTotal => CartItems.Sum(ci => ci.Quantity * ci.Book.Price);
 
         public async Task<IActionResult> OnGetAsync()
@@ -29,6 +36,10 @@ namespace BookStore.Pages.Cart
 
             CartItems = await _cartService.GetCartItemsAsync(user.Id);
             ViewData["CartCount"] = CartItems.Sum(ci => ci.Quantity);
+
+            CurrentRegion = _fulfillmentService.GetUserSelectedRegion(HttpContext, user.Addresses?.FirstOrDefault(a => a.IsDefaultShipping)?.City);
+            var itemsTuple = CartItems.Select(ci => (ci.BookId, ci.Quantity)).ToList();
+            FulfillmentPlan = await _fulfillmentService.EvaluateFulfillmentPlanAsync(itemsTuple, null, CurrentRegion);
 
             return Page();
         }

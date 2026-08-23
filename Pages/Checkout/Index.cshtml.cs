@@ -19,6 +19,7 @@ namespace BookStore.Pages.Checkout
         private readonly IVnPayService _vnPayService;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ApplicationDbContext _context;
+        private readonly IWarehouseFulfillmentService _fulfillmentService;
 
         public IndexModel(
             IOrderService orderService,
@@ -26,7 +27,8 @@ namespace BookStore.Pages.Checkout
             ICartService cartService,
             IVnPayService vnPayService,
             UserManager<ApplicationUser> userManager,
-            ApplicationDbContext context)
+            ApplicationDbContext context,
+            IWarehouseFulfillmentService fulfillmentService)
         {
             _orderService = orderService;
             _userService = userService;
@@ -34,6 +36,7 @@ namespace BookStore.Pages.Checkout
             _vnPayService = vnPayService;
             _userManager = userManager;
             _context = context;
+            _fulfillmentService = fulfillmentService;
         }
 
         public ApplicationUser CurrentUser { get; set; } = null!;
@@ -41,6 +44,7 @@ namespace BookStore.Pages.Checkout
         public List<CartItem> CheckoutItems { get; set; } = new();
         public List<UserVoucher> AvailableVouchers { get; set; } = new();
         public CheckoutCalculationResult Calculation { get; set; } = new();
+        public RegionalFulfillmentResult FulfillmentPlan { get; set; } = new();
         public bool RequiresOrderSplit { get; set; } = false;
 
         [BindProperty]
@@ -103,35 +107,6 @@ namespace BookStore.Pages.Checkout
                 Form.SelectedAddressId = Addresses.First().Id;
             }
 
-            // --- CHECK FOR ORDER SPLIT ---
-            var bookIds = CheckoutItems.Select(ci => ci.BookId).ToList();
-            var allInventories = await _context.BranchInventories
-                .Where(bi => bookIds.Contains(bi.BookId))
-                .ToListAsync();
-
-            bool canFulfillInOneBranch = false;
-            var branchGroups = allInventories.GroupBy(bi => bi.BranchId);
-            foreach(var group in branchGroups)
-            {
-                bool thisBranchCanFulfillAll = true;
-                foreach(var item in CheckoutItems)
-                {
-                    var branchStock = group.FirstOrDefault(bi => bi.BookId == item.BookId)?.StockQuantity ?? 0;
-                    if (branchStock < item.Quantity)
-                    {
-                        thisBranchCanFulfillAll = false;
-                        break;
-                    }
-                }
-                if (thisBranchCanFulfillAll)
-                {
-                    canFulfillInOneBranch = true;
-                    break;
-                }
-            }
-            RequiresOrderSplit = !canFulfillInOneBranch;
-            // -----------------------------
-
             // Load user vouchers
             AvailableVouchers = await _context.UserVouchers
                 .Include(uv => uv.Voucher)
@@ -144,6 +119,12 @@ namespace BookStore.Pages.Checkout
                 Form.VoucherCode,
                 Form.PaymentMethod
             );
+
+            var selectedAddr = Addresses.FirstOrDefault(a => a.Id == Form.SelectedAddressId) ?? Addresses.FirstOrDefault();
+            var itemsTuple = CheckoutItems.Select(ci => (ci.BookId, ci.Quantity)).ToList();
+            var userRegion = _fulfillmentService.GetUserSelectedRegion(HttpContext, selectedAddr?.City);
+            FulfillmentPlan = await _fulfillmentService.EvaluateFulfillmentPlanAsync(itemsTuple, selectedAddr?.City, userRegion);
+            RequiresOrderSplit = FulfillmentPlan.RequiresInterWarehouseTransfer;
 
             return Page();
         }
