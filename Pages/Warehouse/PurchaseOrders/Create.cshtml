@@ -1,4 +1,4 @@
-﻿@page
+@page
 @model BookStore.Pages.Warehouse.PurchaseOrders.CreateModel
 @{
     Layout = "_AdminLayout";
@@ -10,15 +10,25 @@
     <form method="post">
         <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 mb-3" role="alert"></div>
 
-        <!-- SUPPLIER PICKER -->
-        <div class="row g-3 mb-4">
+        <div class="row mb-4">
             <div class="col-md-6">
-                <label asp-for="Input.SupplierId" class="form-label fw-semibold">Nhà cung cấp / Nhà xuất bản</label>
-                <select asp-for="Input.SupplierId" class="form-select" required>
+                <label class="form-label fw-bold">Chi nhánh nhập hàng <span class="text-danger">*</span></label>
+                <select asp-for="Input.BranchId" class="form-select">
+                    <option value="">-- Chọn kho nhận hàng --</option>
+                    @foreach (var branch in Model.Branches)
+                    {
+                        <option value="@branch.Id">@branch.Name</option>
+                    }
+                </select>
+                <span asp-validation-for="Input.BranchId" class="text-danger small"></span>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label fw-bold">Nhà cung cấp <span class="text-danger">*</span></label>
+                <select asp-for="Input.SupplierId" class="form-select" id="globalSupplierSelect" onchange="onGlobalSupplierChange()">
                     <option value="">-- Chọn Nhà cung cấp --</option>
                     @foreach (var s in Model.Suppliers)
                     {
-                        <option value="@s.Id">@s.Name (@(s.ContactPerson ?? s.Phone ?? "N/A"))</option>
+                        <option value="@s.Id">@s.Name</option>
                     }
                 </select>
                 <span asp-validation-for="Input.SupplierId" class="text-danger small"></span>
@@ -31,9 +41,9 @@
             <table class="table table-bordered align-middle small" id="poItemsTable">
                 <thead class="table-light">
                     <tr>
-                        <th style="width: 45%;">Sản phẩm (Sách)</th>
+                        <th style="width: 50%;">Sản phẩm (Sách)</th>
                         <th style="width: 20%;">Số lượng nhập</th>
-                        <th style="width: 25%;">Đơn giá nhập (VNĐ)</th>
+                        <th style="width: 20%;">Đơn giá (VNĐ)</th>
                         <th style="width: 10%;" class="text-center">Xóa</th>
                     </tr>
                 </thead>
@@ -43,11 +53,11 @@
                     {
                         <tr>
                             <td>
-                                <select name="Input.Items[@i].BookId" class="form-select form-select-sm">
-                                    <option value="0">-- Chọn sách --</option>
+                                <select name="Input.Items[@i].BookId" class="form-select form-select-sm book-select">
+                                    <option value="0" data-supplier-id="">-- Chọn sách --</option>
                                     @foreach (var b in Model.Books)
                                     {
-                                        <option value="@b.Id">@b.Title (Tồn: @b.StockQuantity)</option>
+                                        <option value="@b.Id" data-supplier-id="@b.SupplierId">@b.Title (Tồn: @b.StockQuantity)</option>
                                     }
                                 </select>
                             </td>
@@ -87,15 +97,54 @@
 
 <script>
     let rowIndex = 3;
-    const booksOptions = `@Html.Raw(string.Join("", Model.Books.Select(b => $"<option value='{b.Id}'>{b.Title} (Tồn: {b.StockQuantity})</option>")))`;
+    const booksOptions = `<option value="0" data-supplier-id="">-- Chọn sách --</option>` + `@Html.Raw(string.Join("", Model.Books.Select(b => $"<option value='{b.Id}' data-supplier-id='{b.SupplierId}'>{b.Title.Replace("'", "\\'")} (Tồn: {b.StockQuantity})</option>")))`;
+
+    function onGlobalSupplierChange() {
+        const selectedSupplierId = document.getElementById('globalSupplierSelect').value;
+        const allBookSelects = document.querySelectorAll('.book-select');
+        
+        allBookSelects.forEach(select => {
+            const currentValue = select.value;
+            // Reset options
+            select.innerHTML = booksOptions;
+            
+            // Lọc ra các sách có data-supplier-id trùng với selectedSupplierId
+            if (selectedSupplierId) {
+                Array.from(select.options).forEach(option => {
+                    if (option.value !== "0" && option.getAttribute('data-supplier-id') !== selectedSupplierId) {
+                        option.style.display = 'none';
+                        option.disabled = true;
+                    } else {
+                        option.style.display = '';
+                        option.disabled = false;
+                    }
+                });
+            }
+
+            // Giữ lại giá trị cũ nếu hợp lệ
+            let valid = false;
+            Array.from(select.options).forEach(option => {
+                if(option.value === currentValue && !option.disabled) valid = true;
+            });
+            if(valid) {
+                select.value = currentValue;
+            } else {
+                select.value = "0";
+            }
+        });
+    }
+
+    // Call once to filter initially if needed
+    document.addEventListener('DOMContentLoaded', () => {
+        onGlobalSupplierChange();
+    });
 
     function addRow() {
         const tbody = document.getElementById('poItemsBody');
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>
-                <select name="Input.Items[${rowIndex}].BookId" class="form-select form-select-sm">
-                    <option value="0">-- Chọn sách --</option>
+                <select name="Input.Items[${rowIndex}].BookId" class="form-select form-select-sm book-select">
                     ${booksOptions}
                 </select>
             </td>
@@ -113,5 +162,8 @@
         `;
         tbody.appendChild(tr);
         rowIndex++;
+        
+        // Cập nhật lại filter cho dòng mới
+        onGlobalSupplierChange();
     }
 </script>

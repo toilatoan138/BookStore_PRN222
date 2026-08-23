@@ -1,4 +1,4 @@
-﻿using BookStore.Models.Entities;
+using BookStore.Models.Entities;
 
 namespace BookStore.Services
 {
@@ -18,13 +18,14 @@ namespace BookStore.Services
         public int BookId { get; set; }
         public int Quantity { get; set; }
         public decimal UnitPrice { get; set; }
+        public int SupplierId { get; set; }
     }
 
     public interface IWarehouseService
     {
         Task<WarehouseDashboardStats> GetDashboardStatsAsync();
         Task<List<Book>> GetInventoryAsync(string? keyword = null, bool lowStockOnly = false);
-        Task<bool> AdjustStockAsync(int bookId, int newQuantity, string? reason, string userId, string? locationCode = null);
+        Task<bool> AdjustStockAsync(int branchId, int bookId, int newQuantity, string? reason, string userId, string? locationCode = null);
         Task<List<Location>> GetLocationsAsync();
         Task<Location> CreateLocationAsync(Location location);
         Task<List<Supplier>> GetSuppliersAsync();
@@ -33,7 +34,7 @@ namespace BookStore.Services
         Task<bool> UpdateSupplierAsync(Supplier supplier);
         Task<List<PurchaseOrder>> GetPurchaseOrdersAsync(int? status = null);
         Task<PurchaseOrder?> GetPurchaseOrderByIdAsync(int id);
-        Task<PurchaseOrder> CreatePurchaseOrderAsync(int supplierId, string userId, List<PoItemInput> items);
+        Task<List<PurchaseOrder>> CreatePurchaseOrdersAsync(string userId, List<PoItemInput> items, int branchId);
         Task<bool> ReceivePurchaseOrderGoodsAsync(int poId, string warehouseUserId);
         Task<List<Order>> GetPickingListAsync();
         Task<List<Invoice>> GetInvoicesAsync();

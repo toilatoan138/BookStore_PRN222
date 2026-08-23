@@ -1,4 +1,4 @@
-﻿@page
+@page
 @model BookStore.Pages.Warehouse.Inventory.LowStockModel
 @{
     Layout = "_AdminLayout";
@@ -73,17 +73,18 @@
                     <tr>
                         <th class="text-center" style="width: 5%;">STT</th>
                         <th class="text-center" style="width: 8%;">Ảnh</th>
-                        <th style="width: 25%;">Tên sách</th>
-                        <th style="width: 14%;">Thể loại</th>
-                        <th class="text-center" style="width: 12%;">Vị trí kệ</th>
-                        <th style="width: 14%;">Nhà xuất bản</th>
+                        <th style="width: 20%;">Tên sách</th>
+                        <th style="width: 12%;">Thể loại</th>
+                        <th style="width: 15%;">Chi nhánh</th>
+                        <th class="text-center" style="width: 10%;">Vị trí kệ</th>
+                        <th style="width: 12%;">Nhà xuất bản</th>
                         <th style="width: 10%;">Giá bán</th>
                         <th class="text-center" style="width: 8%;">Tồn kho</th>
                         <th class="text-center" style="width: 12%;">Thao tác</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @if (!Model.Books.Any())
+                    @if (!Model.LowStockItems.Any())
                     {
                         <tr>
                             <td colspan="9" class="text-center text-muted py-4">
@@ -95,8 +96,9 @@
                     else
                     {
                         int index = 0;
-                        foreach (var b in Model.Books)
+                        foreach (var item in Model.LowStockItems)
                         {
+                            var b = item.Book;
                             index++;
                             <tr>
                                 <td class="text-center fw-bold text-muted">@index</td>
@@ -109,13 +111,14 @@
                                 </td>
                                 <td class="fw-bold text-dark">@b.Title</td>
                                 <td>@(b.Category?.Name ?? "Chưa phân loại")</td>
+                                <td class="fw-bold text-primary">@item.Branch.Name</td>
                                 <td class="text-center fw-bold text-info">
                                     @(b.LocationCode != null ? b.LocationCode : Html.Raw("<span class='text-muted small'>Chưa xếp kệ</span>"))
                                 </td>
                                 <td>@(b.Publisher ?? "N/A")</td>
                                 <td class="fw-bold text-danger">@b.Price.ToString("N0")đ</td>
                                 <td class="text-center">
-                                    <span class="badge bg-danger fs-6 px-3 py-2">@b.StockQuantity</span>
+                                    <span class="badge bg-danger fs-6 px-3 py-2">@item.StockQuantity</span>
                                 </td>
                                 <td class="text-center">
                                     <a asp-page="/Warehouse/PurchaseOrders/Create" class="btn btn-sm btn-success rounded-pill px-2 me-1" title="Tạo đơn nhập">
@@ -123,7 +126,7 @@
                                     </a>
                                     <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-2"
                                             title="Kiểm kê"
-                                            onclick="openAdjustStockModal(@b.Id, '@Html.Raw(Html.Encode(b.Title))', @b.StockQuantity, '@(b.LocationCode ?? "")')">
+                                            onclick="openAdjustStockModal(@item.BranchId, @b.Id, '@Html.Raw(Html.Encode(b.Title)) - @item.Branch.Name', @item.StockQuantity, '@(b.LocationCode ?? "")')">
                                         <i class="fa-solid fa-pen"></i>
                                     </button>
                                 </td>
@@ -146,6 +149,7 @@
             </div>
             <form method="post" asp-page-handler="AdjustStock">
                 <div class="modal-body p-4">
+                    <input type="hidden" name="branchId" id="modalBranchId" />
                     <input type="hidden" name="bookId" id="modalBookId" />
 
                     <div class="mb-3">
@@ -180,8 +184,9 @@
 
 @section Scripts {
     <script>
-        function openAdjustStockModal(id, title, qty, loc) {
-            document.getElementById('modalBookId').value = id;
+        function openAdjustStockModal(branchId, bookId, title, qty, loc) {
+            document.getElementById('modalBranchId').value = branchId;
+            document.getElementById('modalBookId').value = bookId;
             document.getElementById('modalBookTitle').value = title;
             document.getElementById('modalQuantity').value = qty;
             document.getElementById('modalLocationCode').value = loc;

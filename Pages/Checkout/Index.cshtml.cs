@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using BookStore.Data;
 using BookStore.Models.Entities;
 using BookStore.Services;
@@ -41,6 +41,7 @@ namespace BookStore.Pages.Checkout
         public List<CartItem> CheckoutItems { get; set; } = new();
         public List<UserVoucher> AvailableVouchers { get; set; } = new();
         public CheckoutCalculationResult Calculation { get; set; } = new();
+        public bool RequiresOrderSplit { get; set; } = false;
 
         [BindProperty]
         public CheckoutFormModel Form { get; set; } = new();
@@ -101,6 +102,35 @@ namespace BookStore.Pages.Checkout
             {
                 Form.SelectedAddressId = Addresses.First().Id;
             }
+
+            // --- CHECK FOR ORDER SPLIT ---
+            var bookIds = CheckoutItems.Select(ci => ci.BookId).ToList();
+            var allInventories = await _context.BranchInventories
+                .Where(bi => bookIds.Contains(bi.BookId))
+                .ToListAsync();
+
+            bool canFulfillInOneBranch = false;
+            var branchGroups = allInventories.GroupBy(bi => bi.BranchId);
+            foreach(var group in branchGroups)
+            {
+                bool thisBranchCanFulfillAll = true;
+                foreach(var item in CheckoutItems)
+                {
+                    var branchStock = group.FirstOrDefault(bi => bi.BookId == item.BookId)?.StockQuantity ?? 0;
+                    if (branchStock < item.Quantity)
+                    {
+                        thisBranchCanFulfillAll = false;
+                        break;
+                    }
+                }
+                if (thisBranchCanFulfillAll)
+                {
+                    canFulfillInOneBranch = true;
+                    break;
+                }
+            }
+            RequiresOrderSplit = !canFulfillInOneBranch;
+            // -----------------------------
 
             // Load user vouchers
             AvailableVouchers = await _context.UserVouchers

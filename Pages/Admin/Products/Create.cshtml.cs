@@ -22,6 +22,7 @@ namespace BookStore.Pages.Admin.Products
         public BookInputModel Input { get; set; } = new();
 
         public List<Category> Categories { get; set; } = new();
+        public List<Supplier> Suppliers { get; set; } = new();
 
         public class BookInputModel
         {
@@ -38,6 +39,10 @@ namespace BookStore.Pages.Admin.Products
             [Display(Name = "Danh mục")]
             public int CategoryId { get; set; }
 
+            [Required(ErrorMessage = "Vui lòng chọn nhà cung cấp")]
+            [Display(Name = "Nhà cung cấp")]
+            public int SupplierId { get; set; }
+
             [Required(ErrorMessage = "Giá bán là bắt buộc")]
             [Range(0, 100000000, ErrorMessage = "Giá bán phải từ 0đ trở lên")]
             [Display(Name = "Giá bán (VNĐ)")]
@@ -46,11 +51,6 @@ namespace BookStore.Pages.Admin.Products
             [Display(Name = "Giá nhập (VNĐ)")]
             public decimal ImportPrice { get; set; }
 
-            [Required(ErrorMessage = "Số lượng tồn kho là bắt buộc")]
-            [Range(0, 100000, ErrorMessage = "Số lượng tồn kho phải >= 0")]
-            [Display(Name = "Số lượng tồn kho")]
-            public int StockQuantity { get; set; } = 10;
-
             [StringLength(500)]
             [Display(Name = "URL Ảnh bìa chính")]
             public string? ImageUrl { get; set; }
@@ -58,10 +58,6 @@ namespace BookStore.Pages.Admin.Products
             [StringLength(200)]
             [Display(Name = "Nhà xuất bản")]
             public string? Publisher { get; set; }
-
-            [StringLength(200)]
-            [Display(Name = "Nhà cung cấp")]
-            public string? Supplier { get; set; }
 
             [StringLength(20)]
             [Display(Name = "Mã ISBN")]
@@ -88,6 +84,7 @@ namespace BookStore.Pages.Admin.Products
         public async Task OnGetAsync()
         {
             Categories = await _context.Categories.OrderBy(c => c.Name).ToListAsync();
+            Suppliers = await _context.Suppliers.Where(s => s.IsActive == true).OrderBy(s => s.Name).ToListAsync();
         }
 
         public async Task<IActionResult> OnPostAsync()
@@ -95,6 +92,7 @@ namespace BookStore.Pages.Admin.Products
             if (!ModelState.IsValid)
             {
                 Categories = await _context.Categories.OrderBy(c => c.Name).ToListAsync();
+                Suppliers = await _context.Suppliers.Where(s => s.IsActive == true).OrderBy(s => s.Name).ToListAsync();
                 return Page();
             }
 
@@ -111,13 +109,13 @@ namespace BookStore.Pages.Admin.Products
                 Title = Input.Title,
                 Author = Input.Author,
                 CategoryId = Input.CategoryId,
+                SupplierId = Input.SupplierId,
                 LocationId = locationId,
                 Price = Input.Price,
                 ImportPrice = Input.ImportPrice,
-                StockQuantity = Input.StockQuantity,
+                StockQuantity = 0, // Mặc định = 0 khi tạo mới, sẽ cập nhật khi có PO
                 ImageUrl = string.IsNullOrWhiteSpace(Input.ImageUrl) ? "https://via.placeholder.com/200x280?text=MindBook" : Input.ImageUrl,
                 Publisher = Input.Publisher,
-                Supplier = Input.Supplier,
                 Isbn = Input.Isbn,
                 YearOfPublish = Input.YearOfPublish,
                 NumberOfPages = Input.NumberOfPages,

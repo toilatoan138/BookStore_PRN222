@@ -23,6 +23,7 @@ namespace BookStore.Pages.Admin.Products
 
         public Book Book { get; set; } = null!;
         public List<Category> Categories { get; set; } = new();
+        public List<Supplier> Suppliers { get; set; } = new();
 
         public class EditBookInputModel
         {
@@ -36,6 +37,9 @@ namespace BookStore.Pages.Admin.Products
 
             [Required(ErrorMessage = "Vui lòng chọn danh mục")]
             public int CategoryId { get; set; }
+            
+            [Required(ErrorMessage = "Vui lòng chọn nhà cung cấp")]
+            public int SupplierId { get; set; }
 
             [Required]
             [Range(0, 100000000)]
@@ -43,13 +47,10 @@ namespace BookStore.Pages.Admin.Products
 
             public decimal ImportPrice { get; set; }
 
-            [Required]
-            [Range(0, 100000)]
-            public int StockQuantity { get; set; }
+            public int StockQuantity { get; set; } // Read-only in view
 
             public string? ImageUrl { get; set; }
             public string? Publisher { get; set; }
-            public string? Supplier { get; set; }
             public string? Isbn { get; set; }
             public int? YearOfPublish { get; set; }
             public int? NumberOfPages { get; set; }
@@ -70,6 +71,7 @@ namespace BookStore.Pages.Admin.Products
 
             Book = book;
             Categories = await _context.Categories.OrderBy(c => c.Name).ToListAsync();
+            Suppliers = await _context.Suppliers.Where(s => s.IsActive == true).OrderBy(s => s.Name).ToListAsync();
 
             Input = new EditBookInputModel
             {
@@ -77,12 +79,12 @@ namespace BookStore.Pages.Admin.Products
                 Title = book.Title,
                 Author = book.Author,
                 CategoryId = book.CategoryId,
+                SupplierId = book.SupplierId ?? 0,
                 Price = book.Price,
                 ImportPrice = book.ImportPrice,
                 StockQuantity = book.StockQuantity,
                 ImageUrl = book.ImageUrl,
                 Publisher = book.Publisher,
-                Supplier = book.Supplier,
                 Isbn = book.Isbn,
                 YearOfPublish = book.YearOfPublish,
                 NumberOfPages = book.NumberOfPages,
@@ -107,12 +109,12 @@ namespace BookStore.Pages.Admin.Products
             book.Title = Input.Title;
             book.Author = Input.Author;
             book.CategoryId = Input.CategoryId;
+            book.SupplierId = Input.SupplierId == 0 ? null : Input.SupplierId;
             book.Price = Input.Price;
             book.ImportPrice = Input.ImportPrice;
-            book.StockQuantity = Input.StockQuantity;
+            // Bỏ qua cập nhật book.StockQuantity ở đây
             book.ImageUrl = Input.ImageUrl;
             book.Publisher = Input.Publisher;
-            book.Supplier = Input.Supplier;
             book.Isbn = Input.Isbn;
             book.YearOfPublish = Input.YearOfPublish;
             book.NumberOfPages = Input.NumberOfPages;

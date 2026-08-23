@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using BookStore.Data;
 using BookStore.Models.Entities;
 using BookStore.Services;
@@ -29,14 +29,17 @@ namespace BookStore.Pages.Warehouse.PurchaseOrders
 
         public List<Supplier> Suppliers { get; set; } = new();
         public List<Book> Books { get; set; } = new();
+        public List<Branch> Branches { get; set; } = new();
 
         [BindProperty]
         public PoCreateInput Input { get; set; } = new();
 
         public class PoCreateInput
         {
+            [Required(ErrorMessage = "Vui lòng chọn chi nhánh nhập hàng")]
+            public int BranchId { get; set; }
+
             [Required(ErrorMessage = "Vui lòng chọn nhà cung cấp")]
-            [Display(Name = "Nhà cung cấp")]
             public int SupplierId { get; set; }
 
             public List<PoItemRow> Items { get; set; } = new();
@@ -53,6 +56,7 @@ namespace BookStore.Pages.Warehouse.PurchaseOrders
         {
             Suppliers = await _warehouseService.GetSuppliersAsync();
             Books = await _context.Books.OrderBy(b => b.Title).ToListAsync();
+            Branches = await _context.Branches.ToListAsync();
         }
 
         public async Task<IActionResult> OnPostAsync()
@@ -60,24 +64,37 @@ namespace BookStore.Pages.Warehouse.PurchaseOrders
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return RedirectToPage("/Account/Login");
 
-            var validItems = Input.Items.Where(i => i.BookId > 0 && i.Quantity > 0 && i.UnitPrice > 0).ToList();
-            if (!validItems.Any())
+            if (Input.BranchId <= 0)
             {
-                ModelState.AddModelError(string.Empty, "Vui lòng thêm ít nhất 1 đầu sách với số lượng và đơn giá hợp lệ.");
+                ModelState.AddModelError("Input.BranchId", "Vui lòng chọn chi nhánh nhập hàng.");
+            }
+
+            if (Input.SupplierId <= 0)
+            {
+                ModelState.AddModelError("Input.SupplierId", "Vui lòng chọn nhà cung cấp.");
+            }
+
+            var validItems = Input.Items.Where(i => i.BookId > 0 && i.Quantity > 0 && i.UnitPrice > 0).ToList();
+            if (!validItems.Any() || !ModelState.IsValid)
+            {
+                if (!validItems.Any()) ModelState.AddModelError(string.Empty, "Vui lòng thêm ít nhất 1 đầu sách với số lượng và đơn giá hợp lệ.");
                 Suppliers = await _warehouseService.GetSuppliersAsync();
                 Books = await _context.Books.OrderBy(b => b.Title).ToListAsync();
+                Branches = await _context.Branches.ToListAsync();
                 return Page();
             }
 
             var poItems = validItems.Select(i => new PoItemInput
             {
                 BookId = i.BookId,
+                SupplierId = Input.SupplierId, // Lấy từ form chung
                 Quantity = i.Quantity,
                 UnitPrice = i.UnitPrice
             }).ToList();
 
-            var po = await _warehouseService.CreatePurchaseOrderAsync(Input.SupplierId, user.Id, poItems);
-            TempData["SuccessMessage"] = $"Đã tạo Đơn nhập hàng PO #{po.PurchaseOrderId} thành công! Đơn đã được chuyển sang Admin để duyệt.";
+            var pos = await _warehouseService.CreatePurchaseOrdersAsync(user.Id, poItems, Input.BranchId);
+            var poIds = string.Join(", ", pos.Select(p => $"#{p.PurchaseOrderId}"));
+            TempData["SuccessMessage"] = $"Đã tạo Đơn nhập hàng {poIds} thành công! Đơn đã được chuyển sang Admin để duyệt.";
             return RedirectToPage("/Warehouse/PurchaseOrders/Index");
         }
     }

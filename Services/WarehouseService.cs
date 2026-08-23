@@ -63,15 +63,31 @@ namespace BookStore.Services
             return await query.OrderBy(b => b.StockQuantity).ToListAsync();
         }
 
-        public async Task<bool> AdjustStockAsync(int bookId, int newQuantity, string? reason, string userId, string? locationCode = null)
+        public async Task<bool> AdjustStockAsync(int branchId, int bookId, int newQuantity, string? reason, string userId, string? locationCode = null)
         {
             var book = await _context.Books.FindAsync(bookId);
             if (book == null) return false;
 
-            int oldQuantity = book.StockQuantity;
+            var branchInv = await _context.BranchInventories
+                .FirstOrDefaultAsync(bi => bi.BranchId == branchId && bi.BookId == bookId);
+
+            int oldQuantity = branchInv?.StockQuantity ?? 0;
             int changeAmount = newQuantity - oldQuantity;
 
-            book.StockQuantity = newQuantity;
+            if (branchInv != null)
+            {
+                branchInv.StockQuantity = newQuantity;
+            }
+            else
+            {
+                _context.BranchInventories.Add(new BranchInventory
+                {
+                    BranchId = branchId,
+                    BookId = bookId,
+                    StockQuantity = newQuantity
+                });
+            }
+
             if (!string.IsNullOrEmpty(locationCode))
             {
                 string formattedCode = locationCode.Trim().ToUpper();
@@ -170,35 +186,47 @@ namespace BookStore.Services
                 .FirstOrDefaultAsync(po => po.PurchaseOrderId == id);
         }
 
-        public async Task<PurchaseOrder> CreatePurchaseOrderAsync(int supplierId, string userId, List<PoItemInput> items)
+        public async Task<List<PurchaseOrder>> CreatePurchaseOrdersAsync(string userId, List<PoItemInput> items, int branchId)
         {
-            var po = new PurchaseOrder
-            {
-                SupplierId = supplierId,
-                UserId = userId,
-                OrderDate = DateTime.UtcNow,
-                Status = 0, // Pending Admin Approval
-                TotalQuantity = items.Sum(i => i.Quantity),
-                TotalAmount = items.Sum(i => i.Quantity * i.UnitPrice)
-            };
+            var createdPos = new List<PurchaseOrder>();
+            var groupedItems = items.GroupBy(i => i.SupplierId).ToList();
 
-            _context.PurchaseOrders.Add(po);
-            await _context.SaveChangesAsync();
-
-            foreach (var item in items)
+            foreach (var group in groupedItems)
             {
-                _context.PurchaseOrderDetails.Add(new PurchaseOrderDetail
+                int supplierId = group.Key;
+                var groupItems = group.ToList();
+
+                var po = new PurchaseOrder
                 {
-                    PurchaseOrderId = po.PurchaseOrderId,
-                    BookId = item.BookId,
-                    ExpectedQuantity = item.Quantity,
-                    ReceivedQuantity = 0,
-                    Price = item.UnitPrice
-                });
-            }
+                    SupplierId = supplierId,
+                    BranchId = branchId,
+                    UserId = userId,
+                    OrderDate = DateTime.UtcNow,
+                    Status = 0, // Pending Admin Approval
+                    TotalQuantity = groupItems.Sum(i => i.Quantity),
+                    TotalAmount = groupItems.Sum(i => i.Quantity * i.UnitPrice)
+                };
 
-            await _context.SaveChangesAsync();
-            return po;
+                _context.PurchaseOrders.Add(po);
+                await _context.SaveChangesAsync();
+
+                foreach (var item in groupItems)
+                {
+                    _context.PurchaseOrderDetails.Add(new PurchaseOrderDetail
+                    {
+                        PurchaseOrderId = po.PurchaseOrderId,
+                        BookId = item.BookId,
+                        ExpectedQuantity = item.Quantity,
+                        ReceivedQuantity = 0,
+                        Price = item.UnitPrice
+                    });
+                }
+
+                await _context.SaveChangesAsync();
+                createdPos.Add(po);
+            }
+            
+            return createdPos;
         }
 
         public async Task<bool> ReceivePurchaseOrderGoodsAsync(int poId, string warehouseUserId)
@@ -212,7 +240,7 @@ namespace BookStore.Services
             po.Status = 2; // Received
             po.StatusNote = $"Đã nhập kho thành công bởi thủ kho lúc {DateTime.UtcNow:dd/MM/yyyy HH:mm}";
 
-            // Update Stock of each book & log movement
+            // Update Stock of each book in BranchInventory & log movement
             foreach (var d in po.Details)
             {
                 d.ReceivedQuantity = d.ExpectedQuantity;
@@ -220,8 +248,24 @@ namespace BookStore.Services
                 var book = await _context.Books.FindAsync(d.BookId);
                 if (book != null)
                 {
-                    book.StockQuantity += d.ExpectedQuantity;
                     book.ImportPrice = d.Price; // Update latest cost price
+                    
+                    var branchInv = await _context.BranchInventories
+                        .FirstOrDefaultAsync(bi => bi.BranchId == po.BranchId && bi.BookId == d.BookId);
+                        
+                    if (branchInv != null)
+                    {
+                        branchInv.StockQuantity += d.ExpectedQuantity;
+                    }
+                    else
+                    {
+                        _context.BranchInventories.Add(new BranchInventory
+                        {
+                            BranchId = po.BranchId,
+                            BookId = d.BookId,
+                            StockQuantity = d.ExpectedQuantity
+                        });
+                    }
 
                     _context.InventoryHistories.Add(new InventoryHistory
                     {

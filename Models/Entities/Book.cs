@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BookStore.Models.Entities
@@ -122,5 +122,6 @@ namespace BookStore.Models.Entities
         public virtual ICollection<InventoryHistory> InventoryHistories { get; set; } = new List<InventoryHistory>();
         public virtual ICollection<CollectionBook> CollectionBooks { get; set; } = new List<CollectionBook>();
         public virtual ICollection<PromotionBook> PromotionBooks { get; set; } = new List<PromotionBook>();
+        public virtual ICollection<BranchInventory> BranchInventories { get; set; } = new List<BranchInventory>();
     }
 }
