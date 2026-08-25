@@ -1,4 +1,4 @@
-﻿-- ====================================================================
+-- ====================================================================
 -- SEED DATA SCRIPT: BOOKSTORE PRN222
 -- ====================================================================
 -- Mục đích: Chạy Script này nếu bạn muốn insert data mẫu trực tiếp vào Database 
@@ -16,6 +16,17 @@ INSERT INTO [Branches] ([Id], [Name], [Address], [City], [IsActive]) VALUES
 (2, N'Chi nhánh Đà Nẵng', N'Sơn Trà, Đà Nẵng', N'Đà Nẵng', 1),
 (3, N'Chi nhánh TP.HCM', N'Quận 1, TP.HCM', N'TP.HCM', 1);
 SET IDENTITY_INSERT [Branches] OFF;
+GO
+
+-- 1.5. Insert Roles (Nếu chưa có)
+IF NOT EXISTS (SELECT 1 FROM [AspNetRoles] WHERE [Name] = N'Admin')
+BEGIN
+    INSERT INTO [AspNetRoles] ([Id], [Name], [NormalizedName], [ConcurrencyStamp]) VALUES 
+    (NEWID(), N'Admin', N'ADMIN', NEWID()),
+    (NEWID(), N'Staff', N'STAFF', NEWID()),
+    (NEWID(), N'Warehouse', N'WAREHOUSE', NEWID()),
+    (NEWID(), N'Customer', N'CUSTOMER', NEWID());
+END
 GO
 
 -- 2. Variables for standard password hash (Password@123)
