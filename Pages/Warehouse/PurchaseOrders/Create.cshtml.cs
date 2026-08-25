@@ -53,6 +53,12 @@ namespace BookStore.Pages.Warehouse.PurchaseOrders
             public decimal UnitPrice { get; set; }
         }
 
+        [BindProperty(SupportsGet = true)]
+        public int? PrefillBookId { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public int? PrefillBranchId { get; set; }
+
         public async Task OnGetAsync()
         {
             Suppliers = await _warehouseService.GetSuppliersAsync();
@@ -66,6 +72,29 @@ namespace BookStore.Pages.Warehouse.PurchaseOrders
                     g => g.Key,
                     g => g.ToDictionary(bi => bi.BranchId, bi => bi.StockQuantity)
                 );
+
+            if (PrefillBranchId.HasValue && PrefillBranchId.Value > 0)
+            {
+                Input.BranchId = PrefillBranchId.Value;
+            }
+
+            if (PrefillBookId.HasValue && PrefillBookId.Value > 0)
+            {
+                var book = Books.FirstOrDefault(b => b.Id == PrefillBookId.Value);
+                if (book != null)
+                {
+                    Input.SupplierId = book.SupplierId ?? 0;
+                    Input.Items = new List<PoItemRow>
+                    {
+                        new PoItemRow
+                        {
+                            BookId = book.Id,
+                            Quantity = 10,
+                            UnitPrice = book.Price > 0 ? (book.Price * 0.7m) : 50000 // default price
+                        }
+                    };
+                }
+            }
         }
 
         public async Task<IActionResult> OnPostAsync()

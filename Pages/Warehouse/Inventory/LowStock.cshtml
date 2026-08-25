@@ -26,41 +26,53 @@
 
     <!-- FILTER -->
     <div class="bg-white p-4 rounded-4 shadow-sm mb-4">
-        <form method="get" class="row g-3">
-            <div class="col-md-3">
-                <label class="form-label fw-bold small text-muted">Tên sách / Mã vị trí</label>
-                <input type="text" asp-for="Keyword" class="form-control" placeholder="Nhập tên sách..." />
+        <form method="get">
+            <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold small text-muted">Từ khóa (Tên sách / Mã vị trí)</label>
+                    <input type="text" asp-for="Keyword" class="form-control" placeholder="Nhập tên sách..." />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold small text-muted">Chi nhánh</label>
+                    <select asp-for="FilterBranchId" class="form-select">
+                        <option value="0">-- Tất cả chi nhánh --</option>
+                        @foreach (var br in Model.Branches)
+                        {
+                            <option value="@br.Id">@br.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold small text-muted">Thể loại</label>
+                    <select asp-for="CategoryId" class="form-select">
+                        <option value="0">-- Tất cả thể loại --</option>
+                        @foreach (var c in Model.Categories)
+                        {
+                            <option value="@c.Id">@c.Name</option>
+                        }
+                    </select>
+                </div>
             </div>
-
-            <div class="col-md-3">
-                <label class="form-label fw-bold small text-muted">Thể loại</label>
-                <select asp-for="CategoryId" class="form-select">
-                    <option value="0">-- Tất cả thể loại --</option>
-                    @foreach (var c in Model.Categories)
-                    {
-                        <option value="@c.Id">@c.Name</option>
-                    }
-                </select>
-            </div>
-
-            <div class="col-md-3">
-                <label class="form-label fw-bold small text-muted">Nhà xuất bản</label>
-                <select asp-for="Publisher" class="form-select">
-                    <option value="">-- Tất cả NXB --</option>
-                    @foreach (var p in Model.Publishers)
-                    {
-                        <option value="@p">@p</option>
-                    }
-                </select>
-            </div>
-
-            <div class="col-md-3 d-flex align-items-end gap-2">
-                <button type="submit" class="btn btn-warning w-50 fw-semibold text-dark">
-                    <i class="fa-solid fa-filter me-1"></i> Lọc
-                </button>
-                <a asp-page="/Warehouse/Inventory/LowStock" class="btn btn-secondary w-50 fw-semibold">
-                    <i class="fa-solid fa-rotate-right me-1"></i> Làm mới
-                </a>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold small text-muted">Nhà xuất bản</label>
+                    <select asp-for="Publisher" class="form-select">
+                        <option value="">-- Tất cả NXB --</option>
+                        @foreach (var p in Model.Publishers)
+                        {
+                            <option value="@p">@p</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4"></div>
+                <div class="col-md-4 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-warning w-50 fw-semibold text-dark">
+                        <i class="fa-solid fa-filter me-1"></i> Lọc
+                    </button>
+                    <a asp-page="/Warehouse/Inventory/LowStock" class="btn btn-secondary w-50 fw-semibold">
+                        <i class="fa-solid fa-rotate-right me-1"></i> Làm mới
+                    </a>
+                </div>
             </div>
         </form>
     </div>
@@ -72,19 +84,18 @@
                 <thead class="table-light">
                     <tr>
                         <th class="text-center" style="width: 5%;">STT</th>
-                        <th class="text-center" style="width: 8%;">Ảnh</th>
-                        <th style="width: 20%;">Tên sách</th>
-                        <th style="width: 12%;">Thể loại</th>
-                        <th style="width: 15%;">Chi nhánh</th>
+                        <th class="text-center" style="width: 7%;">Ảnh</th>
+                        <th style="width: 25%;">Tên sách</th>
+                        <th style="width: 15%;">Thể loại</th>
                         <th class="text-center" style="width: 10%;">Vị trí kệ</th>
                         <th style="width: 12%;">Nhà xuất bản</th>
                         <th style="width: 10%;">Giá bán</th>
-                        <th class="text-center" style="width: 8%;">Tồn kho</th>
-                        <th class="text-center" style="width: 12%;">Thao tác</th>
+                        <th class="text-center" style="width: 10%;">Tồn kho</th>
+                        <th class="text-center" style="width: 6%;">Thao tác</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @if (!Model.LowStockItems.Any())
+                    @if (!Model.LowStockBooks.Any())
                     {
                         <tr>
                             <td colspan="9" class="text-center text-muted py-4">
@@ -96,9 +107,8 @@
                     else
                     {
                         int index = 0;
-                        foreach (var item in Model.LowStockItems)
+                        foreach (var b in Model.LowStockBooks)
                         {
-                            var b = item.Book;
                             index++;
                             <tr>
                                 <td class="text-center fw-bold text-muted">@index</td>
@@ -111,23 +121,57 @@
                                 </td>
                                 <td class="fw-bold text-dark">@b.Title</td>
                                 <td>@(b.Category?.Name ?? "Chưa phân loại")</td>
-                                <td class="fw-bold text-primary">@item.Branch.Name</td>
                                 <td class="text-center fw-bold text-info">
                                     @(b.LocationCode != null ? b.LocationCode : Html.Raw("<span class='text-muted small'>Chưa xếp kệ</span>"))
                                 </td>
                                 <td>@(b.Publisher ?? "N/A")</td>
                                 <td class="fw-bold text-danger">@b.Price.ToString("N0")đ</td>
-                                <td class="text-center">
-                                    <span class="badge bg-danger fs-6 px-3 py-2">@item.StockQuantity</span>
+                                <td class="p-0">
+                                    @{
+                                        var displayBranches = Model.FilterBranchId.HasValue && Model.FilterBranchId.Value > 0
+                                            ? Model.Branches.Where(br => br.Id == Model.FilterBranchId.Value).ToList()
+                                            : Model.Branches.ToList();
+                                    }
+                                    <table class="table table-sm table-borderless mb-0">
+                                        <tbody>
+                                        @foreach(var br in displayBranches)
+                                        {
+                                            var stock = b.BranchInventories.FirstOrDefault(bi => bi.BranchId == br.Id)?.StockQuantity ?? 0;
+                                            
+                                            <tr class="border-bottom">
+                                                <td class="small fw-bold text-muted">@br.Name:</td>
+                                                <td class="text-end fw-bold">
+                                                    @if(stock <= 5)
+                                                    {
+                                                        <span class="text-danger">@stock</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span>@stock</span>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                        </tbody>
+                                    </table>
                                 </td>
                                 <td class="text-center">
-                                    <a asp-page="/Warehouse/PurchaseOrders/Create" class="btn btn-sm btn-success rounded-pill px-2 me-1" title="Tạo đơn nhập">
-                                        <i class="fa-solid fa-plus me-1"></i>Nhập
-                                    </a>
-                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-2"
+                                    @if (Model.FilterBranchId.HasValue && Model.FilterBranchId.Value > 0)
+                                    {
+                                        <a asp-page="/Warehouse/PurchaseOrders/Create" asp-route-prefillBookId="@b.Id" asp-route-prefillBranchId="@Model.FilterBranchId" class="btn btn-sm btn-success rounded-pill px-2 mb-1 w-100" title="Tạo đơn nhập">
+                                            <i class="fa-solid fa-plus me-1"></i>Nhập
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <button type="button" class="btn btn-sm btn-secondary rounded-pill px-2 mb-1 w-100 opacity-50" title="Vui lòng chọn cụ thể một chi nhánh ở bộ lọc phía trên để có thể tạo đơn nhập" disabled>
+                                            <i class="fa-solid fa-plus me-1"></i>Nhập
+                                        </button>
+                                    }
+                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-2 w-100"
                                             title="Kiểm kê"
-                                            onclick="openAdjustStockModal(@item.BranchId, @b.Id, '@Html.Raw(Html.Encode(b.Title)) - @item.Branch.Name', @item.StockQuantity, '@(b.LocationCode ?? "")')">
-                                        <i class="fa-solid fa-pen"></i>
+                                            onclick="openAdjustStockModal(@b.Id, '@Html.Raw(Html.Encode(b.Title))', '@(b.LocationCode ?? "")')">
+                                        <i class="fa-solid fa-pen me-1"></i>Kiểm kê
                                     </button>
                                 </td>
                             </tr>
@@ -149,12 +193,22 @@
             </div>
             <form method="post" asp-page-handler="AdjustStock">
                 <div class="modal-body p-4">
-                    <input type="hidden" name="branchId" id="modalBranchId" />
                     <input type="hidden" name="bookId" id="modalBookId" />
 
                     <div class="mb-3">
                         <label class="form-label fw-bold text-muted small">Tên sách</label>
                         <input type="text" id="modalBookTitle" class="form-control fw-bold bg-light" readonly />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">Chi nhánh cần điều chỉnh *</label>
+                        <select name="branchId" class="form-select" required>
+                            <option value="">-- Chọn chi nhánh --</option>
+                            @foreach (var branch in Model.Branches)
+                            {
+                                <option value="@branch.Id">@branch.Name</option>
+                            }
+                        </select>
                     </div>
 
                     <div class="row g-3 mb-3">
@@ -184,11 +238,10 @@
 
 @section Scripts {
     <script>
-        function openAdjustStockModal(branchId, bookId, title, qty, loc) {
-            document.getElementById('modalBranchId').value = branchId;
+        function openAdjustStockModal(bookId, title, loc) {
             document.getElementById('modalBookId').value = bookId;
             document.getElementById('modalBookTitle').value = title;
-            document.getElementById('modalQuantity').value = qty;
+            document.getElementById('modalQuantity').value = 0; // Default to 0 for low stock
             document.getElementById('modalLocationCode').value = loc;
             new bootstrap.Modal(document.getElementById('adjustStockModal')).show();
         }

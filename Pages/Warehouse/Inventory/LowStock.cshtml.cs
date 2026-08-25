@@ -23,9 +23,13 @@ namespace BookStore.Pages.Warehouse.Inventory
             _userManager = userManager;
         }
 
-        public List<BranchInventory> LowStockItems { get; set; } = new();
+        public List<Book> LowStockBooks { get; set; } = new();
         public List<Category> Categories { get; set; } = new();
         public List<string> Publishers { get; set; } = new();
+        public List<Branch> Branches { get; set; } = new();
+
+        [BindProperty(SupportsGet = true)]
+        public int? FilterBranchId { get; set; }
 
         [BindProperty(SupportsGet = true)]
         public string? Keyword { get; set; }
@@ -39,6 +43,7 @@ namespace BookStore.Pages.Warehouse.Inventory
         public async Task OnGetAsync()
         {
             Categories = await _context.Categories.OrderBy(c => c.Name).ToListAsync();
+            Branches = await _context.Branches.OrderBy(b => b.Name).ToListAsync();
             Publishers = await _context.Books
                 .Where(b => !string.IsNullOrEmpty(b.Publisher))
                 .Select(b => b.Publisher!)
@@ -46,37 +51,52 @@ namespace BookStore.Pages.Warehouse.Inventory
                 .OrderBy(p => p)
                 .ToListAsync();
 
-            var query = _context.BranchInventories
-                .Include(bi => bi.Book).ThenInclude(b => b.Category)
-                .Include(bi => bi.Book).ThenInclude(b => b.Location)
-                .Include(bi => bi.Branch)
-                .Where(bi => bi.StockQuantity <= 5 && bi.Book.IsActive)
+            var query = _context.Books
+                .Include(b => b.Category)
+                .Include(b => b.Location)
+                .Include(b => b.BranchInventories)
+                    .ThenInclude(bi => bi.Branch)
+                .Where(b => b.IsActive)
+                .AsSplitQuery()
                 .AsNoTracking()
                 .AsQueryable();
+
+            if (FilterBranchId.HasValue && FilterBranchId.Value > 0)
+            {
+                // Low stock in the selected branch means either no record (stock 0) or stock <= 5
+                query = query.Where(b => !b.BranchInventories.Any(bi => bi.BranchId == FilterBranchId.Value) || 
+                                         b.BranchInventories.Any(bi => bi.BranchId == FilterBranchId.Value && bi.StockQuantity <= 5));
+            }
+            else
+            {
+                // Low stock in ANY branch (including no records at all)
+                // Wait, if it has no records at all, it's low stock everywhere.
+                // It's safer to just say it's low stock if there is any branch <= 5 OR total stock is low?
+                // Actually, if a book has no branch inventories at all, it's low stock.
+                // Let's just say: Any branch has <=5 OR it has no branch inventories.
+                query = query.Where(b => !b.BranchInventories.Any() || b.BranchInventories.Any(bi => bi.StockQuantity <= 5));
+            }
 
             if (!string.IsNullOrWhiteSpace(Keyword))
             {
                 string kw = Keyword.Trim().ToLower();
-                query = query.Where(bi => (bi.Book.Title != null && bi.Book.Title.ToLower().Contains(kw)) ||
-                                          (bi.Book.Author != null && bi.Book.Author.ToLower().Contains(kw)) ||
-                                          (bi.Book.Location != null && bi.Book.Location.LocationCode != null && bi.Book.Location.LocationCode.ToLower().Contains(kw)) ||
-                                          (bi.Branch.Name.ToLower().Contains(kw)));
+                query = query.Where(b => (b.Title != null && b.Title.ToLower().Contains(kw)) ||
+                                          (b.Author != null && b.Author.ToLower().Contains(kw)) ||
+                                          (b.Location != null && b.Location.LocationCode != null && b.Location.LocationCode.ToLower().Contains(kw)));
             }
 
             if (CategoryId.HasValue && CategoryId.Value > 0)
             {
-                query = query.Where(bi => bi.Book.CategoryId == CategoryId.Value);
+                query = query.Where(b => b.CategoryId == CategoryId.Value);
             }
 
             if (!string.IsNullOrWhiteSpace(Publisher))
             {
-                query = query.Where(bi => bi.Book.Publisher == Publisher);
+                query = query.Where(b => b.Publisher == Publisher);
             }
 
-            LowStockItems = await query
-                .OrderBy(bi => bi.StockQuantity)
-                .ThenBy(bi => bi.Branch.Name)
-                .ThenBy(bi => bi.Book.Title)
+            LowStockBooks = await query
+                .OrderBy(b => b.Title)
                 .ToListAsync();
         }
 
@@ -95,7 +115,7 @@ namespace BookStore.Pages.Warehouse.Inventory
                 TempData["ErrorMessage"] = "Không tìm thấy sách cần cập nhật.";
             }
 
-            return RedirectToPage(new { keyword = Keyword, categoryId = CategoryId, publisher = Publisher });
+            return RedirectToPage(new { keyword = Keyword, categoryId = CategoryId, publisher = Publisher, filterBranchId = FilterBranchId });
         }
     }
 }

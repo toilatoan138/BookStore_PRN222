@@ -36,61 +36,79 @@
         </div>
 
         <!-- ITEMS TABLE -->
-        <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-list text-primary me-2"></i>Danh sách sách đề xuất nhập</h6>
-        <div class="table-responsive mb-3">
-            <table class="table table-bordered align-middle small" id="poItemsTable">
-                <thead class="table-light">
-                    <tr>
-                        <th style="width: 50%;">Sản phẩm (Sách)</th>
-                        <th style="width: 20%;">Số lượng nhập</th>
-                        <th style="width: 20%;">Đơn giá (VNĐ)</th>
-                        <th style="width: 10%;" class="text-center">Xóa</th>
-                    </tr>
-                </thead>
-                <tbody id="poItemsBody">
-                    <!-- INITIAL 3 ROWS -->
-                    @for (int i = 0; i < 3; i++)
-                    {
+        <div id="poItemsSection" style="display: none;">
+            <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-list text-primary me-2"></i>Danh sách sách đề xuất nhập</h6>
+            <div class="table-responsive mb-3">
+                <table class="table table-bordered align-middle small" id="poItemsTable">
+                    <thead class="table-light">
                         <tr>
-                            <td>
-                                <select name="Input.Items[@i].BookId" class="form-select form-select-sm book-select" onchange="onBookChange(this)">
-                                    <option value="0" data-supplier-id="">-- Chọn sách --</option>
-                                    @foreach (var b in Model.Books)
-                                    {
-                                        <option value="@b.Id" data-supplier-id="@b.SupplierId" data-title="@b.Title" data-total-stock="@b.StockQuantity">@b.Title (Tổng tồn: @b.StockQuantity)</option>
-                                    }
-                                </select>
-                            </td>
-                            <td>
-                                <input type="number" name="Input.Items[@i].Quantity" min="1" class="form-control form-control-sm" placeholder="SL" value="10" />
-                            </td>
-                            <td>
-                                <input type="number" name="Input.Items[@i].UnitPrice" step="1000" min="0" class="form-control form-control-sm" placeholder="Giá nhập" value="50000" />
-                            </td>
-                            <td class="text-center">
-                                <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="this.closest('tr').remove()">
-                                    <i class="fa-regular fa-trash-can"></i>
-                                </button>
-                            </td>
+                            <th style="width: 50%;">Sản phẩm (Sách)</th>
+                            <th style="width: 20%;">Số lượng nhập</th>
+                            <th style="width: 20%;">Đơn giá (VNĐ)</th>
+                            <th style="width: 10%;" class="text-center">Xóa</th>
                         </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
+                    </thead>
+                    <tbody id="poItemsBody">
+                        <!-- INITIAL ROWS -->
+                        @{
+                            var initialRows = Model.Input.Items != null && Model.Input.Items.Count > 0 
+                                ? Model.Input.Items 
+                                : new List<BookStore.Pages.Warehouse.PurchaseOrders.CreateModel.PoItemRow> { new(), new(), new() };
+                        }
+                        @for (int i = 0; i < initialRows.Count; i++)
+                        {
+                            var row = initialRows[i];
+                            <tr>
+                                <td>
+                                    <select name="Input.Items[@i].BookId" class="form-select form-select-sm book-select" onchange="onBookChange(this)">
+                                        <option value="0" data-supplier-id="">-- Chọn sách --</option>
+                                        @foreach (var b in Model.Books)
+                                        {
+                                            if (b.Id == row.BookId) {
+                                                <option value="@b.Id" data-supplier-id="@b.SupplierId" data-title="@b.Title" data-total-stock="@b.StockQuantity" selected>@b.Title (Tổng tồn: @b.StockQuantity)</option>
+                                            } else {
+                                                <option value="@b.Id" data-supplier-id="@b.SupplierId" data-title="@b.Title" data-total-stock="@b.StockQuantity">@b.Title (Tổng tồn: @b.StockQuantity)</option>
+                                            }
+                                        }
+                                    </select>
+                                </td>
+                                <td>
+                                    <input type="number" name="Input.Items[@i].Quantity" min="1" class="form-control form-control-sm" placeholder="SL" value="@(row.Quantity > 0 ? row.Quantity : 10)" />
+                                </td>
+                                <td>
+                                    <input type="number" name="Input.Items[@i].UnitPrice" step="1000" min="0" class="form-control form-control-sm" placeholder="Giá nhập" value="@(row.UnitPrice > 0 ? Math.Round(row.UnitPrice) : 50000)" />
+                                </td>
+                                <td class="text-center">
+                                    <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="this.closest('tr').remove()">
+                                        <i class="fa-regular fa-trash-can"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
 
-        <div class="mb-4">
-            <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="addRow()">
-                <i class="fa-solid fa-plus me-1"></i>Thêm dòng sách khác
-            </button>
-        </div>
+            <div class="mb-4">
+                <button type="button" class="btn btn-outline-primary btn-sm rounded-pill px-3" onclick="addRow()">
+                    <i class="fa-solid fa-plus me-1"></i>Thêm dòng sách khác
+                </button>
+            </div>
 
-        <div class="d-flex gap-2">
-            <button type="submit" class="btn btn-primary px-4 py-2 rounded-pill fw-bold">
-                <i class="fa-solid fa-paper-plane me-1"></i>Gửi đề xuất PO tới Admin
-            </button>
-            <a asp-page="/Warehouse/PurchaseOrders/Index" class="btn btn-outline-secondary px-4 py-2 rounded-pill">
-                Hủy
-            </a>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary px-4 py-2 rounded-pill fw-bold">
+                    <i class="fa-solid fa-paper-plane me-1"></i>Gửi đề xuất PO tới Admin
+                </button>
+                <a asp-page="/Warehouse/PurchaseOrders/Index" class="btn btn-outline-secondary px-4 py-2 rounded-pill">
+                    Hủy
+                </a>
+            </div>
+        </div>
+        
+        <div id="branchPrompt" class="text-center py-5 bg-light rounded-3 border">
+            <i class="fa-solid fa-hand-pointer fa-3x text-secondary mb-3"></i>
+            <h5 class="fw-bold text-secondary">Vui lòng chọn chi nhánh</h5>
+            <p class="text-muted small mb-0">Bạn cần chọn <strong>Chi nhánh nhập hàng</strong> ở phía trên trước khi tiến hành chọn sách.</p>
         </div>
     </form>
 </div>
@@ -105,7 +123,7 @@
 
 <script>
     const bookBranchStocks = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.BookBranchStocks));
-    let rowIndex = 3;
+    let rowIndex = @Html.Raw(Model.Input.Items != null && Model.Input.Items.Count > 0 ? Model.Input.Items.Count : 3);
 
     function updateOptionsText(selectElement, branchId) {
         Array.from(selectElement.options).forEach(opt => {
@@ -127,6 +145,16 @@
 
     function onBranchChange() {
         const branchId = document.getElementById('Input_BranchId').value;
+        const poItemsSection = document.getElementById('poItemsSection');
+        const branchPrompt = document.getElementById('branchPrompt');
+        
+        if (branchId) {
+            poItemsSection.style.display = 'block';
+            branchPrompt.style.display = 'none';
+        } else {
+            poItemsSection.style.display = 'none';
+            branchPrompt.style.display = 'block';
+        }
         
         // Cập nhật Template
         const templateSelect = document.getElementById('bookSelectTemplate');

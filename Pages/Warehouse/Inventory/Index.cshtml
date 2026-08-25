@@ -169,10 +169,22 @@
                                     }
                                 </td>
                                 <td class="text-center">
-                                    <button type="button" class="btn btn-sm btn-outline-primary"
-                                            title="Kiểm kê / Điều chỉnh"
+                                    @if (Model.FilterBranchId.HasValue && Model.FilterBranchId.Value > 0)
+                                    {
+                                        <a asp-page="/Warehouse/PurchaseOrders/Create" asp-route-prefillBookId="@b.Id" asp-route-prefillBranchId="@Model.FilterBranchId" class="btn btn-sm btn-success rounded-pill px-2 mb-1 w-100" title="Tạo đơn nhập">
+                                            <i class="fa-solid fa-plus me-1"></i>Nhập
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <button type="button" class="btn btn-sm btn-secondary rounded-pill px-2 mb-1 w-100 opacity-50" title="Vui lòng chọn cụ thể một chi nhánh ở bộ lọc phía trên để có thể tạo đơn nhập" disabled>
+                                            <i class="fa-solid fa-plus me-1"></i>Nhập
+                                        </button>
+                                    }
+                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-2 w-100"
+                                            title="Kiểm kê"
                                             onclick="openAdjustStockModal(@b.Id, '@Html.Raw(Html.Encode(b.Title))', 0, '@(b.LocationCode ?? "")')">
-                                        <i class="fa-solid fa-pen"></i>
+                                        <i class="fa-solid fa-pen me-1"></i>Kiểm kê
                                     </button>
                                 </td>
                             </tr>
