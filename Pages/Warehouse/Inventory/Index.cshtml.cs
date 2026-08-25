@@ -41,6 +41,9 @@ namespace BookStore.Pages.Warehouse.Inventory
         public string? Publisher { get; set; }
 
         [BindProperty(SupportsGet = true)]
+        public int? FilterBranchId { get; set; }
+
+        [BindProperty(SupportsGet = true)]
         public int CurrentPage { get; set; } = 1;
 
         public int TotalPages { get; set; } = 1;

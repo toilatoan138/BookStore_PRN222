@@ -23,52 +23,62 @@
 
     <!-- FILTER CONTAINER -->
     <div class="bg-white p-4 rounded-4 shadow-sm mb-4">
-        <form method="get" class="row g-3">
-            <div class="col-md-3">
-                <label class="form-label fw-bold small text-muted">Từ khóa (Tên sách / Mã vị trí)</label>
-                <input type="text" asp-for="Keyword" class="form-control" placeholder="Nhập tên sách, tác giả..." />
+        <form method="get">
+            <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold small text-muted">Từ khóa (Tên sách / Mã vị trí)</label>
+                    <input type="text" asp-for="Keyword" class="form-control" placeholder="Nhập tên, mã..." />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold small text-muted">Chi nhánh</label>
+                    <select asp-for="FilterBranchId" class="form-select">
+                        <option value="0">-- Tất cả chi nhánh --</option>
+                        @foreach (var br in Model.Branches)
+                        {
+                            <option value="@br.Id">@br.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold small text-muted">Thể loại</label>
+                    <select asp-for="CategoryId" class="form-select">
+                        <option value="0">-- Tất cả thể loại --</option>
+                        @foreach (var c in Model.Categories)
+                        {
+                            <option value="@c.Id">@c.Name</option>
+                        }
+                    </select>
+                </div>
             </div>
-
-            <div class="col-md-2">
-                <label class="form-label fw-bold small text-muted">Thể loại</label>
-                <select asp-for="CategoryId" class="form-select">
-                    <option value="0">-- Tất cả thể loại --</option>
-                    @foreach (var c in Model.Categories)
-                    {
-                        <option value="@c.Id">@c.Name</option>
-                    }
-                </select>
-            </div>
-
-            <div class="col-md-2">
-                <label class="form-label fw-bold small text-muted">Tác giả</label>
-                <select asp-for="Author" class="form-select">
-                    <option value="">-- Tất cả tác giả --</option>
-                    @foreach (var a in Model.Authors)
-                    {
-                        <option value="@a">@a</option>
-                    }
-                </select>
-            </div>
-
-            <div class="col-md-2">
-                <label class="form-label fw-bold small text-muted">Nhà xuất bản</label>
-                <select asp-for="Publisher" class="form-select">
-                    <option value="">-- Tất cả NXB --</option>
-                    @foreach (var p in Model.Publishers)
-                    {
-                        <option value="@p">@p</option>
-                    }
-                </select>
-            </div>
-
-            <div class="col-md-3 d-flex align-items-end gap-2">
-                <button type="submit" class="btn btn-primary w-50 fw-semibold">
-                    <i class="fa-solid fa-filter me-1"></i> Lọc
-                </button>
-                <a asp-page="/Warehouse/Inventory/Index" class="btn btn-secondary w-50 fw-semibold">
-                    <i class="fa-solid fa-rotate-right me-1"></i> Xóa lọc
-                </a>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold small text-muted">Tác giả</label>
+                    <select asp-for="Author" class="form-select">
+                        <option value="">-- Tất cả tác giả --</option>
+                        @foreach (var a in Model.Authors)
+                        {
+                            <option value="@a">@a</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold small text-muted">Nhà xuất bản</label>
+                    <select asp-for="Publisher" class="form-select">
+                        <option value="">-- Tất cả NXB --</option>
+                        @foreach (var p in Model.Publishers)
+                        {
+                            <option value="@p">@p</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-primary w-50 fw-semibold">
+                        <i class="fa-solid fa-filter me-1"></i> Lọc
+                    </button>
+                    <a asp-page="/Warehouse/Inventory/Index" class="btn btn-secondary w-50 fw-semibold">
+                        <i class="fa-solid fa-rotate-right me-1"></i> Xóa lọc
+                    </a>
+                </div>
             </div>
         </form>
     </div>
@@ -123,29 +133,28 @@
                                 <td>@(b.Publisher ?? "N/A")</td>
                                 <td class="fw-bold text-danger">@b.Price.ToString("N0")đ</td>
                                 <td class="p-0">
-                                    @if (b.BranchInventories.Any())
-                                    {
-                                        <table class="table table-sm table-borderless mb-0">
-                                            <tbody>
-                                            @foreach(var bi in b.BranchInventories)
-                                            {
-                                                <tr class="border-bottom">
-                                                    <td class="small fw-bold text-muted">@bi.Branch.Name:</td>
-                                                    <td class="text-end fw-bold">@bi.StockQuantity</td>
-                                                </tr>
-                                            }
-                                            </tbody>
-                                        </table>
+                                    @{
+                                        var displayBranches = Model.FilterBranchId.HasValue && Model.FilterBranchId.Value > 0
+                                            ? Model.Branches.Where(br => br.Id == Model.FilterBranchId.Value).ToList()
+                                            : Model.Branches.ToList();
+                                            
+                                        int totalStock = 0;
                                     }
-                                    else
-                                    {
-                                        <div class="text-center text-muted small py-2">0</div>
-                                    }
+                                    <table class="table table-sm table-borderless mb-0">
+                                        <tbody>
+                                        @foreach(var br in displayBranches)
+                                        {
+                                            var stock = b.BranchInventories.FirstOrDefault(bi => bi.BranchId == br.Id)?.StockQuantity ?? 0;
+                                            totalStock += stock;
+                                            <tr class="border-bottom">
+                                                <td class="small fw-bold text-muted">@br.Name:</td>
+                                                <td class="text-end fw-bold">@stock</td>
+                                            </tr>
+                                        }
+                                        </tbody>
+                                    </table>
                                 </td>
                                 <td class="text-center text-nowrap">
-                                    @{
-                                        var totalStock = b.BranchInventories.Sum(x => x.StockQuantity);
-                                    }
                                     @if (totalStock <= 0)
                                     {
                                         <span class="badge bg-secondary">Hết hàng</span>
@@ -184,7 +193,8 @@
                            asp-route-keyword="@Model.Keyword"
                            asp-route-categoryId="@Model.CategoryId"
                            asp-route-author="@Model.Author"
-                           asp-route-publisher="@Model.Publisher">
+                           asp-route-publisher="@Model.Publisher"
+                           asp-route-filterBranchId="@Model.FilterBranchId">
                             &laquo; Trước
                         </a>
                     </li>
@@ -199,7 +209,8 @@
                                    asp-route-keyword="@Model.Keyword"
                                    asp-route-categoryId="@Model.CategoryId"
                                    asp-route-author="@Model.Author"
-                                   asp-route-publisher="@Model.Publisher">@i</a>
+                                   asp-route-publisher="@Model.Publisher"
+                                   asp-route-filterBranchId="@Model.FilterBranchId">@i</a>
                             </li>
                         }
                         else if (i == Model.CurrentPage - 3 || i == Model.CurrentPage + 3)
@@ -214,7 +225,8 @@
                            asp-route-keyword="@Model.Keyword"
                            asp-route-categoryId="@Model.CategoryId"
                            asp-route-author="@Model.Author"
-                           asp-route-publisher="@Model.Publisher">
+                           asp-route-publisher="@Model.Publisher"
+                           asp-route-filterBranchId="@Model.FilterBranchId">
                             Sau &raquo;
                         </a>
                     </li>

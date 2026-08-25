@@ -30,6 +30,7 @@ namespace BookStore.Pages.Warehouse.PurchaseOrders
         public List<Supplier> Suppliers { get; set; } = new();
         public List<Book> Books { get; set; } = new();
         public List<Branch> Branches { get; set; } = new();
+        public Dictionary<int, Dictionary<int, int>> BookBranchStocks { get; set; } = new();
 
         [BindProperty]
         public PoCreateInput Input { get; set; } = new();
@@ -57,6 +58,14 @@ namespace BookStore.Pages.Warehouse.PurchaseOrders
             Suppliers = await _warehouseService.GetSuppliersAsync();
             Books = await _context.Books.OrderBy(b => b.Title).ToListAsync();
             Branches = await _context.Branches.ToListAsync();
+
+            var branchInventories = await _context.BranchInventories.ToListAsync();
+            BookBranchStocks = branchInventories
+                .GroupBy(bi => bi.BookId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.ToDictionary(bi => bi.BranchId, bi => bi.StockQuantity)
+                );
         }
 
         public async Task<IActionResult> OnPostAsync()

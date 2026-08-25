@@ -13,7 +13,7 @@
         <div class="row mb-4">
             <div class="col-md-6">
                 <label class="form-label fw-bold">Chi nhánh nhập hàng <span class="text-danger">*</span></label>
-                <select asp-for="Input.BranchId" class="form-select">
+                <select asp-for="Input.BranchId" class="form-select" onchange="onBranchChange()">
                     <option value="">-- Chọn kho nhận hàng --</option>
                     @foreach (var branch in Model.Branches)
                     {
@@ -57,7 +57,7 @@
                                     <option value="0" data-supplier-id="">-- Chọn sách --</option>
                                     @foreach (var b in Model.Books)
                                     {
-                                        <option value="@b.Id" data-supplier-id="@b.SupplierId">@b.Title (Tồn: @b.StockQuantity)</option>
+                                        <option value="@b.Id" data-supplier-id="@b.SupplierId" data-title="@b.Title" data-total-stock="@b.StockQuantity">@b.Title (Tổng tồn: @b.StockQuantity)</option>
                                     }
                                 </select>
                             </td>
@@ -95,9 +95,49 @@
     </form>
 </div>
 
+<select id="bookSelectTemplate" style="display: none;">
+    <option value="0" data-supplier-id="">-- Chọn sách --</option>
+    @foreach (var b in Model.Books)
+    {
+        <option value="@b.Id" data-supplier-id="@b.SupplierId" data-title="@b.Title" data-total-stock="@b.StockQuantity">@b.Title (Tổng tồn: @b.StockQuantity)</option>
+    }
+</select>
+
 <script>
+    const bookBranchStocks = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.BookBranchStocks));
     let rowIndex = 3;
-    const booksOptions = `<option value="0" data-supplier-id="">-- Chọn sách --</option>` + `@Html.Raw(string.Join("", Model.Books.Select(b => $"<option value='{b.Id}' data-supplier-id='{b.SupplierId}'>{b.Title.Replace("'", "\\'")} (Tồn: {b.StockQuantity})</option>")))`;
+
+    function updateOptionsText(selectElement, branchId) {
+        Array.from(selectElement.options).forEach(opt => {
+            if (opt.value === "0") return;
+            const bookId = opt.value;
+            const title = opt.getAttribute('data-title');
+            const totalStock = opt.getAttribute('data-total-stock');
+            
+            if (branchId && bookBranchStocks[bookId] && bookBranchStocks[bookId][branchId] !== undefined) {
+                const branchStock = bookBranchStocks[bookId][branchId];
+                opt.text = `${title} (Tồn tại kho: ${branchStock})`;
+            } else if (branchId) {
+                opt.text = `${title} (Tồn tại kho: 0)`;
+            } else {
+                opt.text = `${title} (Tổng tồn: ${totalStock})`;
+            }
+        });
+    }
+
+    function onBranchChange() {
+        const branchId = document.getElementById('Input_BranchId').value;
+        
+        // Cập nhật Template
+        const templateSelect = document.getElementById('bookSelectTemplate');
+        updateOptionsText(templateSelect, branchId);
+        
+        // Cập nhật các select đang hiển thị
+        const allBookSelects = document.querySelectorAll('.book-select');
+        allBookSelects.forEach(select => {
+            updateOptionsText(select, branchId);
+        });
+    }
 
     function onBookChange(selectElement) {
         const selectedOption = selectElement.options[selectElement.selectedIndex];
@@ -129,11 +169,12 @@
     function onGlobalSupplierChange() {
         const selectedSupplierId = document.getElementById('globalSupplierSelect').value;
         const allBookSelects = document.querySelectorAll('.book-select');
+        const templateSelect = document.getElementById('bookSelectTemplate');
         
         allBookSelects.forEach(select => {
             const currentValue = select.value;
-            // Reset options
-            select.innerHTML = booksOptions;
+            // Lấy HTML từ template để reset option (bảo toàn text đã được cập nhật bởi onBranchChange)
+            select.innerHTML = templateSelect.innerHTML;
             
             // Lọc ra các sách có data-supplier-id trùng với selectedSupplierId
             if (selectedSupplierId) {
@@ -163,16 +204,19 @@
 
     // Call once to filter initially if needed
     document.addEventListener('DOMContentLoaded', () => {
+        onBranchChange(); // Initialize the text based on current branch selection
         onGlobalSupplierChange();
     });
 
     function addRow() {
         const tbody = document.getElementById('poItemsBody');
+        const templateSelect = document.getElementById('bookSelectTemplate');
         const tr = document.createElement('tr');
+        
         tr.innerHTML = `
             <td>
                 <select name="Input.Items[${rowIndex}].BookId" class="form-select form-select-sm book-select" onchange="onBookChange(this)">
-                    ${booksOptions}
+                    ${templateSelect.innerHTML}
                 </select>
             </td>
             <td>
