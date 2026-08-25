@@ -61,9 +61,9 @@ namespace BookStore.Services
 
             // Đọc tồn kho thực tế từ bảng BranchInventories theo chi nhánh động
             var branches = await _context.Branches.ToListAsync();
-            var branchHN = branches.FirstOrDefault(b => b.City.Contains("Hà Nội") || b.Name.Contains("Hà Nội"));
-            var branchDN = branches.FirstOrDefault(b => b.City.Contains("Đà Nẵng") || b.Name.Contains("Đà Nẵng"));
-            var branchHCM = branches.FirstOrDefault(b => b.City.Contains("Hồ Chí Minh") || b.City.Contains("TP.HCM") || b.City.Contains("TP HCM") || b.Name.Contains("HCM"));
+            var branchHN = branches.FirstOrDefault(b => (b.City != null && b.City.Contains("Hà Nội")) || (b.Name != null && b.Name.Contains("Hà Nội")));
+            var branchDN = branches.FirstOrDefault(b => (b.City != null && b.City.Contains("Đà Nẵng")) || (b.Name != null && b.Name.Contains("Đà Nẵng")));
+            var branchHCM = branches.FirstOrDefault(b => (b.City != null && (b.City.Contains("Hồ Chí Minh") || b.City.Contains("TP.HCM") || b.City.Contains("TP HCM"))) || (b.Name != null && b.Name.Contains("HCM")));
 
             var branchInventories = await _context.BranchInventories
                 .Where(bi => bi.BookId == bookId)
