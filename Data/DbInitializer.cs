@@ -97,7 +97,7 @@ namespace BookStore.Data
 
                 var usersToSeed = new List<(string UserName, string Email, string FullName, string Role, int? BranchId)>
                 {
-                    ("superadmin", "admin@bookstore.com", "Nguyễn Nhật Anh (Tổng GĐ)", "Admin", null),
+                    ("superadmin", "superadmin@bookstore.com", "Nguyễn Nhật Anh (Tổng GĐ)", "Admin", null),
                     ("admin_hn", "admin_hn@bookstore.com", "Trưởng Khoa (Admin HN)", "Admin", hnId),
                     ("admin_dn", "admin_dn@bookstore.com", "Lê Hải (Admin ĐN)", "Admin", dnId),
                     ("admin_hcm", "admin_hcm@bookstore.com", "Trần Khắc (Admin HCM)", "Admin", hcmId),
