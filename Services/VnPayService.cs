@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -19,15 +19,19 @@ namespace BookStore.Services
             string vnp_TmnCode = _configuration["VnPay:TmnCode"] ?? "0P3L0W46";
             string vnp_HashSecret = _configuration["VnPay:HashSecret"] ?? "G4XG1K8U7G7N84Y0T5K3T5I2G1V4N8Y4";
 
-            var vnp_Params = new SortedDictionary<string, string>(StringComparer.Ordinal)
+            string ipAddress = string.IsNullOrWhiteSpace(request.IpAddress) || request.IpAddress == "::1" || request.IpAddress == "0.0.0.1" 
+                ? "127.0.0.1" 
+                : request.IpAddress;
+
+            var vnp_Params = new SortedDictionary<string, string>(new VnPayCompare())
             {
                 { "vnp_Version", "2.1.0" },
                 { "vnp_Command", "pay" },
-                { "vnp_TmnCode", vnp_TmnCode },
+                { "vnp_TmnCode", vnp_TmnCode.Trim() },
                 { "vnp_Amount", ((long)(request.Amount * 100)).ToString() },
                 { "vnp_CreateDate", DateTime.Now.ToString("yyyyMMddHHmmss") },
                 { "vnp_CurrCode", "VND" },
-                { "vnp_IpAddr", request.IpAddress },
+                { "vnp_IpAddr", ipAddress },
                 { "vnp_Locale", "vn" },
                 { "vnp_OrderInfo", request.OrderInfo },
                 { "vnp_OrderType", "other" },
@@ -35,40 +39,27 @@ namespace BookStore.Services
                 { "vnp_TxnRef", request.OrderId }
             };
 
-            var queryBuilder = new StringBuilder();
-            var rawDataBuilder = new StringBuilder();
-
+            var data = new StringBuilder();
             foreach (var kv in vnp_Params)
             {
                 if (!string.IsNullOrEmpty(kv.Value))
                 {
-                    if (rawDataBuilder.Length > 0)
-                    {
-                        rawDataBuilder.Append('&');
-                        queryBuilder.Append('&');
-                    }
-
-                    rawDataBuilder.Append(WebUtility.UrlEncode(kv.Key));
-                    rawDataBuilder.Append('=');
-                    rawDataBuilder.Append(WebUtility.UrlEncode(kv.Value));
-
-                    queryBuilder.Append(WebUtility.UrlEncode(kv.Key));
-                    queryBuilder.Append('=');
-                    queryBuilder.Append(WebUtility.UrlEncode(kv.Value));
+                    data.Append(WebUtility.UrlEncode(kv.Key) + "=" + WebUtility.UrlEncode(kv.Value) + "&");
                 }
             }
 
-            string signData = rawDataBuilder.ToString();
-            string vnp_SecureHash = HmacSha512(vnp_HashSecret, signData);
+            string queryString = data.ToString();
+            string signData = queryString.Length > 0 ? queryString.Remove(queryString.Length - 1, 1) : "";
+            string vnp_SecureHash = HmacSha512(vnp_HashSecret.Trim(), signData);
 
-            return $"{vnp_Url}?{queryBuilder}&vnp_SecureHash={vnp_SecureHash}";
+            return $"{vnp_Url}?{queryString}vnp_SecureHash={vnp_SecureHash}";
         }
 
         public VnPayPaymentResponse ProcessPaymentCallback(IQueryCollection query)
         {
             string vnp_HashSecret = _configuration["VnPay:HashSecret"] ?? "G4XG1K8U7G7N84Y0T5K3T5I2G1V4N8Y4";
 
-            var vnp_Params = new SortedDictionary<string, string>(StringComparer.Ordinal);
+            var vnp_Params = new SortedDictionary<string, string>(new VnPayCompare());
             string vnp_SecureHash = string.Empty;
 
             foreach (var key in query.Keys)
@@ -83,20 +74,18 @@ namespace BookStore.Services
                 }
             }
 
-            var rawDataBuilder = new StringBuilder();
+            var data = new StringBuilder();
             foreach (var kv in vnp_Params)
             {
                 if (!string.IsNullOrEmpty(kv.Value))
                 {
-                    if (rawDataBuilder.Length > 0) rawDataBuilder.Append('&');
-                    rawDataBuilder.Append(WebUtility.UrlEncode(kv.Key));
-                    rawDataBuilder.Append('=');
-                    rawDataBuilder.Append(WebUtility.UrlEncode(kv.Value));
+                    data.Append(WebUtility.UrlEncode(kv.Key) + "=" + WebUtility.UrlEncode(kv.Value) + "&");
                 }
             }
 
-            string signData = rawDataBuilder.ToString();
-            string checkSignature = HmacSha512(vnp_HashSecret, signData);
+            string queryString = data.ToString();
+            string signData = queryString.Length > 0 ? queryString.Remove(queryString.Length - 1, 1) : "";
+            string checkSignature = HmacSha512(vnp_HashSecret.Trim(), signData);
 
             bool isValidSignature = checkSignature.Equals(vnp_SecureHash, StringComparison.OrdinalIgnoreCase);
             string responseCode = query["vnp_ResponseCode"].ToString();
@@ -129,6 +118,18 @@ namespace BookStore.Services
                 }
             }
             return hash.ToString();
+        }
+    }
+
+    public class VnPayCompare : IComparer<string>
+    {
+        public int Compare(string? x, string? y)
+        {
+            if (x == y) return 0;
+            if (x == null) return -1;
+            if (y == null) return 1;
+            var vnpCompare = System.Globalization.CompareInfo.GetCompareInfo("en-US");
+            return vnpCompare.Compare(x, y, System.Globalization.CompareOptions.Ordinal);
         }
     }
 }

@@ -1,0 +1,328 @@
+@page
+@model BookStore.Pages.Admin.Warehouses.StockMatrixModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Ma Trận Tồn Kho Đa Chi Nhánh";
+    ViewData["Subtitle"] = Model.IsSuperAdmin ? "Tra cứu và đối soát số lượng tồn kho từng đầu sách trên 3 miền Hà Nội, Đà Nẵng, TP.HCM" : $"Quản lý chi tiết số lượng tồn kho tại {Model.UserBranchName}";
+}
+
+<!-- ACTION BAR -->
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+    <div class="d-flex align-items-center gap-2">
+        @if (Model.IsSuperAdmin)
+        {
+            <span class="badge bg-danger p-2 shadow-sm fs-6">
+                <i class="fa-solid fa-crown text-warning me-1"></i>SUPER ADMIN
+            </span>
+        }
+        else
+        {
+            <span class="badge bg-info text-dark p-2 shadow-sm fs-6">
+                <i class="fa-solid fa-location-dot text-danger me-1"></i>@Model.UserBranchName
+            </span>
+        }
+        <span class="badge bg-light text-dark border p-2">Tổng @Model.TotalItems.ToString("N0") sản phẩm</span>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-page="/Admin/Warehouses/Transfer" class="btn btn-warning btn-sm text-dark fw-bold rounded-pill px-3 shadow-sm">
+            <i class="fa-solid fa-dolly me-1"></i> Tạo lệnh chuyển kho
+        </a>
+        <a asp-page="/Admin/PurchaseOrders/Index" class="btn btn-success btn-sm rounded-pill px-3 shadow-sm">
+            <i class="fa-solid fa-file-invoice-dollar me-1"></i> Đơn nhập PO
+        </a>
+    </div>
+</div>
+
+<!-- BỘ LỌC TÌM KIẾM -->
+<div class="card shadow-sm border-0 rounded-4 mb-4 bg-white">
+    <div class="card-body p-4">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label small fw-bold text-muted mb-1">Tìm kiếm sách</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                    <input type="text" class="form-control border-start-0" name="Keyword" value="@Model.Keyword" placeholder="Tên sách, tác giả, ISBN..." />
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label small fw-bold text-muted mb-1">Danh mục thể loại</label>
+                <select class="form-select" name="CategoryId">
+                    <option value="">-- Tất cả danh mục --</option>
+                    @foreach (var cat in Model.Categories)
+                    {
+                        <option value="@cat.Id" selected="@(Model.CategoryId == cat.Id)">@cat.Name</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label small fw-bold text-muted mb-1">Chi nhánh / Kho</label>
+                @if (Model.IsSuperAdmin)
+                {
+                    <select class="form-select" name="BranchId">
+                        <option value="">-- Toàn bộ hệ thống (3 Miền) --</option>
+                        @foreach (var br in Model.Branches)
+                        {
+                            <option value="@br.Id" selected="@(Model.BranchId == br.Id)">@br.Name (@br.City)</option>
+                        }
+                    </select>
+                }
+                else
+                {
+                    <input type="text" class="form-control bg-light fw-bold text-primary" value="@Model.UserBranchName" readonly />
+                    <input type="hidden" name="BranchId" value="@Model.UserBranchId" />
+                }
+            </div>
+
+            <div class="col-md-3 d-flex gap-2 align-items-center">
+                <div class="form-check form-switch me-2">
+                    <input class="form-check-input" type="checkbox" id="lowStockSwitch" name="LowStockOnly" value="true" @(Model.LowStockOnly ? "checked" : "") onchange="this.form.submit()" />
+                    <label class="form-check-label small fw-bold text-danger" for="lowStockSwitch">Sắp hết (&le; 5)</label>
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm rounded-pill px-3 flex-fill shadow-sm">
+                    <i class="fa-solid fa-filter me-1"></i> Lọc
+                </button>
+                <a asp-page="/Admin/Warehouses/StockMatrix" class="btn btn-outline-secondary btn-sm rounded-circle p-2 d-flex align-items-center justify-content-center" title="Xóa bộ lọc" style="width: 36px; height: 36px;">
+                    <i class="fa-solid fa-rotate-left"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MA TRẬN TỒN KHO BẢNG CHÍNH -->
+<div class="card shadow-sm border-0 rounded-4 bg-white">
+    <div class="card-header bg-white py-3 border-0 border-bottom d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0 fw-bold text-dark d-flex align-items-center">
+            <i class="fa-solid fa-table-cells text-primary me-2"></i>Ma Trận Phân Bổ Tồn Kho Chi Tiết
+        </h5>
+        <span class="badge bg-light text-dark border">Trang @Model.CurrentPage / @Model.TotalPages</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4" style="min-width: 250px;">Sách & Thông Tin</th>
+                        <th style="min-width: 120px;">Danh Mục</th>
+                        <th class="text-end" style="min-width: 100px;">Giá Vốn</th>
+                        <th class="text-end" style="min-width: 100px;">Giá Bán</th>
+                        <th class="text-center bg-primary bg-opacity-10 text-primary fw-bold" style="min-width: 100px;">Tổng Tồn</th>
+                        @foreach (var br in Model.Branches)
+                        {
+                            <th class="text-center" style="min-width: 110px;">
+                                <div class="fw-bold">@br.Name</div>
+                                <small class="text-muted fw-normal">(@br.City)</small>
+                            </th>
+                        }
+                        <th class="text-end pe-4" style="min-width: 130px;">Thao Tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Items.Any())
+                    {
+                        <tr>
+                            <td colspan="@(5 + Model.Branches.Count + 1)" class="text-center text-muted py-5">
+                                <i class="fa-solid fa-box-open fa-3x mb-3 text-secondary d-block"></i>
+                                Không tìm thấy dữ liệu sách nào phù hợp với bộ lọc.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model.Items)
+                        {
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center">
+                                        @if (!string.IsNullOrEmpty(item.ImageUrl))
+                                        {
+                                            <img src="@item.ImageUrl" class="rounded-3 me-3 shadow-sm" style="width: 42px; height: 58px; object-fit: cover;" alt="@item.Title" />
+                                        }
+                                        else
+                                        {
+                                            <div class="rounded-3 bg-light me-3 d-flex align-items-center justify-content-center text-muted shadow-sm" style="width: 42px; height: 58px;">
+                                                <i class="fa-solid fa-book"></i>
+                                            </div>
+                                        }
+                                        <div>
+                                            <div class="fw-bold text-dark text-truncate" style="max-width: 230px;" title="@item.Title">
+                                                @item.Title
+                                            </div>
+                                            <small class="text-muted d-block">TG: @(item.Author ?? "N/A")</small>
+                                            <small class="text-secondary" style="font-size: 0.75rem;">ID: #@item.BookId</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="badge bg-light text-dark border">@item.CategoryName</span></td>
+                                <td class="text-end text-muted small">@item.ImportPrice.ToString("N0") đ</td>
+                                <td class="text-end fw-bold text-dark">@item.Price.ToString("N0") đ</td>
+                                <td class="text-center bg-primary bg-opacity-10">
+                                    <span class="badge @(item.TotalStock == 0 ? "bg-danger" : (item.TotalStock <= 5 ? "bg-warning text-dark" : "bg-primary")) fs-6 fw-bold rounded-pill px-3">
+                                        @item.TotalStock.ToString("N0")
+                                    </span>
+                                </td>
+                                @foreach (var br in Model.Branches)
+                                {
+                                    int bQty = item.BranchStocks.ContainsKey(br.Id) ? item.BranchStocks[br.Id] : 0;
+                                    <td class="text-center">
+                                        @if (bQty == 0)
+                                        {
+                                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger fw-bold rounded-pill px-3" style="font-size: 0.85rem;">0</span>
+                                        }
+                                        else if (bQty <= 5)
+                                        {
+                                            <span class="badge bg-warning bg-opacity-25 text-dark border border-warning fw-bold rounded-pill px-3" style="font-size: 0.85rem;">@bQty</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-success bg-opacity-10 text-success border border-success fw-bold rounded-pill px-3" style="font-size: 0.85rem;">@bQty</span>
+                                        }
+                                    </td>
+                                }
+                                <td class="text-end pe-4">
+                                    <div class="d-inline-flex gap-1">
+                                        <!-- Nút Điều chuyển -->
+                                        <a asp-page="/Admin/Warehouses/Transfer" asp-route-bookId="@item.BookId" class="btn btn-sm btn-outline-warning text-dark rounded-circle" title="Điều chuyển sách này" style="width: 32px; height: 32px; padding: 0; line-height: 30px;">
+                                            <i class="fa-solid fa-dolly"></i>
+                                        </a>
+                                        <!-- Nút Sửa tồn kiểm kê -->
+                                        <button type="button" class="btn btn-sm btn-outline-primary rounded-circle" title="Kiểm kê / Sửa số lượng tồn" style="width: 32px; height: 32px; padding: 0; line-height: 30px;"
+                                                onclick="openAdjustModal(@item.BookId, '@Html.Raw(item.Title.Replace("'", "\\'"))', @item.TotalStock)">
+                                            <i class="fa-solid fa-pen-to-square"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- PHÂN TRANG -->
+        @if (Model.TotalPages > 1)
+        {
+            <div class="p-3 d-flex justify-content-between align-items-center border-top">
+                <span class="text-muted small">
+                    Hiển thị trang @Model.CurrentPage / @Model.TotalPages (Tổng @Model.TotalItems sản phẩm)
+                </span>
+                <nav aria-label="Page navigation">
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                            <a class="page-link rounded-pill px-3 me-1" asp-page="/Admin/Warehouses/StockMatrix"
+                               asp-route-keyword="@Model.Keyword"
+                               asp-route-categoryId="@Model.CategoryId"
+                               asp-route-branchId="@Model.BranchId"
+                               asp-route-lowStockOnly="@Model.LowStockOnly"
+                               asp-route-currentPage="@(Model.CurrentPage - 1)">Trước</a>
+                        </li>
+                        @for (int i = 1; i <= Model.TotalPages; i++)
+                        {
+                            if (i == 1 || i == Model.TotalPages || (i >= Model.CurrentPage - 2 && i <= Model.CurrentPage + 2))
+                            {
+                                <li class="page-item @(Model.CurrentPage == i ? "active" : "")">
+                                    <a class="page-link rounded-pill mx-1" asp-page="/Admin/Warehouses/StockMatrix"
+                                       asp-route-keyword="@Model.Keyword"
+                                       asp-route-categoryId="@Model.CategoryId"
+                                       asp-route-branchId="@Model.BranchId"
+                                       asp-route-lowStockOnly="@Model.LowStockOnly"
+                                       asp-route-currentPage="@i">@i</a>
+                                </li>
+                            }
+                            else if (i == Model.CurrentPage - 3 || i == Model.CurrentPage + 3)
+                            {
+                                <li class="page-item disabled"><span class="page-link">...</span></li>
+                            }
+                        }
+                        <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                            <a class="page-link rounded-pill px-3 ms-1" asp-page="/Admin/Warehouses/StockMatrix"
+                               asp-route-keyword="@Model.Keyword"
+                               asp-route-categoryId="@Model.CategoryId"
+                               asp-route-branchId="@Model.BranchId"
+                               asp-route-lowStockOnly="@Model.LowStockOnly"
+                               asp-route-currentPage="@(Model.CurrentPage + 1)">Sau</a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- MODAL KIỂM KÊ & SỬA TỒN KHO -->
+<div class="modal fade" id="adjustModal" tabindex="-1" aria-labelledby="adjustModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 shadow border-0">
+            <form method="post" asp-page-handler="AdjustStock">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title fw-bold text-dark" id="adjustModalLabel">
+                        <i class="fa-solid fa-pen-to-square text-primary me-2"></i>Kiểm Kê / Điều Chỉnh Tồn Kho
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <input type="hidden" id="adjustBookId" name="bookId" />
+                    
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Tên sách</label>
+                        <input type="text" class="form-control fw-bold bg-light" id="adjustBookTitle" readonly />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Chi nhánh cần điều chỉnh <span class="text-danger">*</span></label>
+                        @if (Model.IsSuperAdmin)
+                        {
+                            <select class="form-select" name="branchId" id="adjustBranchId" required>
+                                @foreach (var br in Model.Branches)
+                                {
+                                    <option value="@br.Id">@br.Name (@br.City)</option>
+                                }
+                            </select>
+                        }
+                        else
+                        {
+                            <input type="text" class="form-control bg-light fw-bold text-primary" value="@Model.UserBranchName" readonly />
+                            <input type="hidden" name="branchId" value="@Model.UserBranchId" />
+                        }
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Số lượng tồn kho thực tế mới <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control form-control-lg fw-bold text-primary" name="newQuantity" id="adjustNewQty" min="0" max="1000000" required />
+                        <small class="text-muted">Nhập số lượng đếm được sau khi kiểm kê thực tế.</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Lý do điều chỉnh kiểm kê <span class="text-danger">*</span></label>
+                        <textarea class="form-control" name="reason" rows="3" placeholder="Nhập lý do chi tiết (VD: Hư hỏng rách bìa, thất thoát, bù đếm thừa từ đơn trước...)" required></textarea>
+                    </div>
+
+                    <div class="alert alert-warning small mb-0 rounded-3">
+                        <i class="fa-solid fa-circle-info me-1"></i>
+                        Giao dịch này sẽ ghi nhận vào <strong>Lịch sử Biến động kho (ADJUSTMENT)</strong> và cập nhật ngay lập tức tổng tồn toàn hệ thống.
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary rounded-pill px-3" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary fw-bold rounded-pill px-4 shadow-sm">
+                        <i class="fa-solid fa-floppy-disk me-1"></i> Lưu điều chỉnh
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openAdjustModal(bookId, bookTitle, currentQty) {
+            document.getElementById('adjustBookId').value = bookId;
+            document.getElementById('adjustBookTitle').value = bookTitle;
+            document.getElementById('adjustNewQty').value = currentQty;
+            const modal = new bootstrap.Modal(document.getElementById('adjustModal'));
+            modal.show();
+        }
+    </script>
+}

@@ -1,0 +1,111 @@
+@page
+@model BookStore.Pages.Admin.Warehouses.ReconcileModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Kiểm Soát & Đồng Bộ Sai Lệch Tồn Kho";
+    ViewData["Subtitle"] = "Tự động phát hiện và cân chỉnh chênh lệch số lượng giữa bảng tổng Books và các kho chi nhánh";
+}
+
+<!-- ACTION BAR -->
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+    <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-danger p-2 shadow-sm fs-6">
+            <i class="fa-solid fa-crown text-warning me-1"></i>SUPER ADMIN ONLY
+        </span>
+    </div>
+    <div>
+        @if (Model.Discrepancies.Any())
+        {
+            <form method="post" asp-page-handler="ReconcileAll" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn tự động đồng bộ lại toàn bộ số lượng tồn kho của các đầu sách bị lệch?');">
+                <button type="submit" class="btn btn-danger btn-sm fw-bold rounded-pill px-4 shadow-sm">
+                    <i class="fa-solid fa-wrench me-1"></i> Tự Động Đồng Bộ Toàn Bộ (@Model.Discrepancies.Count đầu sách)
+                </button>
+            </form>
+        }
+    </div>
+</div>
+
+<!-- TRẠNG THÁI TOÀN VẸN DỮ LIỆU -->
+<div class="card shadow-sm border-0 rounded-4 mb-4 bg-white">
+    <div class="card-body p-4">
+        <div class="d-flex align-items-center">
+            @if (!Model.Discrepancies.Any())
+            {
+                <div class="p-3 bg-success bg-opacity-10 text-success rounded-4 me-3 shadow-sm">
+                    <i class="fa-solid fa-shield-check fa-2x"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold text-success mb-1">Toàn Vẹn Dữ Liệu Tồn Kho: 100% Khớp</h5>
+                    <p class="text-muted mb-0">
+                        Không phát hiện bất kỳ sai lệch nào giữa tổng tồn hệ thống (bảng <code>Books.StockQuantity</code>) và chi tiết các chi nhánh (bảng <code>Branch_Inventory</code>).
+                    </p>
+                </div>
+            }
+            else
+            {
+                <div class="p-3 bg-danger bg-opacity-10 text-danger rounded-4 me-3 shadow-sm">
+                    <i class="fa-solid fa-triangle-exclamation fa-2x"></i>
+                </div>
+                <div>
+                    <h5 class="fw-bold text-danger mb-1">Cảnh Báo: Phát Hiện @Model.Discrepancies.Count Đầu Sách Bị Lệch Tồn Kho</h5>
+                    <p class="text-muted mb-0">
+                        Có sự chênh lệch giữa số lượng ghi trên bảng tổng và tổng số lượng tồn thực tế tại 3 kho chi nhánh. Nhấn nút <strong>"Tự Động Đồng Bộ Toàn Bộ"</strong> để hệ thống tự động tính toán lại và đưa về số liệu chuẩn xác.
+                    </p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- BẢNG CHI TIẾT CÁC ĐẦU SÁCH BỊ LỆCH -->
+@if (Model.Discrepancies.Any())
+{
+    <div class="card shadow-sm border-0 rounded-4 bg-white">
+        <div class="card-header bg-white py-3 border-0 border-bottom d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0 fw-bold text-dark d-flex align-items-center">
+                <i class="fa-solid fa-list-check text-primary me-2"></i>Danh Sách Đầu Sách Có Số Liệu Lệch
+            </h5>
+            <span class="badge bg-danger rounded-pill px-3">@Model.Discrepancies.Count đầu sách</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">ID Sách</th>
+                            <th>Tên Sách</th>
+                            <th class="text-center">Số Tồn Bảng Tổng (Books)</th>
+                            <th class="text-center">Tổng Tồn Thực Tế 3 Kho (Branch_Inventory)</th>
+                            <th class="text-center">Chênh Lệch</th>
+                            <th class="text-end pe-4">Đánh Giá</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var d in Model.Discrepancies)
+                        {
+                            <tr>
+                                <td class="text-muted ps-4">#@d.BookId</td>
+                                <td class="fw-bold text-dark">@d.Title</td>
+                                <td class="text-center fs-6">@d.MainStock.ToString("N0")</td>
+                                <td class="text-center fs-6 text-primary fw-bold">@d.SumBranchStock.ToString("N0")</td>
+                                <td class="text-center fs-6 fw-bold @(d.Difference > 0 ? "text-danger" : "text-warning")">
+                                    @(d.Difference > 0 ? $"+{d.Difference}" : d.Difference.ToString())
+                                </td>
+                                <td class="text-end pe-4">
+                                    @if (d.Difference > 0)
+                                    {
+                                        <span class="badge bg-danger rounded-pill px-3">Bảng tổng nhiều hơn thực tế</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning text-dark rounded-pill px-3">Bảng tổng ít hơn thực tế</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}

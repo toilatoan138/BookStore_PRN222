@@ -1,0 +1,420 @@
+@page
+@model BookStore.Pages.Admin.Warehouses.IndexModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = Model.Overview.IsSuperAdmin ? "Tổng Quan Kho Toàn Quốc" : $"Tổng Quan {Model.Overview.UserBranchName}";
+    ViewData["Subtitle"] = Model.Overview.IsSuperAdmin ? "Báo cáo giám sát tồn kho, phân bổ 3 miền và luân chuyển hàng hóa chuỗi BookStore" : $"Theo dõi số liệu tồn kho và vận hành chi nhánh {Model.Overview.UserBranchName}";
+}
+
+<!-- ACTION BAR -->
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+    <div class="d-flex align-items-center gap-2">
+        @if (Model.Overview.IsSuperAdmin)
+        {
+            <span class="badge bg-danger p-2 shadow-sm fs-6">
+                <i class="fa-solid fa-crown text-warning me-1"></i>SUPER ADMIN (TRỤ SỞ CHÍNH)
+            </span>
+        }
+        else
+        {
+            <span class="badge bg-info text-dark p-2 shadow-sm fs-6">
+                <i class="fa-solid fa-location-dot text-danger me-1"></i>@Model.Overview.UserBranchName
+            </span>
+        }
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-page="/Admin/Warehouses/StockMatrix" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm">
+            <i class="fa-solid fa-boxes-stacked me-1"></i> Ma trận tồn kho
+        </a>
+        <a asp-page="/Admin/Warehouses/Transfer" class="btn btn-warning btn-sm text-dark fw-bold rounded-pill px-3 shadow-sm">
+            <i class="fa-solid fa-dolly me-1"></i> Điều chuyển kho
+        </a>
+        @if (Model.Overview.IsSuperAdmin && Model.Overview.InconsistentBookCount > 0)
+        {
+            <a asp-page="/Admin/Warehouses/Reconcile" class="btn btn-danger btn-sm rounded-pill px-3 shadow-sm">
+                <i class="fa-solid fa-triangle-exclamation me-1"></i> Phát hiện @Model.Overview.InconsistentBookCount lệch tồn!
+            </a>
+        }
+    </div>
+</div>
+
+<!-- 4 KPI CARDS -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="card shadow-sm border-0 rounded-4 h-100 bg-gradient text-white" style="background: linear-gradient(135deg, #1e3a8a, #3b82f6);">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-uppercase small fw-bold opacity-75">Tổng Tồn Kho</div>
+                        <div class="fs-2 fw-bolder mt-1">@Model.Overview.TotalBooksInStock.ToString("N0") <span class="fs-6 fw-normal opacity-75">cuốn</span></div>
+                        <div class="small opacity-75 mt-2">
+                            <i class="fa-solid fa-book me-1"></i>Trên @Model.Overview.TotalSkus.ToString("N0") đầu sách (SKU)
+                        </div>
+                    </div>
+                    <div class="p-3 bg-white bg-opacity-20 rounded-4 shadow-sm">
+                        <i class="fa-solid fa-boxes-stacked fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="card shadow-sm border-0 rounded-4 h-100 text-white" style="background: linear-gradient(135deg, #065f46, #10b981);">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-uppercase small fw-bold opacity-75">Giá Trị Tồn (Giá Vốn)</div>
+                        <div class="fs-2 fw-bolder mt-1">@Model.Overview.TotalCostValue.ToString("N0") <span class="fs-6 fw-normal opacity-75">đ</span></div>
+                        <div class="small opacity-75 mt-2">
+                            <i class="fa-solid fa-coins me-1"></i>Vốn hàng tồn kho
+                        </div>
+                    </div>
+                    <div class="p-3 bg-white bg-opacity-20 rounded-4 shadow-sm">
+                        <i class="fa-solid fa-vault fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="card shadow-sm border-0 rounded-4 h-100 text-white" style="background: linear-gradient(135deg, #854d0e, #eab308);">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-uppercase small fw-bold opacity-75">Giá Trị Bán Ước Tính</div>
+                        <div class="fs-2 fw-bolder mt-1">@Model.Overview.TotalRetailValue.ToString("N0") <span class="fs-6 fw-normal opacity-75">đ</span></div>
+                        <div class="small opacity-75 mt-2">
+                            <i class="fa-solid fa-tags me-1"></i>Theo niêm yết bán lẻ
+                        </div>
+                    </div>
+                    <div class="p-3 bg-white bg-opacity-20 rounded-4 shadow-sm">
+                        <i class="fa-solid fa-sack-dollar fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="card shadow-sm border-0 rounded-4 h-100 text-white" style="background: linear-gradient(135deg, #991b1b, #ef4444);">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="text-uppercase small fw-bold opacity-75">Cảnh Báo Sắp Hết</div>
+                        <div class="fs-2 fw-bolder mt-1">@Model.Overview.LowStockCount <span class="fs-6 fw-normal opacity-75">đầu sách</span></div>
+                        <div class="small opacity-75 mt-2">
+                            <i class="fa-solid fa-triangle-exclamation me-1"></i>Tồn kho &le; 5 cuốn
+                        </div>
+                    </div>
+                    <div class="p-3 bg-white bg-opacity-20 rounded-4 shadow-sm">
+                        <i class="fa-solid fa-bell fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- PHẦN CHI TIẾT TỪNG CHI NHÁNH DÀNH CHO SUPER ADMIN -->
+@if (Model.Overview.IsSuperAdmin)
+{
+    <div class="row g-4 mb-4">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 rounded-4 h-100 bg-white">
+                <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center border-bottom">
+                    <h5 class="card-title mb-0 fw-bold text-dark d-flex align-items-center">
+                        <i class="fa-solid fa-network-wired text-primary me-2"></i>Thống Kê Tồn Kho Theo Chi Nhánh Toàn Quốc
+                    </h5>
+                    <a asp-page="/Admin/Warehouses/Branches" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                        <i class="fa-solid fa-gear me-1"></i> Quản lý kho
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-4">Kho Chi Nhánh</th>
+                                    <th>Quản Lý (Admin)</th>
+                                    <th class="text-center">Số SKU</th>
+                                    <th class="text-center">Tổng Tồn</th>
+                                    <th class="text-end">Giá Trị Vốn</th>
+                                    <th class="text-center">Trạng Thái</th>
+                                    <th class="text-end pe-4">Hành Động</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var branch in Model.Overview.BranchSummaries)
+                                {
+                                    <tr>
+                                        <td class="ps-4">
+                                            <div class="fw-bold text-dark">
+                                                <i class="fa-solid fa-location-dot text-danger me-1"></i>@branch.BranchName
+                                            </div>
+                                            <small class="text-muted">@branch.Address, @branch.City</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-light text-dark border">
+                                                <i class="fa-solid fa-user-tie text-primary me-1"></i>@(branch.ManagerName ?? "Chưa gán")
+                                            </span>
+                                        </td>
+                                        <td class="text-center fw-bold text-primary">@branch.TotalSkus.ToString("N0")</td>
+                                        <td class="text-center">
+                                            <span class="badge bg-primary fs-6 rounded-pill px-3">@branch.TotalStock.ToString("N0") cuốn</span>
+                                        </td>
+                                        <td class="text-end fw-bold text-success">@branch.CostValue.ToString("N0") đ</td>
+                                        <td class="text-center">
+                                            @if (branch.IsActive)
+                                            {
+                                                <span class="badge bg-success">Hoạt động</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-secondary">Tạm ngưng</span>
+                                            }
+                                        </td>
+                                        <td class="text-end pe-4">
+                                            <a asp-page="/Admin/Warehouses/StockMatrix" asp-route-branchId="@branch.BranchId" class="btn btn-sm btn-outline-primary rounded-circle" title="Xem tồn kho chi nhánh" style="width: 32px; height: 32px; padding: 0; line-height: 30px;">
+                                                <i class="fa-solid fa-eye"></i>
+                                            </a>
+                                            <a asp-page="/Admin/Warehouses/Transfer" asp-route-fromBranchId="@branch.BranchId" class="btn btn-sm btn-outline-warning text-dark rounded-circle" title="Xuất chuyển kho" style="width: 32px; height: 32px; padding: 0; line-height: 30px;">
+                                                <i class="fa-solid fa-truck-arrow-right"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BIỂU ĐỒ PHÂN BỔ TỒN KHO -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 rounded-4 h-100 bg-white">
+                <div class="card-header bg-white py-3 border-0 border-bottom">
+                    <h5 class="card-title mb-0 fw-bold text-dark d-flex align-items-center">
+                        <i class="fa-solid fa-chart-pie text-warning me-2"></i>Tỷ Trọng Tồn Kho 3 Miền
+                    </h5>
+                </div>
+                <div class="card-body p-4 d-flex flex-column align-items-center justify-content-between">
+                    <div style="position: relative; height: 200px; width: 100%;">
+                        <canvas id="branchDistributionChart"></canvas>
+                    </div>
+                    <div class="w-100 mt-3 pt-3 border-top">
+                        @foreach (var b in Model.Overview.BranchSummaries)
+                        {
+                            var pct = Model.Overview.TotalBooksInStock > 0 ? (b.TotalStock * 100.0 / Model.Overview.TotalBooksInStock) : 0;
+                            <div class="d-flex justify-content-between align-items-center mb-1 small">
+                                <span><i class="fa-solid fa-circle text-primary me-1" style="font-size: 8px;"></i>@b.BranchName</span>
+                                <span class="fw-bold">@b.TotalStock.ToString("N0") cuốn (@pct.ToString("F1")%)</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- SÁCH CẦN BỔ SUNG & LỊCH SỬ BIẾN ĐỘNG GẦN ĐÂY -->
+<div class="row g-4">
+    <!-- BẢNG CẢNH BÁO SÁCH SẮP HẾT -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-0 rounded-4 h-100 bg-white">
+            <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center border-bottom">
+                <h5 class="card-title mb-0 fw-bold text-danger d-flex align-items-center">
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i>Sách Sắp Hết Hàng (&le; 5 cuốn)
+                </h5>
+                <a asp-page="/Admin/Warehouses/StockMatrix" asp-route-lowStockOnly="true" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                    Xem tất cả (@Model.Overview.LowStockCount)
+                </a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Sách</th>
+                                <th>Thể loại</th>
+                                <th class="text-center">Tồn kho</th>
+                                <th class="text-end pe-4">Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!Model.Overview.LowStockBooks.Any())
+                            {
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted py-5">
+                                        <i class="fa-solid fa-circle-check text-success fa-3x mb-2 d-block"></i>
+                                        Tất cả đầu sách đều đang ở ngưỡng an toàn!
+                                    </td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var book in Model.Overview.LowStockBooks)
+                                {
+                                    <tr>
+                                        <td class="ps-4">
+                                            <div class="d-flex align-items-center">
+                                                @if (!string.IsNullOrEmpty(book.ImageUrl))
+                                                {
+                                                    <img src="@book.ImageUrl" class="rounded-3 me-2 shadow-sm" style="width: 36px; height: 50px; object-fit: cover;" alt="@book.Title" />
+                                                }
+                                                else
+                                                {
+                                                    <div class="rounded-3 bg-light me-2 d-flex align-items-center justify-content-center text-muted" style="width: 36px; height: 50px;">
+                                                        <i class="fa-solid fa-book"></i>
+                                                    </div>
+                                                }
+                                                <div>
+                                                    <div class="fw-bold text-dark text-truncate" style="max-width: 200px;" title="@book.Title">@book.Title</div>
+                                                    <small class="text-muted">@book.Author</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td><span class="badge bg-light text-dark border">@book.Category?.Name</span></td>
+                                        <td class="text-center">
+                                            <span class="badge @(book.StockQuantity == 0 ? "bg-danger" : "bg-warning text-dark") fs-6 fw-bold rounded-pill px-3">
+                                                @book.StockQuantity
+                                            </span>
+                                        </td>
+                                        <td class="text-end pe-4">
+                                            <a asp-page="/Admin/Warehouses/Transfer" asp-route-bookId="@book.Id" class="btn btn-sm btn-outline-warning text-dark rounded-pill px-2" title="Điều chuyển sách này">
+                                                <i class="fa-solid fa-dolly"></i> Chuyển
+                                            </a>
+                                            <a asp-page="/Admin/PurchaseOrders/Index" class="btn btn-sm btn-outline-success rounded-pill px-2" title="Nhập hàng">
+                                                <i class="fa-solid fa-cart-plus"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BẢNG BIẾN ĐỘNG KHO GẦN ĐÂY -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-0 rounded-4 h-100 bg-white">
+            <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center border-bottom">
+                <h5 class="card-title mb-0 fw-bold text-dark d-flex align-items-center">
+                    <i class="fa-solid fa-clock-rotate-left text-primary me-2"></i>Biến Động Tồn Kho Gần Đây
+                </h5>
+                <a asp-page="/Admin/Warehouses/Reports" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                    Xem chi tiết XNT
+                </a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 small">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Thời gian</th>
+                                <th>Sách</th>
+                                <th>Loại GD</th>
+                                <th class="text-center">Biến động</th>
+                                <th class="pe-4">Người thực hiện</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!Model.Overview.RecentMovements.Any())
+                            {
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-5">Chưa có giao dịch biến động nào gần đây.</td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var h in Model.Overview.RecentMovements)
+                                {
+                                    <tr>
+                                        <td class="ps-4">@h.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                        <td>
+                                            <span class="text-truncate d-inline-block fw-bold" style="max-width: 140px;" title="@h.Book?.Title">
+                                                @h.Book?.Title
+                                            </span>
+                                        </td>
+                                        <td>
+                                            @switch (h.TransactionType?.ToUpper())
+                                            {
+                                                case "IMPORT":
+                                                    <span class="badge bg-success">Nhập NCC</span>
+                                                    break;
+                                                case "EXPORT":
+                                                    <span class="badge bg-primary">Xuất bán</span>
+                                                    break;
+                                                case "TRANSFER_OUT":
+                                                    <span class="badge bg-warning text-dark">Chuyển đi</span>
+                                                    break;
+                                                case "TRANSFER_IN":
+                                                    <span class="badge bg-info text-dark">Nhận chuyển</span>
+                                                    break;
+                                                case "ADJUSTMENT":
+                                                    <span class="badge bg-secondary">Kiểm kê</span>
+                                                    break;
+                                                default:
+                                                    <span class="badge bg-dark">@h.TransactionType</span>
+                                                    break;
+                                            }
+                                        </td>
+                                        <td class="text-center fw-bold @(h.QuantityChanged >= 0 ? "text-success" : "text-danger")">
+                                            @(h.QuantityChanged > 0 ? "+" + h.QuantityChanged : h.QuantityChanged.ToString())
+                                        </td>
+                                        <td class="pe-4">
+                                            <small class="text-muted">@(h.CreatedBy?.FullName ?? h.CreatedBy?.UserName ?? "Hệ thống")</small>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @if (Model.Overview.IsSuperAdmin)
+    {
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const ctx = document.getElementById('branchDistributionChart');
+                if (ctx) {
+                    const labels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Overview.BranchSummaries.Select(b => b.BranchName)));
+                    const data = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Overview.BranchSummaries.Select(b => b.TotalStock)));
+
+                    new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                data: data,
+                                backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444'],
+                                borderWidth: 3,
+                                borderColor: '#ffffff'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                }
+                            }
+                        }
+                    });
+                }
+            });
+        </script>
+    }
+}

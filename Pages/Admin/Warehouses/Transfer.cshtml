@@ -1,0 +1,260 @@
+@page
+@model BookStore.Pages.Admin.Warehouses.TransferModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Điều Chuyển Sách Giữa Các Kho";
+    ViewData["Subtitle"] = "Lập lệnh vận chuyển điều phối số lượng sách giữa các kho chi nhánh miền Bắc, Trung, Nam";
+}
+
+<!-- ACTION BAR -->
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+    <div class="d-flex align-items-center gap-2">
+        @if (Model.IsSuperAdmin)
+        {
+            <span class="badge bg-danger p-2 shadow-sm fs-6">
+                <i class="fa-solid fa-crown text-warning me-1"></i>SUPER ADMIN
+            </span>
+        }
+        else
+        {
+            <span class="badge bg-info text-dark p-2 shadow-sm fs-6">
+                <i class="fa-solid fa-location-dot text-danger me-1"></i>@Model.UserBranchName
+            </span>
+        }
+    </div>
+    <div>
+        <a asp-page="/Admin/Warehouses/StockMatrix" class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm">
+            <i class="fa-solid fa-boxes-stacked me-1"></i> Xem ma trận tồn kho
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- FORM ĐIỀU CHUYỂN KHO -->
+    <div class="col-lg-5">
+        <div class="card shadow-sm border-0 rounded-4 h-100 bg-white">
+            <div class="card-header bg-white py-3 border-0 border-bottom">
+                <h5 class="card-title mb-0 fw-bold text-dark d-flex align-items-center">
+                    <i class="fa-solid fa-truck-ramp-box text-primary me-2"></i>Lập Lệnh Điều Chuyển Hàng
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="post" asp-page-handler="Transfer" id="transferForm">
+                    <!-- CHỌN KHO XUẤT VÀ KHO NHẬN -->
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold text-muted">Kho xuất hàng (Gửi) <span class="text-danger">*</span></label>
+                            @if (Model.IsSuperAdmin)
+                            {
+                                <select class="form-select" name="fromBranchId" id="fromBranchId" required onchange="updateStockDisplay()">
+                                    @foreach (var br in Model.Branches)
+                                    {
+                                        <option value="@br.Id" selected="@(Model.SelectedFromBranchId == br.Id)">@br.Name</option>
+                                    }
+                                </select>
+                            }
+                            else
+                            {
+                                <select class="form-select" name="fromBranchId" id="fromBranchId" required onchange="updateStockDisplay()">
+                                    @foreach (var br in Model.Branches)
+                                    {
+                                        <option value="@br.Id" selected="@(Model.UserBranchId == br.Id)">@br.Name</option>
+                                    }
+                                </select>
+                            }
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold text-muted">Kho nhận hàng (Đích) <span class="text-danger">*</span></label>
+                            <select class="form-select" name="toBranchId" id="toBranchId" required>
+                                @foreach (var br in Model.Branches)
+                                {
+                                    <option value="@br.Id" selected="@(Model.SelectedFromBranchId != br.Id && Model.Branches.Count > 1 && br.Id != (Model.SelectedFromBranchId ?? 1))">@br.Name</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- CHỌN SÁCH -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Sách cần điều chuyển <span class="text-danger">*</span></label>
+                        <select class="form-select" name="bookId" id="bookSelector" required onchange="updateStockDisplay()">
+                            <option value="">-- Chọn đầu sách --</option>
+                            @foreach (var b in Model.Books)
+                            {
+                                <option value="@b.Id" selected="@(Model.SelectedBookId == b.Id)">
+                                    @b.Title (Giá: @b.Price.ToString("N0")đ)
+                                </option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- HIỂN THỊ TỒN KHO NGUỒN HIỆN TẠI -->
+                    <div class="p-3 bg-light rounded-4 mb-3 border">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="small fw-bold text-muted">Tồn kho khả dụng tại kho xuất:</span>
+                            <span class="badge bg-primary fs-6 fw-bold rounded-pill px-3" id="sourceStockBadge">0 cuốn</span>
+                        </div>
+                    </div>
+
+                    <!-- NHẬP SỐ LƯỢNG CHUYỂN -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Số lượng cần chuyển <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <input type="number" class="form-control form-control-lg fw-bold text-primary" name="quantity" id="transferQuantity" min="1" max="100000" placeholder="Nhập số lượng..." required />
+                            <span class="input-group-text bg-light">cuốn</span>
+                        </div>
+                        <small class="text-muted" id="qtyHelper">Không được vượt quá số tồn kho xuất.</small>
+                    </div>
+
+                    <!-- GHI CHÚ / LÝ DO -->
+                    <div class="mb-4">
+                        <label class="form-label small fw-bold text-muted">Ghi chú điều chuyển</label>
+                        <textarea class="form-control" name="note" rows="2" placeholder="VD: Bổ sung hàng cho kho TP.HCM phục vụ chiến dịch Flash Sale..."></textarea>
+                    </div>
+
+                    <!-- NÚT SUBMIT -->
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-warning btn-lg fw-bold text-dark rounded-pill shadow-sm">
+                            <i class="fa-solid fa-truck-fast me-2"></i>Thực Hiện Điều Chuyển Ngay
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- BẢNG LỊCH SỬ CÁC GIAO DỊCH ĐIỀU CHUYỂN GẦN NHẤT -->
+    <div class="col-lg-7">
+        <div class="card shadow-sm border-0 rounded-4 h-100 bg-white">
+            <div class="card-header bg-white py-3 border-0 border-bottom d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0 fw-bold text-dark d-flex align-items-center">
+                    <i class="fa-solid fa-clock-rotate-left text-primary me-2"></i>Lịch Sử Luân Chuyển Hàng Gần Đây
+                </h5>
+                <span class="badge bg-light text-dark border">30 giao dịch gần nhất</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 small">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Thời Gian</th>
+                                <th>Sách</th>
+                                <th>Loại Thao Tác</th>
+                                <th class="text-center">Số Lượng</th>
+                                <th class="pe-4">Người Thực Hiện</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!Model.RecentTransfers.Any())
+                            {
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-5">
+                                        <i class="fa-solid fa-dolly fa-2x mb-2 text-secondary d-block"></i>
+                                        Chưa có giao dịch điều chuyển nào được ghi nhận.
+                                    </td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var t in Model.RecentTransfers)
+                                {
+                                    <tr>
+                                        <td class="ps-4">@t.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                        <td>
+                                            <div class="fw-bold text-dark text-truncate" style="max-width: 180px;" title="@t.Book?.Title">
+                                                @t.Book?.Title
+                                            </div>
+                                            <small class="text-muted">ID Sách: #@t.BookId</small>
+                                        </td>
+                                        <td>
+                                            @if (t.TransactionType == "TRANSFER_OUT")
+                                            {
+                                                <span class="badge bg-warning text-dark border border-warning">
+                                                    <i class="fa-solid fa-arrow-up-from-bracket me-1"></i>Chuyển đi
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-info text-dark border border-info">
+                                                    <i class="fa-solid fa-arrow-down-to-bracket me-1"></i>Nhận chuyển
+                                                </span>
+                                            }
+                                        </td>
+                                        <td class="text-center fw-bold @(t.QuantityChanged > 0 ? "text-success" : "text-danger") fs-6">
+                                            @(t.QuantityChanged > 0 ? "+" + t.QuantityChanged : t.QuantityChanged.ToString())
+                                        </td>
+                                        <td class="pe-4">
+                                            <div>@(t.CreatedBy?.FullName ?? t.CreatedBy?.UserName ?? "Admin")</div>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const branchInventories = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.BranchInventories.Select(bi => new { bi.BranchId, bi.BookId, bi.StockQuantity })));
+
+        function updateStockDisplay() {
+            const fromBranchId = parseInt(document.getElementById('fromBranchId').value);
+            const bookId = parseInt(document.getElementById('bookSelector').value);
+            const badge = document.getElementById('sourceStockBadge');
+            const qtyInput = document.getElementById('transferQuantity');
+
+            if (!fromBranchId || !bookId) {
+                badge.innerText = '0 cuốn';
+                badge.className = 'badge bg-secondary fs-6 fw-bold rounded-pill px-3';
+                return;
+            }
+
+            const inv = branchInventories.find(bi => bi.BranchId === fromBranchId && bi.BookId === bookId);
+            const stock = inv ? inv.StockQuantity : 0;
+
+            badge.innerText = stock + ' cuốn';
+            if (stock === 0) {
+                badge.className = 'badge bg-danger fs-6 fw-bold rounded-pill px-3';
+            } else if (stock <= 5) {
+                badge.className = 'badge bg-warning text-dark fs-6 fw-bold rounded-pill px-3';
+            } else {
+                badge.className = 'badge bg-primary fs-6 fw-bold rounded-pill px-3';
+            }
+
+            qtyInput.max = stock;
+        }
+
+        document.getElementById('transferForm').addEventListener('submit', function(e) {
+            const fromBranch = document.getElementById('fromBranchId').value;
+            const toBranch = document.getElementById('toBranchId').value;
+            const bookId = document.getElementById('bookSelector').value;
+            const qty = parseInt(document.getElementById('transferQuantity').value);
+
+            if (!bookId) {
+                alert('Vui lòng chọn đầu sách cần điều chuyển.');
+                e.preventDefault();
+                return;
+            }
+
+            if (fromBranch === toBranch) {
+                alert('Lỗi: Kho xuất và Kho nhận không được trùng nhau!');
+                e.preventDefault();
+                return;
+            }
+
+            if (qty <= 0) {
+                alert('Lỗi: Số lượng chuyển phải lớn hơn 0.');
+                e.preventDefault();
+                return;
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStockDisplay();
+        });
+    </script>
+}

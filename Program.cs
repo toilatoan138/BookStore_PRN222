@@ -71,6 +71,7 @@ builder.Services.AddScoped<BookStore.Services.ICategoryService, BookStore.Servic
 builder.Services.AddScoped<BookStore.Services.IStaffService, BookStore.Services.StaffService>();
 builder.Services.AddScoped<BookStore.Services.IWarehouseService, BookStore.Services.WarehouseService>();
 builder.Services.AddScoped<BookStore.Services.IWarehouseFulfillmentService, BookStore.Services.WarehouseFulfillmentService>();
+builder.Services.AddScoped<BookStore.Services.IWarehouseAdminService, BookStore.Services.WarehouseAdminService>();
 builder.Services.AddSignalR();
 
 // ====================================================================

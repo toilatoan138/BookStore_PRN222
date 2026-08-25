@@ -1,0 +1,230 @@
+@page
+@model BookStore.Pages.Admin.Warehouses.BranchesModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Quản Lý Mạng Lưới Kho & Chi Nhánh";
+    ViewData["Subtitle"] = "Thiết lập danh mục chi nhánh, trạng thái hoạt động và bổ nhiệm Admin quản lý từng kho";
+}
+
+<!-- ACTION BAR -->
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+    <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-danger p-2 shadow-sm fs-6">
+            <i class="fa-solid fa-crown text-warning me-1"></i>SUPER ADMIN ONLY
+        </span>
+        <span class="badge bg-light text-dark border p-2">Tổng @Model.Branches.Count chi nhánh</span>
+    </div>
+    <div>
+        <button type="button" class="btn btn-primary btn-sm fw-bold rounded-pill px-4 shadow-sm" onclick="openBranchModal(0, '', '', '', true)">
+            <i class="fa-solid fa-plus me-1"></i> Thêm Chi Nhánh Mới
+        </button>
+    </div>
+</div>
+
+<!-- GRID CARDS DANH SÁCH CHI NHÁNH -->
+<div class="row g-4">
+    @foreach (var br in Model.Branches)
+    {
+        <div class="col-xl-4 col-md-6">
+            <div class="card shadow-sm border-0 rounded-4 h-100 position-relative overflow-hidden bg-white">
+                <div class="position-absolute top-0 start-0 w-100" style="height: 5px; background: @(br.IsActive ? "#10b981" : "#6b7280");"></div>
+                <div class="card-body p-4 d-flex flex-column justify-content-between">
+                    <div>
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="fw-bold text-dark mb-0 d-flex align-items-center">
+                                <i class="fa-solid fa-warehouse text-primary me-2"></i>@br.BranchName
+                            </h5>
+                            @if (br.IsActive)
+                            {
+                                <span class="badge bg-success rounded-pill px-3">Đang hoạt động</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary rounded-pill px-3">Tạm ngưng</span>
+                            }
+                        </div>
+                        <div class="text-muted small mb-3">
+                            <i class="fa-solid fa-location-dot text-danger me-1"></i>@(string.IsNullOrEmpty(br.Address) ? "Chưa cập nhật địa chỉ" : br.Address), @br.City
+                        </div>
+
+                        <!-- QUẢN LÝ CHI NHÁNH -->
+                        <div class="p-3 bg-light rounded-4 mb-3 d-flex justify-content-between align-items-center border">
+                            <div class="small">
+                                <span class="text-muted d-block" style="font-size: 0.75rem;">Admin Phụ Trách:</span>
+                                <span class="fw-bold text-dark">
+                                    <i class="fa-solid fa-user-tie text-primary me-1"></i>@(br.ManagerName ?? "Chưa bổ nhiệm")
+                                </span>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="openAssignModal(@br.BranchId, '@Html.Raw(br.BranchName.Replace("'", "\\'"))')">
+                                <i class="fa-solid fa-user-gear me-1"></i> Bổ nhiệm
+                            </button>
+                        </div>
+
+                        <!-- CHỈ SỐ KHO -->
+                        <div class="row g-2 mb-3 text-center">
+                            <div class="col-4">
+                                <div class="p-2 border rounded-3 bg-light">
+                                    <div class="text-muted" style="font-size: 0.72rem;">Số SKU</div>
+                                    <div class="fw-bold fs-6 text-primary">@br.TotalSkus.ToString("N0")</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="p-2 border rounded-3 bg-light">
+                                    <div class="text-muted" style="font-size: 0.72rem;">Tổng Tồn</div>
+                                    <div class="fw-bold fs-6 text-dark">@br.TotalStock.ToString("N0")</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="p-2 border rounded-3 bg-light">
+                                    <div class="text-muted" style="font-size: 0.72rem;">Giá Trị Vốn</div>
+                                    <div class="fw-bold fs-6 text-success text-truncate" title="@br.CostValue.ToString("N0") đ">
+                                        @((br.CostValue / 1000000).ToString("F1"))tr
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- THAO TÁC -->
+                    <div class="pt-3 border-top d-flex justify-content-between align-items-center">
+                        <a asp-page="/Admin/Warehouses/StockMatrix" asp-route-branchId="@br.BranchId" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                            <i class="fa-solid fa-boxes-stacked me-1"></i> Xem tồn kho
+                        </a>
+                        <div class="d-flex gap-1">
+                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle p-2 d-flex align-items-center justify-content-center" onclick="openBranchModal(@br.BranchId, '@Html.Raw(br.BranchName.Replace("'", "\\'"))', '@Html.Raw(br.Address?.Replace("'", "\\'") ?? "")', '@Html.Raw(br.City?.Replace("'", "\\'") ?? "")', @(br.IsActive.ToString().ToLower()))" title="Chỉnh sửa thông tin" style="width: 34px; height: 34px;">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <form method="post" asp-page-handler="ToggleStatus" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn thay đổi trạng thái hoạt động của chi nhánh này?');">
+                                <input type="hidden" name="id" value="@br.BranchId" />
+                                @if (br.IsActive)
+                                {
+                                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-circle p-2 d-flex align-items-center justify-content-center" title="Tạm ngưng chi nhánh" style="width: 34px; height: 34px;">
+                                        <i class="fa-solid fa-power-off"></i>
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button type="submit" class="btn btn-sm btn-outline-success rounded-circle p-2 d-flex align-items-center justify-content-center" title="Kích hoạt lại chi nhánh" style="width: 34px; height: 34px;">
+                                        <i class="fa-solid fa-play"></i>
+                                    </button>
+                                }
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- MODAL THÊM / SỬA CHI NHÁNH -->
+<div class="modal fade" id="branchModal" tabindex="-1" aria-labelledby="branchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 shadow border-0">
+            <form method="post" asp-page-handler="SaveBranch">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title fw-bold text-dark" id="branchModalLabel">
+                        <i class="fa-solid fa-network-wired text-primary me-2"></i>Thông Tin Chi Nhánh
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <input type="hidden" id="branchIdInput" name="Id" value="0" />
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Tên kho / Chi nhánh <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="branchNameInput" name="Name" placeholder="VD: Chi nhánh Cần Thơ..." required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Tỉnh / Thành phố <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="branchCityInput" name="City" placeholder="VD: Cần Thơ, Hải Phòng..." required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Địa chỉ chi tiết</label>
+                        <input type="text" class="form-control" id="branchAddressInput" name="Address" placeholder="VD: Số 123 Đường 3/2, Q. Ninh Kiều..." />
+                    </div>
+
+                    <div class="form-check form-switch mb-0">
+                        <input class="form-check-input" type="checkbox" id="branchIsActiveInput" name="IsActive" value="true" checked />
+                        <label class="form-check-label small fw-bold text-dark" for="branchIsActiveInput">Kích hoạt hoạt động</label>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary rounded-pill px-3" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary fw-bold rounded-pill px-4 shadow-sm">
+                        <i class="fa-solid fa-floppy-disk me-1"></i> Lưu thông tin
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL BỔ NHIỆM ADMIN QUẢN LÝ CHI NHÁNH -->
+<div class="modal fade" id="assignModal" tabindex="-1" aria-labelledby="assignModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 shadow border-0">
+            <form method="post" asp-page-handler="AssignManager">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title fw-bold text-dark" id="assignModalLabel">
+                        <i class="fa-solid fa-user-gear text-primary me-2"></i>Bổ Nhiệm Admin Quản Lý Chi Nhánh
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <input type="hidden" id="assignBranchIdInput" name="branchId" />
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Chi nhánh</label>
+                        <input type="text" class="form-control fw-bold bg-light" id="assignBranchNameInput" readonly />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-muted">Chọn Tài Khoản Bổ Nhiệm <span class="text-danger">*</span></label>
+                        <select class="form-select" name="targetUserId" required>
+                            <option value="">-- Chọn tài khoản nhân sự / Admin --</option>
+                            @foreach (var u in Model.AdminUsers)
+                            {
+                                <option value="@u.Id">@u.FullName (@u.UserName) - @(u.BranchId == null ? "Super Admin" : $"Đang ở Chi nhánh #{u.BranchId}")</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="alert alert-info small mb-0 rounded-3">
+                        <i class="fa-solid fa-circle-info me-1"></i>
+                        Sau khi bổ nhiệm, tài khoản này sẽ trở thành <strong>Admin Chi Nhánh</strong> phụ trách quản lý tồn kho và đơn hàng của kho này.
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary rounded-pill px-3" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-primary fw-bold rounded-pill px-4 shadow-sm">
+                        <i class="fa-solid fa-check me-1"></i> Xác nhận bổ nhiệm
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openBranchModal(id, name, address, city, isActive) {
+            document.getElementById('branchIdInput').value = id;
+            document.getElementById('branchNameInput').value = name;
+            document.getElementById('branchAddressInput').value = address;
+            document.getElementById('branchCityInput').value = city;
+            document.getElementById('branchIsActiveInput').checked = isActive;
+            const modal = new bootstrap.Modal(document.getElementById('branchModal'));
+            modal.show();
+        }
+
+        function openAssignModal(branchId, branchName) {
+            document.getElementById('assignBranchIdInput').value = branchId;
+            document.getElementById('assignBranchNameInput').value = branchName;
+            const modal = new bootstrap.Modal(document.getElementById('assignModal'));
+            modal.show();
+        }
+    </script>
+}
