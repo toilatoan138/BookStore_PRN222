@@ -1,4 +1,4 @@
-﻿@page "{id:int}"
+@page "{id:int}"
 @model BookStore.Pages.Orders.DetailModel
 @{
     ViewData["Title"] = $"Chi tiết đơn hàng #{Model.Order.Id}";
@@ -241,6 +241,15 @@
                     <button type="button" class="btn btn-danger rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#cancelModal">
                         <i class="fa-solid fa-ban me-1"></i>Hủy đơn hàng
                     </button>
+                }
+                
+                @if (Model.Order.Status == Models.Enums.OrderStatus.Shipping)
+                {
+                    <form method="post" asp-page-handler="ConfirmReceived" asp-route-id="@Model.Order.Id" class="m-0">
+                        <button type="submit" class="btn btn-success rounded-pill px-4" onclick="return confirm('Xác nhận bạn đã nhận được hàng và hàng còn nguyên vẹn?');">
+                            <i class="fa-solid fa-check-circle me-1"></i>Đã nhận hàng
+                        </button>
+                    </form>
                 }
             </div>
         </div>

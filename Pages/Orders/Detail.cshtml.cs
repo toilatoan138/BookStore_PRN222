@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using BookStore.Data;
 using BookStore.Models.Entities;
 using BookStore.Models.Enums;
@@ -85,6 +85,31 @@ namespace BookStore.Pages.Orders
             else
             {
                 TempData["ErrorMessage"] = "Không thể hủy đơn hàng này.";
+            }
+
+            return RedirectToPage(new { id });
+        }
+
+        public async Task<IActionResult> OnPostConfirmReceivedAsync(int id)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return RedirectToPage("/Account/Login");
+
+            var order = await _orderService.GetOrderByIdAsync(id, user.Id);
+            if (order == null || order.Status != OrderStatus.Shipping)
+            {
+                TempData["ErrorMessage"] = "Không thể cập nhật trạng thái đơn hàng này.";
+                return RedirectToPage(new { id });
+            }
+
+            bool success = await _orderService.UpdateOrderStatusAsync(id, OrderStatus.Delivered, "Khách hàng xác nhận đã nhận hàng thành công");
+            if (success)
+            {
+                TempData["SuccessMessage"] = "Cảm ơn bạn đã xác nhận nhận hàng! Đơn hàng đã hoàn tất.";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Đã xảy ra lỗi khi cập nhật trạng thái.";
             }
 
             return RedirectToPage(new { id });
