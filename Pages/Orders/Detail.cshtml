@@ -219,10 +219,10 @@
                                         @(ret.Status == 0 ? "Chờ duyệt" : ret.Status == 1 ? "Đã duyệt trả" : ret.Status == 3 ? "Hoàn tất" : "Từ chối")
                                     </span>
                                 </div>
-                                <div class="small text-muted mb-1">Lý do: @ret.CustomerReason</div>
+                                <div class="small text-muted mb-1 text-break">Lý do: @ret.CustomerReason</div>
                                 @if (!string.IsNullOrEmpty(ret.AdminNote))
                                 {
-                                    <div class="small text-danger">Phản hồi từ MindBook: @ret.AdminNote</div>
+                                    <div class="small text-danger text-break">Phản hồi từ MindBook: @ret.AdminNote</div>
                                 }
                             </div>
                         }
@@ -242,7 +242,7 @@
                         <i class="fa-solid fa-ban me-1"></i>Hủy đơn hàng
                     </button>
                 }
-                
+
                 @if (Model.Order.Status == Models.Enums.OrderStatus.Shipping)
                 {
                     <form method="post" asp-page-handler="ConfirmReceived" asp-route-id="@Model.Order.Id" class="m-0">
@@ -267,7 +267,7 @@
             <form method="post" asp-page-handler="Cancel" asp-route-id="@Model.Order.Id">
                 <div class="modal-body p-4">
                     <p class="small text-muted mb-3">Vui lòng nhập lý do bạn muốn hủy đơn hàng này:</p>
-                    <textarea name="reason" class="form-control" rows="3" placeholder="Lý do hủy đơn..." required></textarea>
+                    <textarea name="reason" class="form-control" rows="3" maxlength="500" placeholder="Lý do hủy đơn..." required></textarea>
                 </div>
                 <div class="modal-footer border-0 pt-0">
                     <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Đóng</button>
@@ -298,20 +298,21 @@
                         <input asp-for="ReturnInput.Quantity" type="number" id="returnQty" min="1" class="form-control" required />
                     </div>
                     <div class="mb-3">
-                        <label asp-for="ReturnInput.CustomerReason" class="form-label fw-semibold">Lý do trả hàng</label>
-                        <textarea asp-for="ReturnInput.CustomerReason" class="form-control" rows="3" placeholder="Mô tả tình trạng sách (hư hỏng, rách, in nhầm...)" required></textarea>
+                        <label asp-for="ReturnInput.CustomerReason" class="form-label fw-semibold">Lý do trả hàng <span class="text-danger">*</span></label>
+                        <textarea asp-for="ReturnInput.CustomerReason" class="form-control" rows="3" maxlength="500" placeholder="Mô tả tình trạng sách (hư hỏng, rách, in nhầm... - tối đa 500 ký tự)" required></textarea>
+                        <div class="form-text text-muted small">Tối đa 500 ký tự.</div>
                     </div>
 
                     <h6 class="fw-bold text-dark mt-4 mb-2">Thông tin tài khoản nhận tiền hoàn (Nếu COD)</h6>
                     <div class="row g-2">
                         <div class="col-md-6 mb-2">
-                            <input asp-for="ReturnInput.BankName" class="form-control form-control-sm" placeholder="Tên ngân hàng (VD: Vietcombank)" />
+                            <input asp-for="ReturnInput.BankName" maxlength="100" class="form-control form-control-sm" placeholder="Tên ngân hàng (VD: Vietcombank)" />
                         </div>
                         <div class="col-md-6 mb-2">
-                            <input asp-for="ReturnInput.AccountNumber" class="form-control form-control-sm" placeholder="Số tài khoản" />
+                            <input asp-for="ReturnInput.AccountNumber" maxlength="50" class="form-control form-control-sm" placeholder="Số tài khoản" />
                         </div>
                         <div class="col-12">
-                            <input asp-for="ReturnInput.AccountOwner" class="form-control form-control-sm" placeholder="Tên chủ tài khoản" />
+                            <input asp-for="ReturnInput.AccountOwner" maxlength="100" class="form-control form-control-sm" placeholder="Tên chủ tài khoản" />
                         </div>
                     </div>
                 </div>

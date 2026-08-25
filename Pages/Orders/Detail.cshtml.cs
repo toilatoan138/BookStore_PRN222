@@ -44,11 +44,16 @@ namespace BookStore.Pages.Orders
             public int Quantity { get; set; } = 1;
 
             [Required(ErrorMessage = "Vui lòng nhập lý do trả hàng")]
-            [StringLength(1000)]
+            [StringLength(500, ErrorMessage = "Lý do không được vượt quá 500 ký tự")]
             public string CustomerReason { get; set; } = string.Empty;
 
+            [StringLength(100)]
             public string? BankName { get; set; }
+
+            [StringLength(50)]
             public string? AccountNumber { get; set; }
+
+            [StringLength(100)]
             public string? AccountOwner { get; set; }
         }
 
@@ -77,7 +82,8 @@ namespace BookStore.Pages.Orders
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return RedirectToPage("/Account/Login");
 
-            bool success = await _orderService.CancelOrderAsync(id, user.Id, reason ?? "Khách hàng yêu cầu hủy");
+            string safeReason = string.IsNullOrWhiteSpace(reason) ? "Khách hàng yêu cầu hủy" : (reason.Length > 500 ? reason.Substring(0, 500) : reason);
+            bool success = await _orderService.CancelOrderAsync(id, user.Id, safeReason);
             if (success)
             {
                 TempData["SuccessMessage"] = "Đã hủy đơn hàng thành công!";
@@ -134,17 +140,26 @@ namespace BookStore.Pages.Orders
                 return RedirectToPage(new { id });
             }
 
+            // Cắt chuỗi lý do tối đa 500 ký tự chống tràn dữ liệu Database
+            string safeReason = (ReturnInput.CustomerReason ?? string.Empty).Trim();
+            if (safeReason.Length > 500)
+            {
+                safeReason = safeReason.Substring(0, 500);
+            }
+
+            int validQty = Math.Clamp(ReturnInput.Quantity, 1, item.Quantity);
+
             var returnReq = new ReturnRequest
             {
                 OrderId = id,
                 BookId = ReturnInput.BookId,
-                Quantity = Math.Min(ReturnInput.Quantity, item.Quantity),
-                CustomerReason = ReturnInput.CustomerReason,
+                Quantity = validQty,
+                CustomerReason = safeReason,
                 Price = item.Price,
-                MaxRefundableAmount = item.Price * ReturnInput.Quantity,
-                BankName = ReturnInput.BankName,
-                AccountNumber = ReturnInput.AccountNumber,
-                AccountOwner = ReturnInput.AccountOwner,
+                MaxRefundableAmount = order.TotalAmount, // Hạn mức hoàn tiền lấy bằng tổng giá trị toàn bộ đơn hàng
+                BankName = ReturnInput.BankName?.Trim(),
+                AccountNumber = ReturnInput.AccountNumber?.Trim(),
+                AccountOwner = ReturnInput.AccountOwner?.Trim(),
                 Status = 0, // Pending
                 CreatedAt = DateTime.UtcNow
             };

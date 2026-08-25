@@ -27,6 +27,7 @@ namespace BookStore.Pages.Admin.Warehouses
             var user = await _userManager.GetUserAsync(User);
             if (user != null)
             {
+                // Toàn bộ logic lấy dữ liệu, đếm lệnh tồn đều nằm trong Service này
                 Overview = await _warehouseAdminService.GetOverviewAsync(user.Id);
             }
         }

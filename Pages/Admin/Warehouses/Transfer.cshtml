@@ -3,7 +3,27 @@
 @{
     Layout = "_AdminLayout";
     ViewData["Title"] = "Điều Chuyển Sách Giữa Các Kho";
-    ViewData["Subtitle"] = "Lập lệnh vận chuyển điều phối số lượng sách giữa các kho chi nhánh miền Bắc, Trung, Nam";
+    ViewData["Subtitle"] = "Lập lệnh xuất kho và luân chuyển hàng hóa an toàn giữa các chi nhánh";
+}
+
+<!-- Thêm CSS cho Select2 -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+
+<!-- THÔNG BÁO HỆ THỐNG -->
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show py-2 mb-3 small shadow-sm" role="alert">
+        <i class="fa-solid fa-circle-check me-2"></i>@TempData["SuccessMessage"]
+        <button type="button" class="btn-close py-2" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show py-2 mb-3 small shadow-sm" role="alert">
+        <i class="fa-solid fa-triangle-exclamation me-2"></i>@TempData["ErrorMessage"]
+        <button type="button" class="btn-close py-2" data-bs-dismiss="alert"></button>
+    </div>
 }
 
 <!-- ACTION BAR -->
@@ -35,7 +55,7 @@
         <div class="card shadow-sm border-0 rounded-4 h-100 bg-white">
             <div class="card-header bg-white py-3 border-0 border-bottom">
                 <h5 class="card-title mb-0 fw-bold text-dark d-flex align-items-center">
-                    <i class="fa-solid fa-truck-ramp-box text-primary me-2"></i>Lập Lệnh Điều Chuyển Hàng
+                    <i class="fa-solid fa-truck-ramp-box text-primary me-2"></i>Lập Lệnh Xuất Chuyển Hàng
                 </h5>
             </div>
             <div class="card-body p-4">
@@ -46,7 +66,8 @@
                             <label class="form-label small fw-bold text-muted">Kho xuất hàng (Gửi) <span class="text-danger">*</span></label>
                             @if (Model.IsSuperAdmin)
                             {
-                                <select class="form-select" name="fromBranchId" id="fromBranchId" required onchange="updateStockDisplay()">
+                                <select class="form-select" name="fromBranchId" id="fromBranchId" required onchange="handleBranchChange()">
+                                    <option value="">-- Chọn kho xuất --</option>
                                     @foreach (var br in Model.Branches)
                                     {
                                         <option value="@br.Id" selected="@(Model.SelectedFromBranchId == br.Id)">@br.Name</option>
@@ -55,67 +76,64 @@
                             }
                             else
                             {
-                                <select class="form-select" name="fromBranchId" id="fromBranchId" required onchange="updateStockDisplay()">
-                                    @foreach (var br in Model.Branches)
-                                    {
-                                        <option value="@br.Id" selected="@(Model.UserBranchId == br.Id)">@br.Name</option>
-                                    }
-                                </select>
+                                <input type="text" class="form-control bg-light fw-bold text-primary" value="@Model.UserBranchName" readonly />
+                                <input type="hidden" name="fromBranchId" id="fromBranchId" value="@Model.UserBranchId" />
                             }
                         </div>
                         <div class="col-6">
                             <label class="form-label small fw-bold text-muted">Kho nhận hàng (Đích) <span class="text-danger">*</span></label>
-                            <select class="form-select" name="toBranchId" id="toBranchId" required>
+                            <select class="form-select" name="toBranchId" id="toBranchId" required onchange="handleBranchChange()">
+                                <option value="">-- Chọn kho đích --</option>
                                 @foreach (var br in Model.Branches)
                                 {
-                                    <option value="@br.Id" selected="@(Model.SelectedFromBranchId != br.Id && Model.Branches.Count > 1 && br.Id != (Model.SelectedFromBranchId ?? 1))">@br.Name</option>
+                                    <option value="@br.Id">@br.Name</option>
                                 }
                             </select>
                         </div>
                     </div>
 
-                    <!-- CHỌN SÁCH -->
+                    <!-- CHỌN SÁCH TÍCH HỢP SELECT2 -->
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted">Sách cần điều chuyển <span class="text-danger">*</span></label>
-                        <select class="form-select" name="bookId" id="bookSelector" required onchange="updateStockDisplay()">
-                            <option value="">-- Chọn đầu sách --</option>
+                        <select class="form-select select2" name="bookId" id="bookSelector" required onchange="updateStockDisplay()">
+                            <option value="">-- Gõ tên sách hoặc ISBN để tìm --</option>
                             @foreach (var b in Model.Books)
                             {
                                 <option value="@b.Id" selected="@(Model.SelectedBookId == b.Id)">
-                                    @b.Title (Giá: @b.Price.ToString("N0")đ)
+                                    @b.Title (ID: #@b.Id)
                                 </option>
                             }
                         </select>
                     </div>
 
-                    <!-- HIỂN THỊ TỒN KHO NGUỒN HIỆN TẠI -->
+                    <!-- HIỂN THỊ TỒN KHO NGUỒN -->
                     <div class="p-3 bg-light rounded-4 mb-3 border">
                         <div class="d-flex justify-content-between align-items-center">
                             <span class="small fw-bold text-muted">Tồn kho khả dụng tại kho xuất:</span>
-                            <span class="badge bg-primary fs-6 fw-bold rounded-pill px-3" id="sourceStockBadge">0 cuốn</span>
+                            <span class="badge bg-secondary fs-6 fw-bold rounded-pill px-3" id="sourceStockBadge">0 cuốn</span>
                         </div>
                     </div>
 
                     <!-- NHẬP SỐ LƯỢNG CHUYỂN -->
                     <div class="mb-3">
-                        <label class="form-label small fw-bold text-muted">Số lượng cần chuyển <span class="text-danger">*</span></label>
+                        <label class="form-label small fw-bold text-muted">Số lượng xuất kho <span class="text-danger">*</span></label>
                         <div class="input-group">
                             <input type="number" class="form-control form-control-lg fw-bold text-primary" name="quantity" id="transferQuantity" min="1" max="100000" placeholder="Nhập số lượng..." required />
                             <span class="input-group-text bg-light">cuốn</span>
                         </div>
-                        <small class="text-muted" id="qtyHelper">Không được vượt quá số tồn kho xuất.</small>
+                        <small class="text-muted" id="qtyHelper">Không được vượt quá số tồn kho xuất hiện tại.</small>
                     </div>
 
                     <!-- GHI CHÚ / LÝ DO -->
                     <div class="mb-4">
                         <label class="form-label small fw-bold text-muted">Ghi chú điều chuyển</label>
-                        <textarea class="form-control" name="note" rows="2" placeholder="VD: Bổ sung hàng cho kho TP.HCM phục vụ chiến dịch Flash Sale..."></textarea>
+                        <textarea class="form-control" name="note" id="transferNote" rows="2" maxlength="500" placeholder="Mã vận đơn xe tải, lý do chuyển... (Tối đa 500 ký tự)"></textarea>
                     </div>
 
-                    <!-- NÚT SUBMIT -->
+                    <!-- NÚT SUBMIT ĐỔI TÊN CHUẨN LOGIC -->
                     <div class="d-grid">
-                        <button type="submit" class="btn btn-warning btn-lg fw-bold text-dark rounded-pill shadow-sm">
-                            <i class="fa-solid fa-truck-fast me-2"></i>Thực Hiện Điều Chuyển Ngay
+                        <button type="submit" class="btn btn-warning btn-lg fw-bold text-dark rounded-pill shadow-sm" id="btnSubmitTransfer">
+                            <i class="fa-solid fa-truck-fast me-2"></i>Tạo Lệnh Xuất (Chờ Đích Nhận)
                         </button>
                     </div>
                 </form>
@@ -123,14 +141,14 @@
         </div>
     </div>
 
-    <!-- BẢNG LỊCH SỬ CÁC GIAO DỊCH ĐIỀU CHUYỂN GẦN NHẤT -->
+    <!-- BẢNG LỊCH SỬ -->
     <div class="col-lg-7">
         <div class="card shadow-sm border-0 rounded-4 h-100 bg-white">
             <div class="card-header bg-white py-3 border-0 border-bottom d-flex justify-content-between align-items-center">
                 <h5 class="card-title mb-0 fw-bold text-dark d-flex align-items-center">
-                    <i class="fa-solid fa-clock-rotate-left text-primary me-2"></i>Lịch Sử Luân Chuyển Hàng Gần Đây
+                    <i class="fa-solid fa-clock-rotate-left text-primary me-2"></i>Lịch Sử Luân Chuyển Gần Đây
                 </h5>
-                <span class="badge bg-light text-dark border">30 giao dịch gần nhất</span>
+                <span class="badge bg-light text-dark border">30 giao dịch</span>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -150,7 +168,7 @@
                                 <tr>
                                     <td colspan="5" class="text-center text-muted py-5">
                                         <i class="fa-solid fa-dolly fa-2x mb-2 text-secondary d-block"></i>
-                                        Chưa có giao dịch điều chuyển nào được ghi nhận.
+                                        Chưa có giao dịch điều chuyển nào.
                                     </td>
                                 </tr>
                             }
@@ -159,7 +177,7 @@
                                 @foreach (var t in Model.RecentTransfers)
                                 {
                                     <tr>
-                                        <td class="ps-4">@t.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                        <td class="ps-4">@t.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
                                         <td>
                                             <div class="fw-bold text-dark text-truncate" style="max-width: 180px;" title="@t.Book?.Title">
                                                 @t.Book?.Title
@@ -169,15 +187,15 @@
                                         <td>
                                             @if (t.TransactionType == "TRANSFER_OUT")
                                             {
-                                                <span class="badge bg-warning text-dark border border-warning">
-                                                    <i class="fa-solid fa-arrow-up-from-bracket me-1"></i>Chuyển đi
-                                                </span>
+                                                <span class="badge bg-warning text-dark border border-warning"><i class="fa-solid fa-arrow-up-from-bracket me-1"></i>Xuất đi</span>
+                                            }
+                                            else if (t.TransactionType == "IN_TRANSIT")
+                                            {
+                                                <span class="badge bg-primary text-white"><i class="fa-solid fa-truck me-1"></i>Đang di chuyển</span>
                                             }
                                             else
                                             {
-                                                <span class="badge bg-info text-dark border border-info">
-                                                    <i class="fa-solid fa-arrow-down-to-bracket me-1"></i>Nhận chuyển
-                                                </span>
+                                                <span class="badge bg-info text-dark border border-info"><i class="fa-solid fa-arrow-down-to-bracket me-1"></i>Thực nhận</span>
                                             }
                                         </td>
                                         <td class="text-center fw-bold @(t.QuantityChanged > 0 ? "text-success" : "text-danger") fs-6">
@@ -198,8 +216,51 @@
 </div>
 
 @section Scripts {
+    <!-- Script cho Select2 -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
     <script>
         const branchInventories = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.BranchInventories.Select(bi => new { bi.BranchId, bi.BookId, bi.StockQuantity })));
+        let currentAvailableStock = 0;
+
+        // Khởi tạo Select2 với Bootstrap 5 theme
+        $(document).ready(function() {
+            $('.select2').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                language: {
+                    noResults: function() { return "Không tìm thấy sách phù hợp"; }
+                }
+            });
+
+            // Gắn sự kiện change cho Select2 để trigger updateStockDisplay
+            $('#bookSelector').on('change', function() {
+                updateStockDisplay();
+            });
+
+            // Chạy mặc định khi load trang
+            handleBranchChange();
+            updateStockDisplay();
+        });
+
+        function handleBranchChange() {
+            const fromBranch = document.getElementById('fromBranchId').value;
+            const toBranchElem = document.getElementById('toBranchId');
+
+            // Xóa disable cũ
+            Array.from(toBranchElem.options).forEach(opt => opt.disabled = false);
+
+            // Khóa option trùng với kho xuất
+            if (fromBranch) {
+                const sameOpt = Array.from(toBranchElem.options).find(opt => opt.value === fromBranch);
+                if (sameOpt) {
+                    sameOpt.disabled = true;
+                    if (toBranchElem.value === fromBranch) toBranchElem.value = "";
+                }
+            }
+            updateStockDisplay();
+        }
 
         function updateStockDisplay() {
             const fromBranchId = parseInt(document.getElementById('fromBranchId').value);
@@ -207,54 +268,63 @@
             const badge = document.getElementById('sourceStockBadge');
             const qtyInput = document.getElementById('transferQuantity');
 
-            if (!fromBranchId || !bookId) {
+            if (!fromBranchId || !bookId || isNaN(bookId)) {
+                currentAvailableStock = 0;
                 badge.innerText = '0 cuốn';
                 badge.className = 'badge bg-secondary fs-6 fw-bold rounded-pill px-3';
+                qtyInput.max = 0;
                 return;
             }
 
             const inv = branchInventories.find(bi => bi.BranchId === fromBranchId && bi.BookId === bookId);
-            const stock = inv ? inv.StockQuantity : 0;
+            currentAvailableStock = inv ? inv.StockQuantity : 0;
 
-            badge.innerText = stock + ' cuốn';
-            if (stock === 0) {
+            badge.innerText = currentAvailableStock + ' cuốn';
+            if (currentAvailableStock === 0) {
                 badge.className = 'badge bg-danger fs-6 fw-bold rounded-pill px-3';
-            } else if (stock <= 5) {
+            } else if (currentAvailableStock <= 5) {
                 badge.className = 'badge bg-warning text-dark fs-6 fw-bold rounded-pill px-3';
             } else {
                 badge.className = 'badge bg-primary fs-6 fw-bold rounded-pill px-3';
             }
 
-            qtyInput.max = stock;
+            qtyInput.max = currentAvailableStock;
         }
 
         document.getElementById('transferForm').addEventListener('submit', function(e) {
             const fromBranch = document.getElementById('fromBranchId').value;
             const toBranch = document.getElementById('toBranchId').value;
             const bookId = document.getElementById('bookSelector').value;
-            const qty = parseInt(document.getElementById('transferQuantity').value);
+            const qtyInput = document.getElementById('transferQuantity');
+            const qty = parseInt(qtyInput.value) || 0;
 
             if (!bookId) {
-                alert('Vui lòng chọn đầu sách cần điều chuyển.');
+                alert('Vui lòng chọn đầu sách cần điều chuyển!');
                 e.preventDefault();
                 return;
             }
 
             if (fromBranch === toBranch) {
-                alert('Lỗi: Kho xuất và Kho nhận không được trùng nhau!');
+                alert('Kho nhận và kho xuất không được trùng nhau!');
                 e.preventDefault();
                 return;
             }
 
             if (qty <= 0) {
-                alert('Lỗi: Số lượng chuyển phải lớn hơn 0.');
+                alert('Số lượng điều chuyển phải lớn hơn 0!');
                 e.preventDefault();
                 return;
             }
-        });
 
-        document.addEventListener('DOMContentLoaded', function() {
-            updateStockDisplay();
+            if (qty > currentAvailableStock) {
+                alert(`Số lượng tồn kho không đủ để xuất! (Hiện tại kho xuất chỉ còn ${currentAvailableStock} cuốn)`);
+                e.preventDefault();
+                return;
+            }
+
+            const btn = document.getElementById('btnSubmitTransfer');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Đang tạo lệnh...';
         });
     </script>
 }

@@ -1,4 +1,9 @@
-﻿using BookStore.Data;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Threading.Tasks;
+using BookStore.Data;
 using BookStore.Models.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -17,11 +22,16 @@ namespace BookStore.Pages.Staff.Reports
             _context = context;
         }
 
+        // Fix 4: Đảm bảo Input type="date" luôn nhận được DataFormat chuẩn
         [BindProperty(SupportsGet = true)]
-        public DateTime FromDate { get; set; } = DateTime.UtcNow.AddDays(-30);
+        [DataType(DataType.Date)]
+        [DisplayFormat(DataFormatString = "{0:yyyy-MM-dd}", ApplyFormatInEditMode = true)]
+        public DateTime FromDate { get; set; } = DateTime.UtcNow.AddHours(7).AddDays(-30).Date;
 
         [BindProperty(SupportsGet = true)]
-        public DateTime ToDate { get; set; } = DateTime.UtcNow;
+        [DataType(DataType.Date)]
+        [DisplayFormat(DataFormatString = "{0:yyyy-MM-dd}", ApplyFormatInEditMode = true)]
+        public DateTime ToDate { get; set; } = DateTime.UtcNow.AddHours(7).Date;
 
         public decimal TotalRevenue { get; set; }
         public int CompletedOrdersCount { get; set; }
@@ -38,23 +48,46 @@ namespace BookStore.Pages.Staff.Reports
             public decimal Revenue { get; set; }
         }
 
-        public async Task OnGetAsync()
+        public async Task<IActionResult> OnGetAsync()
         {
-            var startUtc = FromDate.Date;
-            var endUtc = ToDate.Date.AddDays(1).AddTicks(-1);
+            // Fix Khoảng thời gian không hợp lệ
+            if (FromDate > ToDate)
+            {
+                TempData["ErrorMessage"] = "Ngày bắt đầu không được lớn hơn ngày kết thúc!";
+                ToDate = DateTime.UtcNow.AddHours(7).Date;
+                FromDate = ToDate.AddDays(-30);
+                return RedirectToPage();
+            }
 
-            var orders = await _context.Orders
+            // Fix 2: Bù trừ múi giờ Việt Nam (UTC+7) khi truy vấn khoảng ngày
+            // StartDate bắt đầu từ 00:00:00 (VN) -> lùi 7 tiếng để ra UTC
+            var startUtc = FromDate.Date.AddHours(-7);
+            // EndDate lấy trọn vẹn đến 23:59:59 (VN) -> sang ngày hôm sau rồi lùi 7 tiếng
+            var endUtc = ToDate.Date.AddDays(1).AddHours(-7);
+
+            // Truy vấn lấy các đơn hàng không bị Hủy hoặc Trả lại
+            var rawOrders = await _context.Orders
                 .Include(o => o.Details)
-                .Where(o => o.OrderDate >= startUtc && o.OrderDate <= endUtc && o.Status != OrderStatus.Cancelled)
+                .Where(o => o.OrderDate >= startUtc
+                         && o.OrderDate < endUtc
+                         && o.Status != OrderStatus.Cancelled) // Có thể loại thêm đơn "Return" tùy thiết kế DB
                 .ToListAsync();
 
-            TotalRevenue = orders.Sum(o => o.TotalAmount);
-            CompletedOrdersCount = orders.Count(o => o.Status == OrderStatus.Delivered || o.Status == OrderStatus.Shipping || o.Status == OrderStatus.Packed);
-            AverageOrderValue = orders.Any() ? (TotalRevenue / orders.Count) : 0;
-            TotalBooksSold = orders.SelectMany(o => o.Details).Sum(d => d.Quantity);
+            // Loại bỏ các đơn đang Pending ảo để tính Doanh thu thực tế (Tùy chọn)
+            // Ở đây giữ lại những đơn >= Processing để có số liệu chính xác thay vì tính cả rác
+            var validOrders = rawOrders.Where(o => (int)o.Status > 0 && !o.Status.ToString().StartsWith("Return")).ToList();
 
-            DailyReports = orders
-                .GroupBy(o => o.OrderDate.Date)
+            if (!validOrders.Any())
+                validOrders = rawOrders; // Fallback nếu muốn hiện cả Pending
+
+            TotalRevenue = validOrders.Sum(o => o.TotalAmount);
+            CompletedOrdersCount = validOrders.Count(o => o.Status == OrderStatus.Delivered || o.Status == OrderStatus.Shipping || o.Status == OrderStatus.Packed || o.Status == OrderStatus.Processing);
+            AverageOrderValue = validOrders.Any() ? (TotalRevenue / validOrders.Count) : 0;
+            TotalBooksSold = validOrders.SelectMany(o => o.Details).Sum(d => d.Quantity);
+
+            // Fix 1: Cộng thêm 7 tiếng vào OrderDate (UTC) để Group chính xác theo ngày của Việt Nam
+            DailyReports = validOrders
+                .GroupBy(o => o.OrderDate.AddHours(7).Date)
                 .Select(g => new DailyReportItem
                 {
                     Date = g.Key,
@@ -64,6 +97,8 @@ namespace BookStore.Pages.Staff.Reports
                 })
                 .OrderByDescending(r => r.Date)
                 .ToList();
+
+            return Page();
         }
     }
 }

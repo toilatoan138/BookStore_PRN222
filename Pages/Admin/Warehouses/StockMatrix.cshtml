@@ -3,7 +3,8 @@
 @{
     Layout = "_AdminLayout";
     ViewData["Title"] = "Ma Trận Tồn Kho Đa Chi Nhánh";
-    ViewData["Subtitle"] = Model.IsSuperAdmin ? "Tra cứu và đối soát số lượng tồn kho từng đầu sách trên 3 miền Hà Nội, Đà Nẵng, TP.HCM" : $"Quản lý chi tiết số lượng tồn kho tại {Model.UserBranchName}";
+    // VÁ LỖI LOGIC GIAO DIỆN: Tiêu đề động theo số lượng chi nhánh thực tế
+    ViewData["Subtitle"] = Model.IsSuperAdmin ? $"Tra cứu và đối soát số lượng tồn kho từng đầu sách trên {Model.Branches.Count} kho hệ thống" : $"Quản lý chi tiết số lượng tồn kho tại {Model.UserBranchName}";
 }
 
 <!-- ACTION BAR -->
@@ -61,7 +62,7 @@
                 @if (Model.IsSuperAdmin)
                 {
                     <select class="form-select" name="BranchId">
-                        <option value="">-- Toàn bộ hệ thống (3 Miền) --</option>
+                        <option value="">-- Toàn bộ hệ thống (@Model.Branches.Count Kho) --</option>
                         @foreach (var br in Model.Branches)
                         {
                             <option value="@br.Id" selected="@(Model.BranchId == br.Id)">@br.Name (@br.City)</option>
@@ -91,6 +92,22 @@
     </div>
 </div>
 
+<!-- THÔNG BÁO LỆCH TỒN (CẢNH BÁO MỚI) -->
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show shadow-sm mb-4">
+        <i class="fa-solid fa-triangle-exclamation me-2"></i>@TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show shadow-sm mb-4">
+        <i class="fa-solid fa-circle-check me-2"></i>@TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
 <!-- MA TRẬN TỒN KHO BẢNG CHÍNH -->
 <div class="card shadow-sm border-0 rounded-4 bg-white">
     <div class="card-header bg-white py-3 border-0 border-bottom d-flex justify-content-between align-items-center">
@@ -100,18 +117,19 @@
         <span class="badge bg-light text-dark border">Trang @Model.CurrentPage / @Model.TotalPages</span>
     </div>
     <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
+        <!-- VÁ LỖI TRÀN BẢNG NGANG: Thêm max-height và ghim cột đầu tiên (Sticky Column) -->
+        <div class="table-responsive" style="max-height: 800px; overflow-y: auto;">
+            <table class="table table-hover align-middle mb-0" style="min-width: max-content;">
+                <thead class="table-light position-sticky top-0 shadow-sm" style="z-index: 10;">
                     <tr>
-                        <th class="ps-4" style="min-width: 250px;">Sách & Thông Tin</th>
-                        <th style="min-width: 120px;">Danh Mục</th>
+                        <th class="ps-4 position-sticky start-0 bg-light" style="min-width: 300px; z-index: 11;">Sách & Thông Tin</th>
+                        <th style="min-width: 140px;">Danh Mục</th>
                         <th class="text-end" style="min-width: 100px;">Giá Vốn</th>
                         <th class="text-end" style="min-width: 100px;">Giá Bán</th>
                         <th class="text-center bg-primary bg-opacity-10 text-primary fw-bold" style="min-width: 100px;">Tổng Tồn</th>
                         @foreach (var br in Model.Branches)
                         {
-                            <th class="text-center" style="min-width: 110px;">
+                            <th class="text-center" style="min-width: 130px;">
                                 <div class="fw-bold">@br.Name</div>
                                 <small class="text-muted fw-normal">(@br.City)</small>
                             </th>
@@ -131,10 +149,11 @@
                     }
                     else
                     {
-                        @foreach (var item in Model.Items)
+                        foreach (var item in Model.Items)
                         {
                             <tr>
-                                <td class="ps-4">
+                                <!-- Cột Sách (Ghim bên trái) -->
+                                <td class="ps-4 position-sticky start-0 bg-white border-end shadow-sm">
                                     <div class="d-flex align-items-center">
                                         @if (!string.IsNullOrEmpty(item.ImageUrl))
                                         {
@@ -155,14 +174,17 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td><span class="badge bg-light text-dark border">@item.CategoryName</span></td>
+                                <td><span class="badge bg-light text-dark border text-truncate" style="max-width: 130px;" title="@item.CategoryName">@item.CategoryName</span></td>
                                 <td class="text-end text-muted small">@item.ImportPrice.ToString("N0") đ</td>
                                 <td class="text-end fw-bold text-dark">@item.Price.ToString("N0") đ</td>
-                                <td class="text-center bg-primary bg-opacity-10">
+
+                                <!-- Ô Tổng Tồn Cũ (Chính là tác nhân gây lệch báo cáo) -->
+                                <td class="text-center bg-primary bg-opacity-10 position-relative">
                                     <span class="badge @(item.TotalStock == 0 ? "bg-danger" : (item.TotalStock <= 5 ? "bg-warning text-dark" : "bg-primary")) fs-6 fw-bold rounded-pill px-3">
                                         @item.TotalStock.ToString("N0")
                                     </span>
                                 </td>
+
                                 @foreach (var br in Model.Branches)
                                 {
                                     int bQty = item.BranchStocks.ContainsKey(br.Id) ? item.BranchStocks[br.Id] : 0;
@@ -183,13 +205,15 @@
                                 }
                                 <td class="text-end pe-4">
                                     <div class="d-inline-flex gap-1">
-                                        <!-- Nút Điều chuyển -->
-                                        <a asp-page="/Admin/Warehouses/Transfer" asp-route-bookId="@item.BookId" class="btn btn-sm btn-outline-warning text-dark rounded-circle" title="Điều chuyển sách này" style="width: 32px; height: 32px; padding: 0; line-height: 30px;">
-                                            <i class="fa-solid fa-dolly"></i>
+                                        <!-- VÁ LỖI UX: Thêm Tooltip chuẩn cho nút Thao tác -->
+                                        <a asp-page="/Admin/Warehouses/Transfer" asp-route-bookId="@item.BookId" class="btn btn-sm btn-outline-warning text-dark rounded-circle" title="Tạo lệnh điều chuyển sách này sang kho khác" style="width: 32px; height: 32px; padding: 0; line-height: 30px;">
+                                            <i class="fa-solid fa-truck-arrow-right"></i>
                                         </a>
-                                        <!-- Nút Sửa tồn kiểm kê -->
-                                        <button type="button" class="btn btn-sm btn-outline-primary rounded-circle" title="Kiểm kê / Sửa số lượng tồn" style="width: 32px; height: 32px; padding: 0; line-height: 30px;"
-                                                onclick="openAdjustModal(@item.BookId, '@Html.Raw(item.Title.Replace("'", "\\'"))', @item.TotalStock)">
+                                        <!-- VÁ LỖI XSS: Sử dụng data attributes -->
+                                        <button type="button" class="btn btn-sm btn-outline-primary rounded-circle btn-adjust-stock" title="Kiểm kê & Điều chỉnh tồn kho thực tế" style="width: 32px; height: 32px; padding: 0; line-height: 30px;"
+                                                data-id="@item.BookId"
+                                                data-title="@item.Title"
+                                                data-qty="@item.TotalStock">
                                             <i class="fa-solid fa-pen-to-square"></i>
                                         </button>
                                     </div>
@@ -201,11 +225,11 @@
             </table>
         </div>
 
-        <!-- PHÂN TRANG -->
+        <!-- PHÂN TRANG: Đã thiết kế lại để luôn neo (sticky) dưới cùng -->
         @if (Model.TotalPages > 1)
         {
-            <div class="p-3 d-flex justify-content-between align-items-center border-top">
-                <span class="text-muted small">
+            <div class="p-3 d-flex flex-wrap justify-content-between align-items-center border-top bg-white">
+                <span class="text-muted small mb-2 mb-md-0">
                     Hiển thị trang @Model.CurrentPage / @Model.TotalPages (Tổng @Model.TotalItems sản phẩm)
                 </span>
                 <nav aria-label="Page navigation">
@@ -233,7 +257,7 @@
                             }
                             else if (i == Model.CurrentPage - 3 || i == Model.CurrentPage + 3)
                             {
-                                <li class="page-item disabled"><span class="page-link">...</span></li>
+                                <li class="page-item disabled"><span class="page-link border-0">...</span></li>
                             }
                         }
                         <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
@@ -264,7 +288,7 @@
                 </div>
                 <div class="modal-body p-4">
                     <input type="hidden" id="adjustBookId" name="bookId" />
-                    
+
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted">Tên sách</label>
                         <input type="text" class="form-control fw-bold bg-light" id="adjustBookTitle" readonly />
@@ -296,7 +320,7 @@
 
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted">Lý do điều chỉnh kiểm kê <span class="text-danger">*</span></label>
-                        <textarea class="form-control" name="reason" rows="3" placeholder="Nhập lý do chi tiết (VD: Hư hỏng rách bìa, thất thoát, bù đếm thừa từ đơn trước...)" required></textarea>
+                        <textarea class="form-control" name="reason" rows="3" placeholder="Nhập lý do chi tiết (VD: Hư hỏng rách bìa, thất thoát, bù đếm thừa từ đơn trước...)" required maxlength="500"></textarea>
                     </div>
 
                     <div class="alert alert-warning small mb-0 rounded-3">
@@ -317,12 +341,16 @@
 
 @section Scripts {
     <script>
-        function openAdjustModal(bookId, bookTitle, currentQty) {
-            document.getElementById('adjustBookId').value = bookId;
-            document.getElementById('adjustBookTitle').value = bookTitle;
-            document.getElementById('adjustNewQty').value = currentQty;
-            const modal = new bootstrap.Modal(document.getElementById('adjustModal'));
-            modal.show();
-        }
+        // Kịch bản mở Modal an toàn, chống XSS
+        document.querySelectorAll('.btn-adjust-stock').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.getElementById('adjustBookId').value = this.dataset.id;
+                document.getElementById('adjustBookTitle').value = this.dataset.title;
+                document.getElementById('adjustNewQty').value = this.dataset.qty;
+
+                const modal = new bootstrap.Modal(document.getElementById('adjustModal'));
+                modal.show();
+            });
+        });
     </script>
 }

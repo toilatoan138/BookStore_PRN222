@@ -8,6 +8,22 @@
 
 <div class="container-fluid px-0">
 
+    <!-- THÔNG BÁO HỆ THỐNG -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show py-2 mb-3 small" role="alert">
+            <i class="fa-solid fa-circle-check me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show py-2 mb-3 small" role="alert">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
     <!-- HEADER -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div class="d-flex align-items-center gap-3">
@@ -113,8 +129,15 @@
                                             }
                                         </td>
                                         <td class="text-center text-nowrap">
-                                            <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-semibold"
-                                                    onclick="openTicketModal(@t.TicketId, '@Html.Raw(Html.Encode(t.User?.FullName ?? ""))', '@Html.Raw(Html.Encode(t.IssueType ?? ""))', '@Html.Raw(Html.Encode(t.TicketSubject))', '@Html.Raw(Html.Encode(t.TicketMessage))', '@Html.Raw(Html.Encode(t.AdminReply ?? ""))', '@t.Status')">
+                                            <!-- VÁ XSS: Sử dụng data attributes thay vì gọi hàm onclick chứa dữ liệu trực tiếp -->
+                                            <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-semibold btn-reply-ticket"
+                                                    data-id="@t.TicketId"
+                                                    data-customer="@(t.User?.FullName ?? "Khách hàng")"
+                                                    data-issue="@(t.IssueType ?? "Hỗ trợ chung")"
+                                                    data-subject="@t.TicketSubject"
+                                                    data-message="@t.TicketMessage"
+                                                    data-reply="@(t.AdminReply ?? "")"
+                                                    data-status="@t.Status">
                                                 <i class="fa-solid fa-reply me-1"></i>Phản hồi
                                             </button>
                                         </td>
@@ -164,7 +187,10 @@
                                             <strong class="text-dark d-block">@(r.Book?.Title ?? "Sách #" + r.BookId)</strong>
                                             <small class="text-danger fw-bold">Số lượng: @r.Quantity quyển</small>
                                         </td>
-                                        <td class="small fst-italic text-muted">@r.CustomerReason</td>
+                                        <!-- VÁ GIAO DIỆN: Thêm text-break để chống tràn bảng khi khách hàng spam ký tự -->
+                                        <td class="small fst-italic text-muted text-break" style="max-width: 250px;">
+                                            @r.CustomerReason
+                                        </td>
                                         <td class="text-center small text-muted">@r.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
                                         <td class="text-center">
                                             @switch (r.Status)
@@ -237,13 +263,15 @@
                             <div>Khách hàng: <strong id="modalTicketCustomer" class="text-dark"></strong></div>
                             <span class="badge bg-info text-dark" id="modalTicketIssue"></span>
                         </div>
-                        <div class="fw-bold text-dark fs-6 mb-1" id="modalTicketSubject"></div>
-                        <p class="text-muted small mb-0" id="modalTicketMessage"></p>
+                        <div class="fw-bold text-dark fs-6 mb-1 text-break" id="modalTicketSubject"></div>
+                        <p class="text-muted small mb-0 text-break" id="modalTicketMessage"></p>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-bold small text-muted">Nội dung phản hồi CSKH *</label>
-                        <textarea name="adminReply" id="modalAdminReply" class="form-control" rows="4" placeholder="Chào bạn, về vấn đề này MindBook Store xin phản hồi..." required></textarea>
+                        <label class="form-label fw-bold small text-muted">Nội dung phản hồi CSKH <span class="text-danger">*</span></label>
+                        <!-- VÁ BẢO MẬT & UI/UX: Thêm maxlength="500" chống tràn db, thêm hiển thị bộ đếm ký tự -->
+                        <textarea name="adminReply" id="modalAdminReply" class="form-control" rows="4" maxlength="500" placeholder="Chào bạn, về vấn đề này MindBook Store xin phản hồi..." required></textarea>
+                        <div class="text-end small text-muted mt-1"><span id="charCount">0</span>/500 ký tự</div>
                     </div>
 
                     <div class="mb-3">
@@ -265,19 +293,33 @@
 
 @section Scripts {
     <script>
-        function openTicketModal(id, customer, issue, subject, message, reply, status) {
-            document.getElementById('modalTicketId').value = id;
-            document.getElementById('modalTicketCustomer').innerText = customer;
-            document.getElementById('modalTicketIssue').innerText = issue;
-            document.getElementById('modalTicketSubject').innerText = subject;
-            document.getElementById('modalTicketMessage').innerText = message;
-            document.getElementById('modalAdminReply').value = reply;
-            if (status === "Closed") {
-                document.getElementById('modalTicketStatus').value = "Closed";
-            } else {
-                document.getElementById('modalTicketStatus').value = "Replied";
-            }
-            new bootstrap.Modal(document.getElementById('replyTicketModal')).show();
-        }
+        // Xử lý đếm ký tự
+        const replyTextarea = document.getElementById('modalAdminReply');
+        const charCount = document.getElementById('charCount');
+        replyTextarea.addEventListener('input', function() {
+            charCount.textContent = this.value.length;
+        });
+
+        // VÁ XSS (CROSS-SITE SCRIPTING): Nhận dữ liệu an toàn qua Dataset và dùng textContent
+        document.querySelectorAll('.btn-reply-ticket').forEach(button => {
+            button.addEventListener('click', function() {
+                document.getElementById('modalTicketId').value = this.dataset.id;
+                document.getElementById('modalTicketCustomer').textContent = this.dataset.customer;
+                document.getElementById('modalTicketIssue').textContent = this.dataset.issue;
+                document.getElementById('modalTicketSubject').textContent = this.dataset.subject;
+                document.getElementById('modalTicketMessage').textContent = this.dataset.message;
+
+                replyTextarea.value = this.dataset.reply;
+                charCount.textContent = this.dataset.reply.length;
+
+                if (this.dataset.status === "Closed") {
+                    document.getElementById('modalTicketStatus').value = "Closed";
+                } else {
+                    document.getElementById('modalTicketStatus').value = "Replied";
+                }
+
+                new bootstrap.Modal(document.getElementById('replyTicketModal')).show();
+            });
+        });
     </script>
 }

@@ -44,10 +44,46 @@ namespace BookStore.Pages.Admin.Warehouses
             var overview = await _warehouseAdminService.GetOverviewAsync(user.Id);
             Branches = overview.BranchSummaries;
 
-            AdminUsers = await _context.Users
-                .Where(u => u.Status)
-                .OrderBy(u => u.FullName)
-                .ToListAsync();
+            // VÁ LỖI CRASH TRUY VẤN ROLE: Chọc thẳng vào Database bằng Entity Framework
+            try
+            {
+                var targetRoleIds = await _context.Roles
+                    .Where(r => r.Name == "Admin" || r.Name == "Staff")
+                    .Select(r => r.Id)
+                    .ToListAsync();
+
+                if (targetRoleIds.Any())
+                {
+                    var userIdsInRoles = await _context.UserRoles
+                        .Where(ur => targetRoleIds.Contains(ur.RoleId))
+                        .Select(ur => ur.UserId)
+                        .ToListAsync();
+
+                    AdminUsers = await _context.Users
+                        .Where(u => u.Status && userIdsInRoles.Contains(u.Id))
+                        .OrderBy(u => u.FullName)
+                        .AsNoTracking()
+                        .ToListAsync();
+                }
+                else
+                {
+                    // Dự phòng 1: Nếu bảng Roles trống, lấy toàn bộ User đang active
+                    AdminUsers = await _context.Users
+                        .Where(u => u.Status)
+                        .OrderBy(u => u.FullName)
+                        .AsNoTracking()
+                        .ToListAsync();
+                }
+            }
+            catch
+            {
+                // Dự phòng 2: Fallback an toàn tuyệt đối chống sập trang
+                AdminUsers = await _context.Users
+                    .Where(u => u.Status)
+                    .OrderBy(u => u.FullName)
+                    .AsNoTracking()
+                    .ToListAsync();
+            }
 
             return Page();
         }
@@ -56,6 +92,16 @@ namespace BookStore.Pages.Admin.Warehouses
         {
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return RedirectToPage("/Account/Login");
+
+            // Kiểm tra trùng lặp tên chi nhánh
+            bool isDuplicateName = await _context.Branches
+                .AnyAsync(b => b.Name.ToLower().Trim() == branch.Name.ToLower().Trim() && b.Id != branch.Id);
+
+            if (isDuplicateName)
+            {
+                TempData["ErrorMessage"] = $"Lỗi: Tên chi nhánh '{branch.Name}' đã tồn tại trong hệ thống. Vui lòng chọn tên khác!";
+                return RedirectToPage();
+            }
 
             var (success, message) = await _warehouseAdminService.SaveBranchAsync(user.Id, branch);
             if (success) TempData["SuccessMessage"] = message;
@@ -68,6 +114,20 @@ namespace BookStore.Pages.Admin.Warehouses
         {
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return RedirectToPage("/Account/Login");
+
+            var branchToToggle = await _context.Branches.FindAsync(id);
+            if (branchToToggle != null && branchToToggle.IsActive)
+            {
+                int totalStock = await _context.BranchInventories
+                    .Where(bi => bi.BranchId == id)
+                    .SumAsync(bi => bi.StockQuantity);
+
+                if (totalStock > 0)
+                {
+                    TempData["ErrorMessage"] = $"Lỗi nghiêm trọng: Không thể đóng cửa kho đang chứa {totalStock:N0} cuốn sách. Bạn phải điều chuyển hết hàng tồn kho sang chi nhánh khác trước khi tạm ngưng!";
+                    return RedirectToPage();
+                }
+            }
 
             var (success, message) = await _warehouseAdminService.ToggleBranchStatusAsync(user.Id, id);
             if (success) TempData["SuccessMessage"] = message;

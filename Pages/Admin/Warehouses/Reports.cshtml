@@ -6,6 +6,15 @@
     ViewData["Subtitle"] = "Tổng hợp dòng luân chuyển hàng hóa, đối soát biến động kho và xuất báo cáo kế toán";
 }
 
+<!-- THÔNG BÁO LỖI -->
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show py-2 mb-3 small shadow-sm" role="alert">
+        <i class="fa-solid fa-triangle-exclamation me-2"></i>@TempData["ErrorMessage"]
+        <button type="button" class="btn-close py-2" data-bs-dismiss="alert"></button>
+    </div>
+}
+
 <!-- ACTION BAR -->
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
     <div class="d-flex align-items-center gap-2">
@@ -23,7 +32,8 @@
         }
     </div>
     <div class="d-flex gap-2">
-        <a asp-page-handler="ExportCsv" asp-route-branchId="@Model.BranchId" asp-route-fromDate="@Model.FromDate" asp-route-toDate="@Model.ToDate" class="btn btn-outline-success btn-sm fw-bold rounded-pill px-3 shadow-sm">
+        <!-- Đã vá lỗi truyền ngày tháng vào nút Export CSV -->
+        <a asp-page-handler="ExportCsv" asp-route-branchId="@Model.BranchId" asp-route-fromDate="@(Model.FromDate?.ToString("yyyy-MM-dd"))" asp-route-toDate="@(Model.ToDate?.ToString("yyyy-MM-dd"))" class="btn btn-outline-success btn-sm fw-bold rounded-pill px-3 shadow-sm">
             <i class="fa-solid fa-file-csv me-1"></i> Tải Báo Cáo CSV (Excel)
         </a>
         <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill px-3 shadow-sm" onclick="window.print()">
@@ -33,7 +43,7 @@
 </div>
 
 <!-- BỘ LỌC KỲ BÁO CÁO -->
-<div class="card shadow-sm border-0 rounded-4 mb-4 bg-white">
+<div class="card shadow-sm border-0 rounded-4 mb-4 bg-white d-print-none">
     <div class="card-body p-4">
         <form method="get" class="row g-3 align-items-end">
             <div class="col-md-3">
@@ -57,23 +67,25 @@
 
             <div class="col-md-2">
                 <label class="form-label small fw-bold text-muted mb-1">Từ ngày</label>
-                <input type="date" class="form-control" name="FromDate" value="@Model.FromDate?.ToString("yyyy-MM-dd")" />
+                <!-- VÁ LỖI UX: Định dạng lại chuẩn ISO để input date giữ được giá trị -->
+                <input type="date" class="form-control" name="FromDate" value="@(Model.FromDate.HasValue ? Model.FromDate.Value.ToString("yyyy-MM-dd") : "")" />
             </div>
 
             <div class="col-md-2">
                 <label class="form-label small fw-bold text-muted mb-1">Đến ngày</label>
-                <input type="date" class="form-control" name="ToDate" value="@Model.ToDate?.ToString("yyyy-MM-dd")" />
+                <input type="date" class="form-control" name="ToDate" value="@(Model.ToDate.HasValue ? Model.ToDate.Value.ToString("yyyy-MM-dd") : "")" />
             </div>
 
             <div class="col-md-2">
-                <label class="form-label small fw-bold text-muted mb-1">Loại giao dịch</label>
+                <!-- VÁ LỖI UX: Ghi chú rõ Loại GD chỉ áp dụng cho tab Nhật ký -->
+                <label class="form-label small fw-bold text-muted mb-1" title="Chỉ áp dụng cho tab Nhật Ký">Loại GD (Dành cho Nhật ký)</label>
                 <select class="form-select" name="TransactionType">
-                    <option value="">-- Tất cả loại GD --</option>
-                    <option value="IMPORT" selected="@(Model.TransactionType == "IMPORT")">Nhập NCC (IMPORT)</option>
-                    <option value="EXPORT" selected="@(Model.TransactionType == "EXPORT")">Xuất bán (EXPORT)</option>
-                    <option value="TRANSFER_OUT" selected="@(Model.TransactionType == "TRANSFER_OUT")">Chuyển đi (TRANSFER_OUT)</option>
-                    <option value="TRANSFER_IN" selected="@(Model.TransactionType == "TRANSFER_IN")">Nhận chuyển (TRANSFER_IN)</option>
-                    <option value="ADJUSTMENT" selected="@(Model.TransactionType == "ADJUSTMENT")">Kiểm kê (ADJUSTMENT)</option>
+                    <option value="">-- Tất cả GD --</option>
+                    <option value="IMPORT" selected="@(Model.TransactionType == "IMPORT")">Nhập NCC (+)</option>
+                    <option value="EXPORT" selected="@(Model.TransactionType == "EXPORT")">Xuất bán (-)</option>
+                    <option value="TRANSFER_OUT" selected="@(Model.TransactionType == "TRANSFER_OUT")">Chuyển đi (-)</option>
+                    <option value="TRANSFER_IN" selected="@(Model.TransactionType == "TRANSFER_IN")">Nhận chuyển (+)</option>
+                    <option value="ADJUSTMENT" selected="@(Model.TransactionType == "ADJUSTMENT")">Kiểm kê (+/-)</option>
                 </select>
             </div>
 
@@ -89,66 +101,66 @@
     </div>
 </div>
 
-<!-- 5 THẺ TỔNG HỢP KỲ BÁO CÁO -->
-<div class="row g-3 mb-4 text-center">
-    <div class="col-6 col-md-2">
-        <div class="p-3 border-0 rounded-4 bg-white shadow-sm h-100">
-            <div class="text-muted small fw-bold">Tổng Nhập (PO)</div>
-            <div class="fs-4 fw-bold text-success mt-1">+@Model.TotalImportAll.ToString("N0")</div>
-            <small class="text-muted">cuốn</small>
+<!-- 7 THẺ TỔNG HỢP KỲ BÁO CÁO (Đã thêm Tồn Đầu Kỳ) -->
+<div class="row g-2 mb-4 text-center d-flex justify-content-between">
+    <div class="col">
+        <div class="p-2 border-0 rounded-4 bg-secondary bg-opacity-10 shadow-sm h-100 border border-secondary border-opacity-25">
+            <div class="text-secondary small fw-bold text-uppercase" style="font-size: 0.7rem;">Tồn Đầu Kỳ</div>
+            <div class="fs-5 fw-bold text-dark mt-1">@Model.TotalOpeningStockAll.ToString("N0")</div>
         </div>
     </div>
-    <div class="col-6 col-md-2">
-        <div class="p-3 border-0 rounded-4 bg-white shadow-sm h-100">
-            <div class="text-muted small fw-bold">Tổng Xuất (Bán)</div>
-            <div class="fs-4 fw-bold text-primary mt-1">-@Model.TotalExportAll.ToString("N0")</div>
-            <small class="text-muted">cuốn</small>
+    <div class="col">
+        <div class="p-2 border-0 rounded-4 bg-white shadow-sm h-100">
+            <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.7rem;">Tổng Nhập</div>
+            <div class="fs-5 fw-bold text-success mt-1">+@Model.TotalImportAll.ToString("N0")</div>
         </div>
     </div>
-    <div class="col-6 col-md-2">
-        <div class="p-3 border-0 rounded-4 bg-white shadow-sm h-100">
-            <div class="text-muted small fw-bold">Nhận Chuyển Kho</div>
-            <div class="fs-4 fw-bold text-info mt-1">+@Model.TotalTransferInAll.ToString("N0")</div>
-            <small class="text-muted">cuốn</small>
+    <div class="col">
+        <div class="p-2 border-0 rounded-4 bg-white shadow-sm h-100">
+            <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.7rem;">Tổng Xuất</div>
+            <div class="fs-5 fw-bold text-danger mt-1">-@Model.TotalExportAll.ToString("N0")</div>
         </div>
     </div>
-    <div class="col-6 col-md-2">
-        <div class="p-3 border-0 rounded-4 bg-white shadow-sm h-100">
-            <div class="text-muted small fw-bold">Xuất Chuyển Kho</div>
-            <div class="fs-4 fw-bold text-warning mt-1">-@Model.TotalTransferOutAll.ToString("N0")</div>
-            <small class="text-muted">cuốn</small>
+    <div class="col">
+        <div class="p-2 border-0 rounded-4 bg-white shadow-sm h-100">
+            <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.7rem;">Nhận Chuyển</div>
+            <div class="fs-5 fw-bold text-info mt-1">+@Model.TotalTransferInAll.ToString("N0")</div>
         </div>
     </div>
-    <div class="col-6 col-md-2">
-        <div class="p-3 border-0 rounded-4 bg-white shadow-sm h-100">
-            <div class="text-muted small fw-bold">Kiểm Kê Bù Trừ</div>
-            <div class="fs-4 fw-bold @(Model.TotalAdjustmentAll >= 0 ? "text-success" : "text-danger") mt-1">
+    <div class="col">
+        <div class="p-2 border-0 rounded-4 bg-white shadow-sm h-100">
+            <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.7rem;">Xuất Chuyển</div>
+            <div class="fs-5 fw-bold text-warning mt-1">-@Model.TotalTransferOutAll.ToString("N0")</div>
+        </div>
+    </div>
+    <div class="col">
+        <div class="p-2 border-0 rounded-4 bg-white shadow-sm h-100">
+            <div class="text-muted small fw-bold text-uppercase" style="font-size: 0.7rem;">Kiểm Kê</div>
+            <div class="fs-5 fw-bold @(Model.TotalAdjustmentAll >= 0 ? "text-success" : "text-danger") mt-1">
                 @(Model.TotalAdjustmentAll > 0 ? "+" + Model.TotalAdjustmentAll.ToString("N0") : Model.TotalAdjustmentAll.ToString("N0"))
             </div>
-            <small class="text-muted">cuốn</small>
         </div>
     </div>
-    <div class="col-6 col-md-2">
-        <div class="p-3 border-0 rounded-4 bg-primary bg-opacity-10 shadow-sm h-100 border border-primary border-opacity-25">
-            <div class="text-primary small fw-bold">Tồn Kho Hiện Tại</div>
-            <div class="fs-4 fw-bold text-primary mt-1">@Model.TotalCurrentStockAll.ToString("N0")</div>
-            <small class="text-muted">cuốn</small>
+    <div class="col">
+        <div class="p-2 border-0 rounded-4 bg-primary bg-opacity-10 shadow-sm h-100 border border-primary border-opacity-25">
+            <div class="text-primary small fw-bold text-uppercase" style="font-size: 0.7rem;">Tồn Cuối Kỳ</div>
+            <div class="fs-5 fw-bold text-primary mt-1">@Model.TotalCurrentStockAll.ToString("N0")</div>
         </div>
     </div>
 </div>
 
 <!-- TABS DỮ LIỆU -->
 <div class="card shadow-sm border-0 rounded-4 bg-white">
-    <div class="card-header bg-white py-3 border-0 border-bottom">
+    <div class="card-header bg-white py-3 border-0 border-bottom d-print-none">
         <ul class="nav nav-pills card-header-pills" id="reportTabs" role="tablist">
             <li class="nav-item" role="presentation">
                 <button class="nav-link active fw-bold rounded-pill px-3" id="matrix-tab" data-bs-toggle="tab" data-bs-target="#matrixTabPane" type="button" role="tab">
-                    <i class="fa-solid fa-table-list me-1"></i> Tổng Hợp XNT Theo Đầu Sách (@Model.ReportItems.Count)
+                    <i class="fa-solid fa-table-list me-1"></i> Báo Cáo XNT (@Model.ReportItems.Count)
                 </button>
             </li>
             <li class="nav-item ms-2" role="presentation">
                 <button class="nav-link fw-bold rounded-pill px-3" id="log-tab" data-bs-toggle="tab" data-bs-target="#logTabPane" type="button" role="tab">
-                    <i class="fa-solid fa-clock-rotate-left me-1"></i> Nhật Ký Biến Động Chi Tiết (@Model.HistoryList.Count)
+                    <i class="fa-solid fa-clock-rotate-left me-1"></i> Nhật Ký Biến Động (@Model.HistoryList.Count)
                 </button>
             </li>
         </ul>
@@ -157,19 +169,20 @@
         <div class="tab-content" id="reportTabsContent">
             <!-- TAB 1: BẢNG TỔNG HỢP THEO ĐẦU SÁCH -->
             <div class="tab-pane fade show active" id="matrixTabPane" role="tabpanel">
-                <div class="table-responsive">
+                <div class="table-responsive" style="max-height: 800px; overflow-y: auto;">
                     <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light small text-uppercase">
+                        <thead class="table-light small text-uppercase position-sticky top-0 shadow-sm" style="z-index: 10;">
                             <tr>
                                 <th class="ps-4">ID</th>
-                                <th>Tên Sách</th>
-                                <th>Danh Mục</th>
-                                <th class="text-center text-success">Nhập NCC (+)</th>
-                                <th class="text-center text-primary">Xuất Bán (-)</th>
-                                <th class="text-center text-info">Nhận Chuyển (+)</th>
-                                <th class="text-center text-warning">Xuất Chuyển (-)</th>
-                                <th class="text-center">Kiểm Kê (+/-)</th>
-                                <th class="text-center fw-bold bg-primary bg-opacity-10 text-primary pe-4">Tồn Kho Hiện Tại</th>
+                                <th style="min-width: 200px;">Tên Sách</th>
+                                <!-- VÁ LỖI LOGIC CỘNG TRỪ XNT: Thêm cột Tồn Đầu Kỳ -->
+                                <th class="text-center bg-secondary bg-opacity-10">Tồn Đầu</th>
+                                <th class="text-center text-success">Nhập (+)</th>
+                                <th class="text-center text-danger">Xuất (-)</th>
+                                <th class="text-center text-info">Nhận (+)</th>
+                                <th class="text-center text-warning">Chuyển (-)</th>
+                                <th class="text-center">Kiểm Kê</th>
+                                <th class="text-center fw-bold bg-primary bg-opacity-10 text-primary pe-4">Tồn Cuối Kỳ</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -185,15 +198,20 @@
                                 {
                                     <tr>
                                         <td class="text-muted small ps-4">#@item.BookId</td>
-                                        <td class="fw-bold text-dark">@item.Title</td>
-                                        <td><span class="badge bg-light text-dark border">@item.CategoryName</span></td>
+                                        <td>
+                                            <div class="fw-bold text-dark text-truncate" style="max-width: 250px;" title="@item.Title">@item.Title</div>
+                                            <small class="text-muted">@item.CategoryName</small>
+                                        </td>
+                                        <td class="text-center fw-bold bg-secondary bg-opacity-10">@item.OpeningStock.ToString("N0")</td>
+
                                         <td class="text-center fw-bold text-success">@(item.TotalImport > 0 ? "+" + item.TotalImport : "0")</td>
-                                        <td class="text-center fw-bold text-primary">@(item.TotalExport > 0 ? "-" + item.TotalExport : "0")</td>
+                                        <td class="text-center fw-bold text-danger">@(item.TotalExport > 0 ? "-" + item.TotalExport : "0")</td>
                                         <td class="text-center fw-bold text-info">@(item.TotalTransferIn > 0 ? "+" + item.TotalTransferIn : "0")</td>
                                         <td class="text-center fw-bold text-warning">@(item.TotalTransferOut > 0 ? "-" + item.TotalTransferOut : "0")</td>
                                         <td class="text-center fw-bold @(item.TotalAdjustment >= 0 ? "text-success" : "text-danger")">
                                             @(item.TotalAdjustment > 0 ? "+" + item.TotalAdjustment : item.TotalAdjustment.ToString())
                                         </td>
+
                                         <td class="text-center bg-primary bg-opacity-10 pe-4">
                                             <span class="badge @(item.CurrentStock == 0 ? "bg-danger" : (item.CurrentStock <= 5 ? "bg-warning text-dark" : "bg-primary")) fs-6 fw-bold rounded-pill px-3">
                                                 @item.CurrentStock.ToString("N0")
@@ -217,7 +235,6 @@
                                 <th>Sách</th>
                                 <th>Loại Giao Dịch</th>
                                 <th class="text-center">Biến Động</th>
-                                <th>Mã Liên Quan</th>
                                 <th class="pe-4">Người Thực Hiện</th>
                             </tr>
                         </thead>
@@ -225,7 +242,7 @@
                             @if (!Model.HistoryList.Any())
                             {
                                 <tr>
-                                    <td colspan="6" class="text-center text-muted py-5">Chưa có giao dịch biến động nào phù hợp.</td>
+                                    <td colspan="5" class="text-center text-muted py-5">Chưa có giao dịch biến động nào phù hợp.</td>
                                 </tr>
                             }
                             else
@@ -233,42 +250,49 @@
                                 @foreach (var h in Model.HistoryList)
                                 {
                                     <tr>
-                                        <td class="ps-4">@h.CreatedAt.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                                        <td class="ps-4">@h.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")</td>
                                         <td>
-                                            <span class="fw-bold text-dark">@h.Book?.Title</span>
-                                            <small class="text-muted d-block">ID: #@h.BookId</small>
+                                            <span class="fw-bold text-dark d-block text-truncate" style="max-width: 250px;">@h.Book?.Title</span>
+                                            <small class="text-muted">ID Sách: #@h.BookId | Mã tham chiếu: @(h.RelatedId.HasValue ? $"#{h.RelatedId.Value}" : "-")</small>
                                         </td>
                                         <td>
                                             @switch (h.TransactionType?.ToUpper())
                                             {
                                                 case "IMPORT":
-                                                    <span class="badge bg-success">Nhập NCC (IMPORT)</span>
+                                                    <span class="badge bg-success">Nhập NCC</span>
                                                     break;
                                                 case "EXPORT":
-                                                    <span class="badge bg-primary">Xuất bán (EXPORT)</span>
+
+                                                    <span class="badge bg-danger">Xuất bán</span>
                                                     break;
                                                 case "TRANSFER_OUT":
-                                                    <span class="badge bg-warning text-dark">Chuyển đi (TRANSFER_OUT)</span>
+
+                                                    <span class="badge bg-warning text-dark">Chuyển đi</span>
                                                     break;
                                                 case "TRANSFER_IN":
-                                                    <span class="badge bg-info text-dark">Nhận chuyển (TRANSFER_IN)</span>
+
+                                                    <span class="badge bg-info text-dark">Nhận chuyển</span>
+                                                    break;
+                                                case "IN_TRANSIT":
+
+                                                    <span class="badge bg-primary">Đang di chuyển</span>
                                                     break;
                                                 case "ADJUSTMENT":
-                                                    <span class="badge bg-secondary">Kiểm kê (ADJUSTMENT)</span>
+
+                                                    <span class="badge bg-secondary">Kiểm kê</span>
                                                     break;
                                                 case "RETURN":
-                                                    <span class="badge bg-info text-white">Khách trả (RETURN)</span>
+
+                                                    <span class="badge bg-info text-white">Khách trả</span>
                                                     break;
                                                 default:
+
                                                     <span class="badge bg-dark">@h.TransactionType</span>
                                                     break;
                                             }
                                         </td>
                                         <td class="text-center fw-bold fs-6 @(h.QuantityChanged >= 0 ? "text-success" : "text-danger")">
                                             @(h.QuantityChanged > 0 ? "+" + h.QuantityChanged : h.QuantityChanged.ToString())
-                                        </td>
-                                        <td>
-                                            <span class="text-muted">@(h.RelatedId.HasValue ? $"#{h.RelatedId.Value}" : "-")</span>
                                         </td>
                                         <td class="pe-4">
                                             <div>@(h.CreatedBy?.FullName ?? h.CreatedBy?.UserName ?? "Hệ thống")</div>

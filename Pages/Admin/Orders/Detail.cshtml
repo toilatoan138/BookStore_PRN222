@@ -6,6 +6,22 @@
     ViewData["Subtitle"] = $"Khách hàng: {Model.Order.FullName} | Ngày đặt: {Model.Order.OrderDate.ToLocalTime():dd/MM/yyyy HH:mm}";
 }
 
+<!-- THÔNG BÁO HỆ THỐNG -->
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show py-2 mb-3 small" role="alert">
+        <i class="fa-solid fa-circle-check me-2"></i>@TempData["SuccessMessage"]
+        <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show py-2 mb-3 small" role="alert">
+        <i class="fa-solid fa-triangle-exclamation me-2"></i>@TempData["ErrorMessage"]
+        <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
 <div class="row g-4" style="max-width: 1000px;">
     <div class="col-lg-8">
         <!-- ORDER ITEMS -->
@@ -87,26 +103,53 @@
         <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
             <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-gear text-danger me-2"></i>Cập nhật trạng thái</h5>
 
-            <form method="post" asp-page-handler="UpdateStatus" asp-route-id="@Model.Order.Id">
-                <div class="mb-3">
-                    <label class="form-label fw-semibold small">Trạng thái hiện tại</label>
-                    <select name="newStatus" class="form-select">
-                        @foreach (Models.Enums.OrderStatus s in Enum.GetValues(typeof(Models.Enums.OrderStatus)))
-                        {
-                            <option value="@s" selected="@(Model.Order.Status == s)">@s</option>
-                        }
-                    </select>
+            @if (Model.Order.Status == Models.Enums.OrderStatus.Delivered)
+            {
+                <div class="alert alert-success py-2 small mb-3">
+                    <i class="fa-solid fa-circle-check me-1"></i>Đơn hàng đã hoàn tất giao thành công.
                 </div>
-
-                <div class="mb-3">
-                    <label class="form-label fw-semibold small">Ghi chú trạng thái / mã vận đơn</label>
-                    <textarea name="note" rows="3" class="form-control form-control-sm" placeholder="VD: Đã xuất kho giao bên vận chuyển ViettelPost...">@Model.Order.StatusNote</textarea>
+            }
+            else if (Model.Order.Status == Models.Enums.OrderStatus.Cancelled)
+            {
+                <div class="alert alert-secondary py-2 small mb-3">
+                    <i class="fa-solid fa-ban me-1"></i>Đơn hàng đã hủy.
                 </div>
+            }
+            else
+            {
+                <form method="post" asp-page-handler="UpdateStatus" asp-route-id="@Model.Order.Id">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Trạng thái kế tiếp</label>
+                        <select name="newStatus" class="form-select">
+                            <option value="@Model.Order.Status" selected>@Model.Order.Status (Hiện tại)</option>
+                            @if (Model.Order.Status == Models.Enums.OrderStatus.Pending)
+                            {
+                                <option value="@Models.Enums.OrderStatus.Processing">Chuẩn bị hàng (Processing)</option>
+                                <option value="@Models.Enums.OrderStatus.Cancelled">Hủy đơn (Cancelled)</option>
+                            }
+                            else if (Model.Order.Status == Models.Enums.OrderStatus.Processing)
+                            {
+                                <option value="@Models.Enums.OrderStatus.Shipping">Giao hàng (Shipping)</option>
+                                <option value="@Models.Enums.OrderStatus.Cancelled">Hủy đơn (Cancelled)</option>
+                            }
+                            else if (Model.Order.Status == Models.Enums.OrderStatus.Shipping)
+                            {
+                                <option value="@Models.Enums.OrderStatus.Delivered">Đã giao (Delivered)</option>
+                                <option value="@Models.Enums.OrderStatus.Cancelled">Hủy đơn (Cancelled)</option>
+                            }
+                        </select>
+                    </div>
 
-                <button type="submit" class="btn btn-danger w-100 rounded-pill fw-bold">
-                    <i class="fa-solid fa-floppy-disk me-1"></i>Lưu trạng thái
-                </button>
-            </form>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Ghi chú trạng thái / mã vận đơn</label>
+                        <textarea name="note" rows="3" maxlength="500" class="form-control form-control-sm" placeholder="VD: Đã xuất kho giao bên vận chuyển ViettelPost...">@Model.Order.StatusNote</textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-danger w-100 rounded-pill fw-bold">
+                        <i class="fa-solid fa-floppy-disk me-1"></i>Lưu trạng thái
+                    </button>
+                </form>
+            }
         </div>
 
         <a asp-page="/Admin/Orders/Index" class="btn btn-outline-secondary w-100 rounded-pill">

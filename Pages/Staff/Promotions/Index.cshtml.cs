@@ -35,6 +35,12 @@ namespace BookStore.Pages.Staff.Promotions
                 return RedirectToPage();
             }
 
+            if (startDate >= endDate)
+            {
+                TempData["ErrorMessage"] = "Thời gian bắt đầu phải nhỏ hơn thời gian kết thúc!";
+                return RedirectToPage();
+            }
+
             var promo = new Promotion
             {
                 PromoName = name.Trim(),
@@ -55,6 +61,18 @@ namespace BookStore.Pages.Staff.Promotions
             var promo = await _context.Promotions.FindAsync(promoId);
             if (promo != null)
             {
+                if (startDate >= endDate)
+                {
+                    TempData["ErrorMessage"] = "Thời gian bắt đầu phải nhỏ hơn thời gian kết thúc!";
+                    return RedirectToPage();
+                }
+
+                if (discountPercent <= 0 || discountPercent > 100)
+                {
+                    TempData["ErrorMessage"] = "Mức giảm giá không hợp lệ!";
+                    return RedirectToPage();
+                }
+
                 promo.PromoName = name.Trim();
                 promo.DiscountPercent = discountPercent;
                 promo.StartDate = startDate;
@@ -74,18 +92,6 @@ namespace BookStore.Pages.Staff.Promotions
                 promo.IsActive = !promo.IsActive;
                 await _context.SaveChangesAsync();
                 TempData["SuccessMessage"] = $"Đã {(promo.IsActive ? "kích hoạt" : "tắt")} chương trình '{promo.PromoName}'!";
-            }
-            return RedirectToPage();
-        }
-
-        public async Task<IActionResult> OnPostDeleteAsync(int id)
-        {
-            var promo = await _context.Promotions.FindAsync(id);
-            if (promo != null)
-            {
-                _context.Promotions.Remove(promo);
-                await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = "Đã xóa chương trình khuyến mãi!";
             }
             return RedirectToPage();
         }

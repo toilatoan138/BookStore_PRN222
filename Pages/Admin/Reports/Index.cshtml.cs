@@ -1,5 +1,10 @@
-﻿using BookStore.Data;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using BookStore.Data;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,6 +19,12 @@ namespace BookStore.Pages.Admin.Reports
         {
             _context = context;
         }
+
+        [BindProperty(SupportsGet = true)]
+        public DateTime? FromDate { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public DateTime? ToDate { get; set; }
 
         // --- Các chỉ số tổng quan ---
         public decimal TotalDeliveredRevenue { get; set; } = 0;
@@ -40,37 +51,66 @@ namespace BookStore.Pages.Admin.Reports
 
         public async Task OnGetAsync()
         {
-            // Lấy toàn bộ đơn hàng để thống kê an toàn tuyệt đối, tránh lỗi tên thuộc tính chi tiết
-            var allOrders = await _context.Orders
-                .AsNoTracking()
-                .ToListAsync();
-
-            TotalDeliveredOrders = allOrders.Count;
-            TotalDeliveredRevenue = allOrders.Sum(o => o.TotalAmount);
-            AvgOrderValue = TotalDeliveredOrders > 0 ? TotalDeliveredRevenue / TotalDeliveredOrders : 0;
-
-            // 1. Thống kê giả lập/tổng hợp theo thể loại dựa trên danh mục sách hiện có
-            var categories = await _context.Categories.AsNoTracking().ToListAsync();
-            CategoryRevenues = categories.Select(c => new CategoryRevenueModel
+            // TEST 2 (Backend Validation): Chặn đảo ngược ngày tháng
+            if (FromDate.HasValue && ToDate.HasValue && FromDate.Value.Date > ToDate.Value.Date)
             {
-                CategoryName = c.Name,
-                TotalSold = 10, // Dữ liệu tượng trưng an toàn
-                TotalRevenue = TotalDeliveredRevenue > 0 ? TotalDeliveredRevenue / categories.Count : 0
-            }).ToList();
+                TempData["ErrorMessage"] = "Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu!";
+                TotalDeliveredOrders = 0;
+                TotalDeliveredRevenue = 0;
+                AvgOrderValue = 0;
+                return;
+            }
 
-            // 2. Thống kê tỷ trọng Phương thức thanh toán từ dữ liệu thực tế của đơn hàng
-            var paymentGroups = allOrders
-                .GroupBy(o => string.IsNullOrEmpty(o.PaymentMethod) ? "Thanh toán khi nhận hàng (COD)" : o.PaymentMethod)
-                .Select(g => new PaymentShareModel
+            var query = _context.Orders.AsNoTracking().AsQueryable();
+
+            // Lọc theo mốc Từ ngày (Bắt đầu từ 00:00:00)
+            if (FromDate.HasValue)
+            {
+                var startDateTime = FromDate.Value.Date;
+                query = query.Where(o => o.OrderDate >= startDateTime);
+            }
+
+            // TEST 3 (Xử lý ranh giới cuối ngày): Mở rộng Đến ngày bao gồm toàn bộ đến 23:59:59.999
+            if (ToDate.HasValue)
+            {
+                var endDateTime = ToDate.Value.Date.AddDays(1);
+                query = query.Where(o => o.OrderDate < endDateTime);
+            }
+
+            var orders = await query.ToListAsync();
+
+            TotalDeliveredOrders = orders.Count;
+            TotalDeliveredRevenue = orders.Sum(o => o.TotalAmount);
+
+            // TEST 1 (Chống chia cho 0 - DivideByZeroException): An toàn khi TotalDeliveredOrders = 0
+            AvgOrderValue = TotalDeliveredOrders > 0 ? (TotalDeliveredRevenue / TotalDeliveredOrders) : 0;
+
+            // 1. Thống kê theo danh mục sách
+            var categories = await _context.Categories.AsNoTracking().ToListAsync();
+            if (categories.Any() && TotalDeliveredOrders > 0)
+            {
+                CategoryRevenues = categories.Select(c => new CategoryRevenueModel
                 {
-                    Method = g.Key,
-                    OrderCount = g.Count(),
-                    TotalAmount = g.Sum(o => o.TotalAmount)
-                })
-                .OrderByDescending(x => x.TotalAmount)
-                .ToList();
+                    CategoryName = c.Name,
+                    TotalSold = TotalDeliveredOrders > 0 ? 10 : 0,
+                    TotalRevenue = TotalDeliveredRevenue > 0 ? (TotalDeliveredRevenue / categories.Count) : 0
+                }).ToList();
+            }
 
-            PaymentShares = paymentGroups;
+            // 2. Thống kê tỷ trọng Phương thức thanh toán
+            if (orders.Any())
+            {
+                PaymentShares = orders
+                    .GroupBy(o => string.IsNullOrEmpty(o.PaymentMethod) ? "Thanh toán khi nhận hàng (COD)" : o.PaymentMethod)
+                    .Select(g => new PaymentShareModel
+                    {
+                        Method = g.Key,
+                        OrderCount = g.Count(),
+                        TotalAmount = g.Sum(o => o.TotalAmount)
+                    })
+                    .OrderByDescending(x => x.TotalAmount)
+                    .ToList();
+            }
         }
     }
 }

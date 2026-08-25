@@ -7,6 +7,21 @@
 }
 
 <div class="container-fluid px-0">
+    <!-- THÔNG BÁO HỆ THỐNG -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show py-2 mb-3 small" role="alert">
+            <i class="fa-solid fa-circle-check me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show py-2 mb-3 small" role="alert">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
 
     <!-- HEADER -->
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -71,7 +86,7 @@
                                 <td class="text-center text-nowrap">
                                     <div class="d-flex justify-content-center gap-1">
                                         <a asp-page="/Staff/Promotions/Books" asp-route-id="@p.PromoId" class="btn btn-sm btn-outline-primary rounded-pill px-2" title="Quản lý sách trong đợt sale">
-                                            <i class="fa-solid fa-book-open me-1"></i> Sách (@p.PromotionBooks.Count)
+                                            <i class="fa-solid fa-book-open me-1"></i> Sách (@(p.PromotionBooks?.Count ?? 0))
                                         </a>
 
                                         <button type="button" class="btn btn-sm btn-outline-warning text-dark rounded-pill px-2" title="Sửa"
@@ -103,7 +118,7 @@
                 <h5 class="modal-title fw-bold"><i class="fa-solid fa-bolt me-2"></i>Tạo Đợt Flash Sale Mới</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form method="post" asp-page-handler="Create">
+            <form method="post" asp-page-handler="Create" id="createPromoForm">
                 <div class="modal-body p-4">
                     <div class="mb-3">
                         <label class="form-label fw-bold small text-muted">Tên đợt Sale / Chương trình *</label>
@@ -112,17 +127,17 @@
 
                     <div class="mb-3">
                         <label class="form-label fw-bold small text-muted">Mức giảm giá (%) *</label>
-                        <input type="number" name="discountPercent" class="form-control fw-bold text-danger fs-5" min="1" max="100" value="20" required />
+                        <input type="number" name="discountPercent" id="createDiscount" class="form-control fw-bold text-danger fs-5" min="1" max="100" value="20" required />
                     </div>
 
                     <div class="row g-3 mb-3">
                         <div class="col-6">
                             <label class="form-label fw-bold small text-muted">Bắt đầu *</label>
-                            <input type="datetime-local" name="startDate" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" required />
+                            <input type="datetime-local" name="startDate" id="createStart" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")" required />
                         </div>
                         <div class="col-6">
                             <label class="form-label fw-bold small text-muted">Kết thúc *</label>
-                            <input type="datetime-local" name="endDate" class="form-control" value="@DateTime.Now.AddDays(3).ToString("yyyy-MM-ddTHH:mm")" required />
+                            <input type="datetime-local" name="endDate" id="createEnd" class="form-control" value="@DateTime.Now.AddDays(3).ToString("yyyy-MM-ddTHH:mm")" required />
                         </div>
                     </div>
 
@@ -146,9 +161,9 @@
         <div class="modal-content rounded-4 border-0 shadow">
             <div class="modal-header bg-warning text-dark">
                 <h5 class="modal-title fw-bold"><i class="fa-solid fa-pen-to-square me-2"></i>Chỉnh Sửa Flash Sale</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form method="post" asp-page-handler="Edit">
+            <form method="post" asp-page-handler="Edit" id="editPromoForm">
                 <div class="modal-body p-4">
                     <input type="hidden" name="promoId" id="editPromoId" />
 
@@ -198,5 +213,35 @@
             document.getElementById('editPromoActive').checked = active;
             new bootstrap.Modal(document.getElementById('editPromoModal')).show();
         }
+
+        // Logic chống nghịch lý thời gian
+        function validatePromoForm(prefix) {
+            const startVal = document.getElementById(prefix + 'Start').value;
+            const endVal = document.getElementById(prefix + 'End').value;
+            const discount = parseInt(document.getElementById(prefix + 'Discount').value);
+
+            if (discount <= 0 || discount > 100) {
+                alert("Mức giảm giá phải nằm trong khoảng từ 1% đến 100%!");
+                return false;
+            }
+
+            if (startVal && endVal) {
+                const startDate = new Date(startVal);
+                const endDate = new Date(endVal);
+                if (startDate >= endDate) {
+                    alert("Thời gian bắt đầu phải sớm hơn thời gian kết thúc!");
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        document.getElementById('createPromoForm').addEventListener('submit', function(e) {
+            if (!validatePromoForm('create')) e.preventDefault();
+        });
+
+        document.getElementById('editPromoForm').addEventListener('submit', function(e) {
+            if (!validatePromoForm('edit')) e.preventDefault();
+        });
     </script>
 }

@@ -7,6 +7,22 @@
 }
 
 <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+    <!-- THÔNG BÁO HỆ THỐNG -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show py-2 mb-3 small" role="alert">
+            <i class="fa-solid fa-circle-check me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show py-2 mb-3 small" role="alert">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
     <!-- SEARCH & FILTER -->
     <div class="d-flex justify-content-between align-items-center mb-4 gap-3">
         <form method="get" class="d-flex gap-2" style="max-width: 400px;">
@@ -14,6 +30,12 @@
             <button type="submit" class="btn btn-sm btn-danger px-3">
                 <i class="fa-solid fa-magnifying-glass"></i>
             </button>
+            @if (!string.IsNullOrWhiteSpace(Model.Keyword))
+            {
+                <a asp-page="./Index" class="btn btn-sm btn-outline-secondary px-2" title="Xóa tìm kiếm">
+                    <i class="fa-solid fa-rotate-left"></i>
+                </a>
+            }
         </form>
 
         <span class="text-muted small">Tổng số: <strong>@Model.Users.Count</strong> tài khoản</span>
@@ -21,7 +43,7 @@
 
     <!-- USERS TABLE -->
     <div class="table-responsive">
-        <table class="table table-hover align-middle small">
+        <table class="table table-hover align-middle small mb-0">
             <thead class="table-light">
                 <tr>
                     <th>Người dùng</th>
@@ -35,77 +57,117 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach (var user in Model.Users)
+                @if (!Model.Users.Any())
                 {
                     <tr>
-                        <td>
-                            <div class="d-flex align-items-center gap-2">
-                                <img src="https://ui-avatars.com/api/?name=@Uri.EscapeDataString(user.FullName)&background=C92127&color=fff&size=36&bold=true"
-                                     class="rounded-circle" style="width: 36px; height: 36px;" />
-                                <div>
-                                    <div class="fw-bold text-dark">@user.FullName</div>
-                                    <small class="text-muted">&#64;@user.UserName</small>
-                                </div>
-                            </div>
-                        </td>
-                        <td>
-                            <div>@user.Email</div>
-                            <small class="text-muted">@(user.PhoneNumber ?? "Chưa có SĐT")</small>
-                        </td>
-                        <td>
-                            <form method="post" asp-page-handler="ChangeRole" class="d-inline">
-                                <input type="hidden" name="userId" value="@user.Id" />
-                                <select name="newRole" class="form-select form-select-sm rounded-pill d-inline-block w-auto" onchange="this.form.submit()">
-                                    <option value="Customer" selected="@(user.Role == "Customer")">Customer</option>
-                                    <option value="Staff" selected="@(user.Role == "Staff")">Staff</option>
-                                    <option value="Warehouse" selected="@(user.Role == "Warehouse")">Warehouse</option>
-                                    <option value="Admin" selected="@(user.Role == "Admin")">Admin</option>
-                                </select>
-                            </form>
-                        </td>
-                        <td>
-                            <form method="post" asp-page-handler="ChangeBranch" class="d-inline">
-                                <input type="hidden" name="userId" value="@user.Id" />
-                                <select name="newBranchId" class="form-select form-select-sm rounded-pill d-inline-block w-auto" onchange="this.form.submit()">
-                                    <option value="0" selected="@(user.BranchId == null)">-- (Không có) --</option>
-                                    @foreach(var branch in Model.Branches)
-                                    {
-                                        <option value="@branch.Id" selected="@(user.BranchId == branch.Id)">@branch.Name</option>
-                                    }
-                                </select>
-                            </form>
-                        </td>
-                        <td>
-                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">
-                                @user.FPoints.ToString("N0") pts
-                            </span>
-                        </td>
-                        <td class="fw-bold text-success">
-                            @user.WalletBalance.ToString("N0")đ
-                        </td>
-                        <td>
-                            @if (user.Status)
-                            {
-                                <span class="badge bg-success-subtle text-success border border-success-subtle">
-                                    <i class="fa-solid fa-check me-1"></i>Hoạt động
-                                </span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle">
-                                    <i class="fa-solid fa-ban me-1"></i>Bị khóa
-                                </span>
-                            }
-                        </td>
-                        <td class="text-end">
-                            <form method="post" asp-page-handler="ToggleStatus" asp-route-userId="@user.Id" class="d-inline"
-                                  onsubmit="return confirm('Bạn có chắc muốn thay đổi trạng thái hoạt động của tài khoản này?');">
-                                <button type="submit" class="btn btn-sm @(user.Status ? "btn-outline-danger" : "btn-outline-success") rounded-pill px-3">
-                                    @(user.Status ? "Khóa tài khoản" : "Mở khóa")
-                                </button>
-                            </form>
+                        <td colspan="8" class="text-center text-muted py-4">
+                            <i class="fa-regular fa-folder-open fa-2x mb-2 d-block text-secondary"></i>
+                            Không tìm thấy người dùng phù hợp.
                         </td>
                     </tr>
+                }
+                else
+                {
+                    @foreach (var user in Model.Users)
+                    {
+                        bool isCurrentSelf = (user.Id == Model.CurrentUserId);
+
+                        <tr class="@(isCurrentSelf ? "table-warning bg-opacity-25" : "")">
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <img src="https://ui-avatars.com/api/?name=@Uri.EscapeDataString(user.FullName)&background=C92127&color=fff&size=36&bold=true"
+                                         class="rounded-circle" style="width: 36px; height: 36px;" />
+                                    <div>
+                                        <div class="fw-bold text-dark">
+                                            @user.FullName
+                                            @if (isCurrentSelf)
+                                            {
+                                                <span class="badge bg-danger ms-1 small">Bạn</span>
+                                            }
+                                        </div>
+                                        <small class="text-muted">&#64;@user.UserName</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div>@user.Email</div>
+                                <small class="text-muted">@(user.PhoneNumber ?? "Chưa có SĐT")</small>
+                            </td>
+                            <td>
+                                @if (isCurrentSelf)
+                                {
+                                    <!-- TEST 1 (UI): Khóa không cho Admin tự đổi role của chính mình -->
+                                    <span class="badge bg-dark px-3 py-2" title="Không thể tự thay đổi vai trò của chính mình">
+                                        <i class="fa-solid fa-shield-halved me-1"></i>@user.Role
+                                    </span>
+                                }
+                                else
+                                {
+                                    <form method="post" asp-page-handler="ChangeRole" class="d-inline">
+                                        <input type="hidden" name="userId" value="@user.Id" />
+                                        <select name="newRole" class="form-select form-select-sm rounded-pill d-inline-block w-auto" onchange="this.form.submit()">
+                                            <option value="Customer" selected="@(user.Role == "Customer")">Customer</option>
+                                            <option value="Staff" selected="@(user.Role == "Staff")">Staff</option>
+                                            <option value="Warehouse" selected="@(user.Role == "Warehouse")">Warehouse</option>
+                                            <option value="Admin" selected="@(user.Role == "Admin")">Admin</option>
+                                        </select>
+                                    </form>
+                                }
+                            </td>
+                            <td>
+                                <form method="post" asp-page-handler="ChangeBranch" class="d-inline">
+                                    <input type="hidden" name="userId" value="@user.Id" />
+                                    <select name="newBranchId" class="form-select form-select-sm rounded-pill d-inline-block w-auto" onchange="this.form.submit()">
+                                        <option value="0" selected="@(user.BranchId == null)">-- (Không có) --</option>
+                                        @foreach (var branch in Model.Branches)
+                                        {
+                                            <option value="@branch.Id" selected="@(user.BranchId == branch.Id)">@branch.Name</option>
+                                        }
+                                    </select>
+                                </form>
+                            </td>
+                            <td>
+                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">
+                                    @user.FPoints.ToString("N0") pts
+                                </span>
+                            </td>
+                            <td class="fw-bold text-success">
+                                @user.WalletBalance.ToString("N0")đ
+                            </td>
+                            <td>
+                                @if (user.Status)
+                                {
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle">
+                                        <i class="fa-solid fa-check me-1"></i>Hoạt động
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle">
+                                        <i class="fa-solid fa-ban me-1"></i>Bị khóa
+                                    </span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                @if (isCurrentSelf)
+                                {
+                                    <!-- TEST 1 (UI): Vô hiệu hóa nút Khóa đối với chính tài khoản đang đăng nhập -->
+                                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 opacity-50" disabled title="Không thể tự khóa tài khoản của chính mình">
+                                        <i class="fa-solid fa-lock me-1"></i>Khóa tài khoản
+                                    </button>
+                                }
+                                else
+                                {
+                                    <form method="post" asp-page-handler="ToggleStatus" asp-route-userId="@user.Id" class="d-inline"
+                                          onsubmit="return confirm('Bạn có chắc muốn thay đổi trạng thái hoạt động của tài khoản này?');">
+                                        <button type="submit" class="btn btn-sm @(user.Status ? "btn-outline-danger" : "btn-outline-success") rounded-pill px-3">
+                                            @(user.Status ? "Khóa tài khoản" : "Mở khóa")
+                                        </button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
                 }
             </tbody>
         </table>

@@ -7,8 +7,7 @@
 }
 
 <div class="container-fluid px-0">
-
-    <!-- ======================== SHIFT REPORT (HÔM NAY) ======================== -->
+    <!-- SHIFT REPORT (HÔM NAY) -->
     <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-calendar-day text-primary me-2"></i>Báo Cáo Ca Làm Việc (Hôm Nay)</h5>
     <div class="row g-3 mb-4">
         <div class="col-md-4">
@@ -48,7 +47,7 @@
         </div>
     </div>
 
-    <!-- ======================== 9 CHỨC NĂNG NGHIỆP VỤ STAFF ======================== -->
+    <!-- CHỨC NĂNG NGHIỆP VỤ -->
     <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-briefcase text-success me-2"></i>Chức Năng Nghiệp Vụ</h5>
     <div class="row g-4 mb-4">
         <div class="col-md-4 col-lg-4">
@@ -160,9 +159,8 @@
         </div>
     </div>
 
-    <!-- ======================== RECENT TICKETS & RECENT REVIEWS ======================== -->
+    <!-- RECENT TICKETS & RECENT REVIEWS -->
     <div class="row g-4">
-        <!-- RECENT TICKETS -->
         <div class="col-lg-6">
             <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
                 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -173,7 +171,7 @@
                 </div>
 
                 <div class="d-flex flex-column gap-3">
-                    @if (!Model.Stats.RecentTickets.Any())
+                    @if (Model.Stats?.RecentTickets == null || !Model.Stats.RecentTickets.Any())
                     {
                         <p class="text-muted small py-3 text-center">Không có yêu cầu hỗ trợ mới nào.</p>
                     }
@@ -183,12 +181,12 @@
                         {
                             <div class="p-3 border rounded-3 bg-light">
                                 <div class="d-flex justify-content-between align-items-start mb-1">
-                                    <strong class="text-dark">@t.TicketSubject</strong>
-                                    <span class="badge @(t.Status == "Closed" ? "bg-secondary" : "bg-warning text-dark")">@t.Status</span>
+                                    <strong class="text-dark">@(t.TicketSubject ?? "Yêu cầu hỗ trợ")</strong>
+                                    <span class="badge @(t.Status == "Closed" ? "bg-secondary" : "bg-warning text-dark")">@(t.Status ?? "Pending")</span>
                                 </div>
-                                <p class="text-muted small mb-2 text-truncate">@t.TicketMessage</p>
+                                <p class="text-muted small mb-2 text-truncate">@(t.TicketMessage ?? "Không có nội dung")</p>
                                 <div class="d-flex justify-content-between align-items-center small">
-                                    <span class="text-muted">Khách: <strong>@(t.User?.FullName ?? "N/A")</strong></span>
+                                    <span class="text-muted">Khách: <strong>@(t.User?.FullName ?? t.User?.UserName ?? "Khách hàng")</strong></span>
                                     <a asp-page="/Staff/Tickets/Index" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-semibold">
                                         Phản hồi
                                     </a>
@@ -200,7 +198,6 @@
             </div>
         </div>
 
-        <!-- RECENT REVIEWS -->
         <div class="col-lg-6">
             <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
                 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -211,7 +208,7 @@
                 </div>
 
                 <div class="d-flex flex-column gap-3">
-                    @if (!Model.Stats.RecentReviews.Any())
+                    @if (Model.Stats?.RecentReviews == null || !Model.Stats.RecentReviews.Any())
                     {
                         <p class="text-muted small py-3 text-center">Chưa có đánh giá nào gần đây.</p>
                     }
@@ -221,7 +218,7 @@
                         {
                             <div class="p-3 border rounded-3 bg-light">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <strong class="text-dark">@r.Book?.Title</strong>
+                                    <strong class="text-dark">@(r.Book?.Title ?? "Sách")</strong>
                                     <div class="text-warning small">
                                         @for (int i = 1; i <= r.Rating; i++)
                                         {
@@ -229,9 +226,9 @@
                                         }
                                     </div>
                                 </div>
-                                <p class="text-muted small mb-2 text-truncate">@r.Comment</p>
+                                <p class="text-muted small mb-2 text-truncate">@(r.Comment ?? "Không có bình luận")</p>
                                 <div class="d-flex justify-content-between align-items-center small">
-                                    <span class="text-muted">Bởi: <strong>@(r.User?.FullName ?? "Khách hàng")</strong></span>
+                                    <span class="text-muted">Bởi: <strong>@(r.User?.FullName ?? r.User?.UserName ?? "Khách hàng")</strong></span>
                                     @if (string.IsNullOrEmpty(r.StaffReply))
                                     {
                                         <span class="badge bg-warning text-dark">Chưa trả lời</span>

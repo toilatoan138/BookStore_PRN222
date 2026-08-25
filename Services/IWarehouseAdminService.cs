@@ -51,6 +51,7 @@ namespace BookStore.Services
         public int BookId { get; set; }
         public string Title { get; set; } = string.Empty;
         public string? CategoryName { get; set; }
+        public int OpeningStock { get; set; }
         public int TotalImport { get; set; }
         public int TotalExport { get; set; }
         public int TotalTransferIn { get; set; }

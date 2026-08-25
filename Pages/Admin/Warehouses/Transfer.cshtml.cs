@@ -55,11 +55,10 @@ namespace BookStore.Pages.Admin.Warehouses
             Books = await _context.Books.Where(b => b.IsActive).OrderBy(b => b.Title).AsNoTracking().ToListAsync();
             BranchInventories = await _context.BranchInventories.AsNoTracking().ToListAsync();
 
-            // Lấy 30 giao dịch điều chuyển gần nhất
             var historyQuery = _context.InventoryHistories
                 .Include(h => h.Book)
                 .Include(h => h.CreatedBy)
-                .Where(h => h.TransactionType == "TRANSFER_OUT" || h.TransactionType == "TRANSFER_IN")
+                .Where(h => h.TransactionType == "TRANSFER_OUT" || h.TransactionType == "TRANSFER_IN" || h.TransactionType == "IN_TRANSIT")
                 .AsNoTracking()
                 .AsQueryable();
 
@@ -80,13 +79,39 @@ namespace BookStore.Pages.Admin.Warehouses
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return RedirectToPage("/Account/Login");
 
+            if (fromBranchId == toBranchId)
+            {
+                TempData["ErrorMessage"] = "Kho nhận và kho xuất không được trùng nhau!";
+                return RedirectToPage(new { selectedBookId = bookId, selectedFromBranchId = fromBranchId });
+            }
+
+            if (quantity <= 0)
+            {
+                TempData["ErrorMessage"] = "Số lượng điều chuyển phải lớn hơn 0!";
+                return RedirectToPage(new { selectedBookId = bookId, selectedFromBranchId = fromBranchId });
+            }
+
+            var sourceInventory = await _context.BranchInventories
+                .FirstOrDefaultAsync(bi => bi.BranchId == fromBranchId && bi.BookId == bookId);
+
+            int availableStock = sourceInventory?.StockQuantity ?? 0;
+            if (quantity > availableStock)
+            {
+                TempData["ErrorMessage"] = $"Số lượng tồn kho không đủ để điều chuyển (Kho xuất hiện chỉ còn {availableStock} cuốn)!";
+                return RedirectToPage(new { selectedBookId = bookId, selectedFromBranchId = fromBranchId });
+            }
+
+            string? safeNote = string.IsNullOrWhiteSpace(note) ? null : (note.Trim().Length > 500 ? note.Trim().Substring(0, 500) : note.Trim());
+
+            // Gọi Service thực thi nghiệp vụ
             var (success, message) = await _warehouseAdminService.TransferStockAsync(
-                user.Id, fromBranchId, toBranchId, bookId, quantity, note);
+                user.Id, fromBranchId, toBranchId, bookId, quantity, safeNote);
 
             if (success)
             {
-                TempData["SuccessMessage"] = message;
-                return RedirectToPage(new { selectedBookId = bookId, selectedFromBranchId = toBranchId });
+                // Thay đổi thông báo để chuẩn bị cho logic "In Transit"
+                TempData["SuccessMessage"] = "Đã khởi tạo lệnh xuất kho thành công. Hàng đang trong trạng thái luân chuyển (In Transit) chờ kho đích xác nhận!";
+                return RedirectToPage(new { selectedBookId = bookId, selectedFromBranchId = fromBranchId });
             }
             else
             {

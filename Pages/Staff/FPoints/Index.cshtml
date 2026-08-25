@@ -6,7 +6,42 @@
     ViewData["Subtitle"] = "Thao tác cộng/trừ điểm thưởng chăm sóc khách hàng và kiểm tra lịch sử biến động điểm";
 }
 
+<style>
+    .customer-item {
+        transition: background-color 0.2s;
+        cursor: pointer;
+    }
+
+        .customer-item:hover {
+            background-color: #f8f9fa;
+        }
+
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #ccc;
+        border-radius: 10px;
+    }
+</style>
+
 <div class="container-fluid px-0">
+    <!-- THÔNG BÁO HỆ THỐNG -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show py-2 mb-3 small" role="alert">
+            <i class="fa-solid fa-circle-check me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show py-2 mb-3 small" role="alert">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
 
     <!-- HEADER -->
     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -15,8 +50,8 @@
                 <i class="fa-solid fa-chart-line me-1"></i> Dashboard
             </a>
             <div class="border-start ps-3">
-                <h4 class="fw-bold text-warning-emphasis m-0">
-                    <i class="fa-solid fa-coins me-2 text-warning"></i>
+                <h4 class="fw-bold m-0 text-warning">
+                    <i class="fa-solid fa-coins me-2"></i>
                     HỆ THỐNG F-POINT
                 </h4>
                 <small class="text-muted">Thao tác cộng/trừ điểm thưởng cho khách hàng</small>
@@ -28,129 +63,253 @@
         </a>
     </div>
 
-    <!-- MAIN TWO COLUMNS ROW -->
-    <div class="row g-4 mb-4">
-        <!-- LEFT COLUMN: LỆNH THỰC THI ĐIỂM -->
+    <div class="row g-4">
+        <!-- FORM LỆNH THỰC THI ĐIỂM -->
         <div class="col-lg-5">
-            <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden h-100">
-                <div class="card-header bg-dark text-white fw-bold py-3">
-                    <i class="fa-solid fa-wand-magic-sparkles me-2 text-warning"></i> Lệnh Thực Thi Điểm
+            <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden">
+                <div class="card-header bg-dark text-white py-3 px-4 fw-bold">
+                    <i class="fa-solid fa-wand-magic-sparkles text-warning me-2"></i>Lệnh Thực Thi Điểm
                 </div>
                 <div class="card-body p-4">
-                    <form method="post" asp-page-handler="ExecutePoint">
-                        <div class="mb-3">
-                            <label class="form-label fw-bold small text-muted">Khách hàng nhận thao tác *</label>
-                            <input type="text" name="userIdentifier" class="form-control" placeholder="Nhập Email, SĐT hoặc User ID..." list="customerDatalist" required />
-                            <datalist id="customerDatalist">
-                                @foreach (var u in Model.AvailableCustomers)
+                    <form method="post" asp-page-handler="AdjustPoints" id="fpointForm">
+
+                        <!-- Ô NHẬP KHÁCH HÀNG CÓ AUTOCOMPLETE -->
+                        <div class="mb-3 position-relative">
+                            <label class="form-label fw-bold small text-muted">Khách hàng nhận thao tác <span class="text-danger">*</span></label>
+                            <input type="text" name="customerIdentifier" id="customerInput" class="form-control" placeholder="Nhập Email, Username hoặc SĐT khách..." autocomplete="off" required />
+
+                            <!-- Dropdown danh sách khách hàng -->
+                            <ul id="customerDropdown" class="list-group position-absolute w-100 shadow custom-scrollbar d-none" style="z-index: 1000; max-height: 250px; overflow-y: auto; margin-top: 2px;">
+                                @foreach (var c in Model.AvailableCustomers)
                                 {
-                                    <option value="@u.Email">@u.FullName (Hiện có: @u.FPoints pts)</option>
+                                    <li class="list-group-item customer-item border-start-0 border-end-0" data-email="@c.Email" data-search="@(c.FullName?.ToLower()) @(c.Email?.ToLower()) @(c.PhoneNumber)">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="rounded-circle bg-light d-flex align-items-center justify-content-center fw-bold border text-secondary" style="width: 32px; height: 32px; min-width: 32px;">
+                                                @(string.IsNullOrEmpty(c.FullName) ? "K" : c.FullName.Substring(0, 1).ToUpper())
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold text-dark small">@(string.IsNullOrEmpty(c.FullName) ? "Khách hàng" : c.FullName)</div>
+                                                <div class="text-muted" style="font-size: 0.75rem;">@c.Email @(!string.IsNullOrEmpty(c.PhoneNumber) ? " | " + c.PhoneNumber : "")</div>
+                                            </div>
+                                        </div>
+                                    </li>
                                 }
-                            </datalist>
-                            <small class="text-muted fst-italic">Gõ để gợi ý theo danh sách khách hàng</small>
+                                @if (!Model.AvailableCustomers.Any())
+                                {
+                                    <li class="list-group-item text-muted small text-center py-3">Chưa có dữ liệu khách hàng</li>
+                                }
+                            </ul>
+
+                            <small class="text-muted">Gõ tên, email hoặc SĐT để tìm kiếm nhanh</small>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label fw-bold small text-muted">Loại thao tác *</label>
-                            <div class="d-flex gap-3">
+                            <label class="form-label fw-bold small text-muted d-block">Loại thao tác <span class="text-danger">*</span></label>
+                            <div class="d-flex gap-4">
                                 <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="actionType" id="actionAdd" value="add" checked />
-                                    <label class="form-check-label fw-semibold text-success" for="actionAdd">
-                                        <i class="fa-solid fa-plus-circle me-1"></i> Cộng điểm (Reward)
+                                    <input class="form-check-input" type="radio" name="actionType" id="actionReward" value="Reward" checked>
+                                    <label class="form-check-label fw-bold text-success" for="actionReward">
+                                        <i class="fa-solid fa-circle-plus me-1"></i>Cộng điểm (Reward)
                                     </label>
                                 </div>
                                 <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="actionType" id="actionSub" value="sub" />
-                                    <label class="form-check-label fw-semibold text-danger" for="actionSub">
-                                        <i class="fa-solid fa-minus-circle me-1"></i> Trừ điểm (Deduct)
+                                    <input class="form-check-input" type="radio" name="actionType" id="actionDeduct" value="Deduct">
+                                    <label class="form-check-label fw-bold text-danger" for="actionDeduct">
+                                        <i class="fa-solid fa-circle-minus me-1"></i>Trừ điểm (Deduct)
                                     </label>
                                 </div>
                             </div>
                         </div>
 
+                        <!-- TEST 1: Chặn số âm & số thập phân; Chặn tràn số -->
                         <div class="mb-3">
-                            <label class="form-label fw-bold small text-muted">Số điểm thưởng *</label>
-                            <input type="number" name="amount" class="form-control fw-bold fs-5 text-primary" min="1" max="1000000" value="50" required />
+                            <label class="form-label fw-bold small text-muted">Số điểm thưởng <span class="text-danger">*</span></label>
+                            <input type="number" name="points" id="pointsInput" class="form-control" min="1" max="1000000" step="1" placeholder="VD: 100" required />
+                            <small class="text-muted">Nhập số nguyên dương từ 1 đến 1.000.000 điểm</small>
                         </div>
 
-                        <div class="mb-4">
-                            <label class="form-label fw-bold small text-muted">Lý do điều chỉnh *</label>
-                            <textarea name="reason" class="form-control" rows="3" placeholder="VD: Tặng điểm sinh nhật, đền bù sự cố giao hàng..." required></textarea>
+                        <!-- TEST 3: Bắt buộc nhập lý do -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-muted">Lý do điều chỉnh <span class="text-danger">*</span></label>
+                            <textarea name="reason" id="reasonInput" rows="3" class="form-control" maxlength="255" placeholder="VD: Bù điểm sự cố đơn hàng #ORD-109, Quà sinh nhật VIP..." required></textarea>
+                            <small class="text-muted">Tối đa 255 ký tự</small>
                         </div>
 
-                        <button type="submit" class="btn btn-warning w-100 rounded-pill py-2 fw-bold text-dark shadow-sm">
-                            <i class="fa-solid fa-bolt me-1"></i> Thực Thi Điểm Ngay
+                        <button type="submit" id="btnSubmit" class="btn btn-warning text-dark w-100 rounded-pill fw-bold py-2 shadow-sm">
+                            <i class="fa-solid fa-bolt me-1"></i>Thực Thi Điểm Ngay
                         </button>
                     </form>
                 </div>
             </div>
         </div>
 
-        <!-- RIGHT COLUMN: LỊCH SỬ BIẾN ĐỘNG F-POINT -->
+        <!-- LỊCH SỬ BIẾN ĐỘNG F-POINT -->
         <div class="col-lg-7">
-            <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden h-100">
-                <div class="card-header bg-light border-0 py-3 d-flex justify-content-between align-items-center">
-                    <h6 class="fw-bold text-dark mb-0"><i class="fa-solid fa-clock-rotate-left text-warning me-2"></i>Lịch Sử Biến Động F-Point</h6>
+            <div class="card border-0 shadow-sm rounded-4 bg-white p-4 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold text-dark mb-0">
+                        <i class="fa-solid fa-clock-rotate-left text-warning me-2"></i>Lịch Sử Biến Động F-Point
+                    </h5>
                     <form method="get" class="d-flex gap-2" style="max-width: 250px;">
-                        <input type="text" asp-for="Keyword" class="form-control form-control-sm" placeholder="Tìm kiếm lịch sử..." />
+                        <input type="text" name="searchKeyword" class="form-control form-control-sm" placeholder="Tìm theo email, lý do..." value="@Model.SearchKeyword" />
                         <button type="submit" class="btn btn-sm btn-dark"><i class="fa-solid fa-magnifying-glass"></i></button>
                     </form>
                 </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0 small">
-                            <thead class="table-light">
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle small mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Khách Hàng</th>
+                                <th class="text-center">Điểm</th>
+                                <th>Lý Do</th>
+                                <th class="text-end">Thời Gian</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!Model.HistoryList.Any())
+                            {
                                 <tr>
-                                    <th style="width: 30%;">Khách Hàng</th>
-                                    <th class="text-center" style="width: 18%;">Điểm</th>
-                                    <th style="width: 32%;">Lý Do</th>
-                                    <th class="text-center" style="width: 20%;">Thời Gian</th>
+                                    <td colspan="4" class="text-center text-muted py-5">
+                                        <i class="fa-regular fa-folder-open fa-2x mb-2 d-block text-secondary"></i>
+                                        Chưa có lịch sử biến động điểm nào.
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                @if (!Model.Histories.Any())
+                            }
+                            else
+                            {
+                                @foreach (var h in Model.HistoryList)
                                 {
                                     <tr>
-                                        <td colspan="4" class="text-center text-muted py-4">Chưa có giao dịch F-Point nào.</td>
+                                        <td>
+                                            <div class="fw-bold text-dark">@(h.User?.FullName ?? "Khách hàng")</div>
+                                            <small class="text-muted">@(h.User?.Email ?? h.UserId)</small>
+                                        </td>
+                                        <td class="text-center">
+                                            @if (h.PointsChange > 0)
+                                            {
+                                                <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 fw-bold">
+                                                    +@h.PointsChange pts
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 fw-bold">
+                                                    @h.PointsChange pts
+                                                </span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <span class="text-dark">@h.Reason</span>
+                                        </td>
+                                        <td class="text-end text-muted">
+                                            @h.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                        </td>
                                     </tr>
                                 }
-                                else
-                                {
-                                    foreach (var h in Model.Histories)
-                                    {
-                                        <tr>
-                                            <td>
-                                                <strong class="text-dark d-block">@(h.User?.FullName ?? h.CustomerInfo ?? "Khách hàng")</strong>
-                                                <small class="text-muted">@(h.User?.Email ?? "")</small>
-                                            </td>
-                                            <td class="text-center fw-bold fs-6">
-                                                @if (h.ActionType.ToLower() == "add")
-                                                {
-                                                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
-                                                        +@h.Amount.ToString("N0") pts
-                                                    </span>
-                                                }
-                                                else
-                                                {
-                                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">
-                                                        -@h.Amount.ToString("N0") pts
-                                                    </span>
-                                                }
-                                            </td>
-                                            <td>
-                                                <span class="text-dark">@h.Reason</span>
-                                            </td>
-                                            <td class="text-center text-muted">
-                                                @h.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
-                                            </td>
-                                        </tr>
-                                    }
-                                }
-                            </tbody>
-                        </table>
-                    </div>
+                            }
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        // XỬ LÝ DROPDOWN AUTOCOMPLETE CHO KHÁCH HÀNG
+        const customerInput = document.getElementById('customerInput');
+        const customerDropdown = document.getElementById('customerDropdown');
+        const customerItems = document.querySelectorAll('.customer-item');
+
+        // Hiện dropdown khi click vào ô input
+        customerInput.addEventListener('focus', function() {
+            customerDropdown.classList.remove('d-none');
+            filterCustomers(this.value);
+        });
+
+        // Lọc khi người dùng gõ phím
+        customerInput.addEventListener('input', function() {
+            customerDropdown.classList.remove('d-none');
+            filterCustomers(this.value);
+        });
+
+        // Hàm lọc
+        function filterCustomers(keyword) {
+            const lowerKeyword = keyword.toLowerCase();
+            let hasVisible = false;
+
+            customerItems.forEach(item => {
+                const searchData = item.getAttribute('data-search');
+                if (searchData.includes(lowerKeyword)) {
+                    item.style.display = 'block';
+                    hasVisible = true;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            if (!hasVisible && keyword !== '') {
+                customerDropdown.classList.add('d-none');
+            } else {
+                customerDropdown.classList.remove('d-none');
+            }
+        }
+
+        // Khi click vào 1 người trong danh sách -> Gán Email vào ô input
+        customerItems.forEach(item => {
+            item.addEventListener('click', function() {
+                const email = this.getAttribute('data-email');
+                if (email) {
+                    customerInput.value = email;
+                }
+                customerDropdown.classList.add('d-none');
+            });
+        });
+
+        // Click ra ngoài khoảng trống thì tự ẩn dropdown
+        document.addEventListener('click', function(e) {
+            if (!customerInput.contains(e.target) && !customerDropdown.contains(e.target)) {
+                customerDropdown.classList.add('d-none');
+            }
+        });
+
+        // KIỂM THỰC FORM TRƯỚC KHI SUBMIT
+        document.getElementById('fpointForm').addEventListener('submit', function(e) {
+            const pointsVal = parseFloat(document.getElementById('pointsInput').value);
+            const reasonVal = document.getElementById('reasonInput').value.trim();
+            const customerVal = document.getElementById('customerInput').value.trim();
+
+            if (!customerVal) {
+                alert("Vui lòng nhập định danh khách hàng!");
+                e.preventDefault();
+                return;
+            }
+
+            // TEST 1: Chặn số âm & số thập phân
+            if (isNaN(pointsVal) || pointsVal <= 0 || !Number.isInteger(pointsVal)) {
+                alert("Số điểm thưởng phải là số nguyên dương lớn hơn 0!");
+                e.preventDefault();
+                return;
+            }
+
+            if (pointsVal > 1000000) {
+                alert("Số điểm thưởng cho mỗi lần điều chỉnh tối đa là 1.000.000 điểm!");
+                e.preventDefault();
+                return;
+            }
+
+            // TEST 3: Bắt buộc nhập lý do
+            if (!reasonVal) {
+                alert("Vui lòng nhập lý do điều chỉnh điểm để lưu vết kiểm toán (Audit Log)!");
+                e.preventDefault();
+                return;
+            }
+
+            const btn = document.getElementById('btnSubmit');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Đang thực thi...';
+        });
+    </script>
+}

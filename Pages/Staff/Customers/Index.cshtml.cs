@@ -1,5 +1,10 @@
-﻿using BookStore.Data;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using BookStore.Data;
 using BookStore.Models.Entities;
+using BookStore.Models.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -20,129 +25,131 @@ namespace BookStore.Pages.Staff.Customers
             _userManager = userManager;
         }
 
-        public List<ApplicationUser> Customers { get; set; } = new();
+        public class CustomerViewModel
+        {
+            public string Id { get; set; } = string.Empty;
+            public string FullName { get; set; } = string.Empty;
+            public string Email { get; set; } = string.Empty;
+            public string PhoneNumber { get; set; } = string.Empty;
+            public DateTime CreatedAt { get; set; }
+            public int FPoints { get; set; }
+            public string MembershipTier { get; set; } = "Đồng";
+            public decimal TotalSpent { get; set; }
+            public string CrmTags { get; set; } = string.Empty;
+        }
+
+        public List<CustomerViewModel> Customers { get; set; } = new();
+
+        [BindProperty(SupportsGet = true)]
+        public string? Tier { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public int? FromPoints { get; set; }
+
+        [BindProperty(SupportsGet = true)]
+        public int? ToPoints { get; set; }
 
         [BindProperty(SupportsGet = true)]
         public string? Keyword { get; set; }
 
-        [BindProperty(SupportsGet = true)]
-        public string? MemberTier { get; set; }
-
-        [BindProperty(SupportsGet = true)]
-        public int? MinPoint { get; set; }
-
-        [BindProperty(SupportsGet = true)]
-        public int? MaxPoint { get; set; }
-
         public async Task OnGetAsync()
         {
-            var query = _userManager.Users
-                .Include(u => u.CustomerNotes)
+            if (FromPoints.HasValue && FromPoints.Value < 0)
+            {
+                TempData["ErrorMessage"] = "Điểm F-Point bắt đầu không được là số âm!";
+                FromPoints = null;
+            }
+            if (ToPoints.HasValue && ToPoints.Value < 0)
+            {
+                TempData["ErrorMessage"] = "Điểm F-Point kết thúc không được là số âm!";
+                ToPoints = null;
+            }
+            if (FromPoints.HasValue && ToPoints.HasValue && FromPoints.Value > ToPoints.Value)
+            {
+                TempData["ErrorMessage"] = "Điểm F-Point bắt đầu phải nhỏ hơn hoặc bằng điểm kết thúc!";
+                Customers = new List<CustomerViewModel>();
+                return;
+            }
+
+            // Chỉ lấy các tài khoản có Role là Customer
+            var customerRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Customer");
+            if (customerRole == null)
+            {
+                Customers = new List<CustomerViewModel>();
+                return;
+            }
+
+            var customerUserIds = await _context.UserRoles
+                .Where(ur => ur.RoleId == customerRole.Id)
+                .Select(ur => ur.UserId)
+                .ToListAsync();
+
+            var query = _context.Users
+                .Where(u => customerUserIds.Contains(u.Id))
                 .AsNoTracking()
                 .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(Keyword))
             {
                 string kw = Keyword.Trim().ToLower();
-                query = query.Where(u => (u.FullName != null && u.FullName.ToLower().Contains(kw)) ||
-                                         (u.Email != null && u.Email.ToLower().Contains(kw)) ||
-                                         (u.PhoneNumber != null && u.PhoneNumber.Contains(kw)) ||
-                                         (u.Id != null && u.Id.Contains(kw)));
+                query = query.Where(u =>
+                    (u.FullName != null && u.FullName.ToLower().Contains(kw)) ||
+                    (u.Email != null && u.Email.ToLower().Contains(kw)) ||
+                    (u.PhoneNumber != null && u.PhoneNumber.Contains(kw)) ||
+                    u.Id.Contains(kw));
             }
 
-            if (!string.IsNullOrWhiteSpace(MemberTier) && MemberTier != "all")
+            var rawUsers = await query.ToListAsync();
+            var customerIds = rawUsers.Select(u => u.Id).ToList();
+
+            var spentByCustomer = await _context.Orders
+                .Where(o => o.UserId != null && customerIds.Contains(o.UserId) && o.Status != OrderStatus.Cancelled)
+                .GroupBy(o => o.UserId!)
+                .Select(g => new { UserId = g.Key, TotalSpent = g.Sum(x => x.TotalAmount) })
+                .ToDictionaryAsync(x => x.UserId, x => x.TotalSpent);
+
+            var list = new List<CustomerViewModel>();
+            foreach (var u in rawUsers)
             {
-                switch (MemberTier.ToLower())
+                decimal totalSpent = (u.Id != null && spentByCustomer.ContainsKey(u.Id)) ? spentByCustomer[u.Id] : 0;
+
+                // Nếu model ApplicationUser của bạn đặt tên là FPoints:
+                int points = u.FPoints;
+                // (Nếu project của bạn đặt tên là Points thì đổi thành: int points = u.Points;)
+
+                string calculatedTier = "Đồng";
+                if (points >= 5000 || totalSpent >= 20_000_000m) calculatedTier = "Kim Cương";
+                else if (points >= 2000 || totalSpent >= 10_000_000m) calculatedTier = "Vàng";
+                else if (points >= 500 || totalSpent >= 2_000_000m) calculatedTier = "Bạc";
+
+                list.Add(new CustomerViewModel
                 {
-                    case "diamond":
-                        query = query.Where(u => u.FPoints >= 5000);
-                        break;
-                    case "gold":
-                        query = query.Where(u => u.FPoints >= 2000 && u.FPoints < 5000);
-                        break;
-                    case "silver":
-                        query = query.Where(u => u.FPoints >= 500 && u.FPoints < 2000);
-                        break;
-                    case "bronze":
-                        query = query.Where(u => u.FPoints < 500);
-                        break;
-                }
+                    Id = u.Id ?? string.Empty,
+                    FullName = u.FullName ?? string.Empty,
+                    Email = u.Email ?? string.Empty,
+                    PhoneNumber = u.PhoneNumber ?? string.Empty,
+                    CreatedAt = u.CreatedAt,
+                    FPoints = points,
+                    MembershipTier = calculatedTier,
+                    TotalSpent = totalSpent,
+                    CrmTags = points > 1000 ? "VIP Khách cũ" : ""
+                });
             }
 
-            if (MinPoint.HasValue)
+            if (!string.IsNullOrEmpty(Tier))
             {
-                query = query.Where(u => u.FPoints >= MinPoint.Value);
+                list = list.Where(c => c.MembershipTier == Tier).ToList();
             }
-
-            if (MaxPoint.HasValue)
+            if (FromPoints.HasValue)
             {
-                query = query.Where(u => u.FPoints <= MaxPoint.Value);
+                list = list.Where(c => c.FPoints >= FromPoints.Value).ToList();
             }
-
-            Customers = await query
-                .OrderByDescending(u => u.TotalSpend)
-                .ToListAsync();
-        }
-
-        public async Task<IActionResult> OnPostApplyTagAsync([FromForm] List<string> selectedUserIds, [FromForm] string tag)
-        {
-            if (selectedUserIds != null && selectedUserIds.Any() && !string.IsNullOrWhiteSpace(tag))
+            if (ToPoints.HasValue)
             {
-                var users = await _context.Users.Where(u => selectedUserIds.Contains(u.Id)).ToListAsync();
-                foreach (var user in users)
-                {
-                    var existingTags = string.IsNullOrEmpty(user.Tags) ? new List<string>() : user.Tags.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
-                    if (!existingTags.Contains(tag.Trim()))
-                    {
-                        existingTags.Add(tag.Trim());
-                        user.Tags = string.Join(", ", existingTags);
-                    }
-                }
-                await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = $"Đã gắn nhãn '{tag}' cho {users.Count} khách hàng được chọn!";
+                list = list.Where(c => c.FPoints <= ToPoints.Value).ToList();
             }
-            return RedirectToPage(new { keyword = Keyword, memberTier = MemberTier, minPoint = MinPoint, maxPoint = MaxPoint });
-        }
 
-        public async Task<IActionResult> OnPostAddNoteAsync([FromForm] List<string> selectedUserIds, [FromForm] string note)
-        {
-            if (selectedUserIds != null && selectedUserIds.Any() && !string.IsNullOrWhiteSpace(note))
-            {
-                foreach (var userId in selectedUserIds)
-                {
-                    _context.CustomerNotes.Add(new CustomerNote
-                    {
-                        UserId = userId,
-                        ContactChannel = "CSKH",
-                        NoteContent = note.Trim(),
-                        CreatedAt = DateTime.UtcNow
-                    });
-                }
-                await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = $"Đã thêm ghi chú nội bộ cho {selectedUserIds.Count} khách hàng!";
-            }
-            return RedirectToPage(new { keyword = Keyword, memberTier = MemberTier, minPoint = MinPoint, maxPoint = MaxPoint });
-        }
-
-        public async Task<IActionResult> OnPostSendMarketingAsync([FromForm] List<string> selectedUserIds, [FromForm] string subject, [FromForm] string content)
-        {
-            if (selectedUserIds != null && selectedUserIds.Any() && !string.IsNullOrWhiteSpace(subject))
-            {
-                string msg = $"{subject.Trim()}: {content?.Trim()}";
-                foreach (var userId in selectedUserIds)
-                {
-                    _context.Notifications.Add(new Notification
-                    {
-                        UserId = userId,
-                        Message = msg.Length > 500 ? msg.Substring(0, 500) : msg,
-                        IsRead = false,
-                        CreatedAt = DateTime.UtcNow
-                    });
-                }
-                await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = $"Đã gửi thông báo ưu đãi / marketing thành công tới {selectedUserIds.Count} khách hàng!";
-            }
-            return RedirectToPage(new { keyword = Keyword, memberTier = MemberTier, minPoint = MinPoint, maxPoint = MaxPoint });
+            Customers = list.OrderByDescending(c => c.TotalSpent).ThenByDescending(c => c.FPoints).ToList();
         }
     }
 }

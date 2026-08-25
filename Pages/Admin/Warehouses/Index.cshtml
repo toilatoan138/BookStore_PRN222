@@ -3,7 +3,7 @@
 @{
     Layout = "_AdminLayout";
     ViewData["Title"] = Model.Overview.IsSuperAdmin ? "Tổng Quan Kho Toàn Quốc" : $"Tổng Quan {Model.Overview.UserBranchName}";
-    ViewData["Subtitle"] = Model.Overview.IsSuperAdmin ? "Báo cáo giám sát tồn kho, phân bổ 3 miền và luân chuyển hàng hóa chuỗi BookStore" : $"Theo dõi số liệu tồn kho và vận hành chi nhánh {Model.Overview.UserBranchName}";
+    ViewData["Subtitle"] = Model.Overview.IsSuperAdmin ? "Báo cáo giám sát tồn kho, phân bổ các chi nhánh và luân chuyển hàng hóa" : $"Theo dõi số liệu tồn kho và vận hành chi nhánh {Model.Overview.UserBranchName}";
 }
 
 <!-- ACTION BAR -->
@@ -23,7 +23,7 @@
         }
     </div>
     <div class="d-flex gap-2">
-        <a asp-page="/Admin/Warehouses/StockMatrix" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm">
+        <a asp-page="/Admin/Warehouses/StockMatrix" class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm fw-semibold">
             <i class="fa-solid fa-boxes-stacked me-1"></i> Ma trận tồn kho
         </a>
         <a asp-page="/Admin/Warehouses/Transfer" class="btn btn-warning btn-sm text-dark fw-bold rounded-pill px-3 shadow-sm">
@@ -31,27 +31,27 @@
         </a>
         @if (Model.Overview.IsSuperAdmin && Model.Overview.InconsistentBookCount > 0)
         {
-            <a asp-page="/Admin/Warehouses/Reconcile" class="btn btn-danger btn-sm rounded-pill px-3 shadow-sm">
+            <a asp-page="/Admin/Warehouses/Reconcile" class="btn btn-danger btn-sm rounded-pill px-3 shadow-sm fw-bold animate__animated animate__pulse animate__infinite">
                 <i class="fa-solid fa-triangle-exclamation me-1"></i> Phát hiện @Model.Overview.InconsistentBookCount lệch tồn!
             </a>
         }
     </div>
 </div>
 
-<!-- 4 KPI CARDS -->
+<!-- 4 KPI CARDS (VÁ LỖI UI: Sử dụng class chuẩn Bootstrap 5 để đảm bảo độ tương phản) -->
 <div class="row g-3 mb-4">
     <div class="col-xl-3 col-md-6">
-        <div class="card shadow-sm border-0 rounded-4 h-100 bg-gradient text-white" style="background: linear-gradient(135deg, #1e3a8a, #3b82f6);">
+        <div class="card shadow-sm border-0 rounded-4 h-100 bg-primary text-white">
             <div class="card-body p-4">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <div class="text-uppercase small fw-bold opacity-75">Tổng Tồn Kho</div>
-                        <div class="fs-2 fw-bolder mt-1">@Model.Overview.TotalBooksInStock.ToString("N0") <span class="fs-6 fw-normal opacity-75">cuốn</span></div>
-                        <div class="small opacity-75 mt-2">
+                        <div class="text-uppercase small fw-bold text-white-50">Tổng Tồn Kho</div>
+                        <div class="fs-2 fw-bolder mt-1">@Model.Overview.TotalBooksInStock.ToString("N0") <span class="fs-6 fw-normal text-white-50">cuốn</span></div>
+                        <div class="small text-white-50 mt-2">
                             <i class="fa-solid fa-book me-1"></i>Trên @Model.Overview.TotalSkus.ToString("N0") đầu sách (SKU)
                         </div>
                     </div>
-                    <div class="p-3 bg-white bg-opacity-20 rounded-4 shadow-sm">
+                    <div class="p-3 bg-white bg-opacity-25 rounded-4 shadow-sm">
                         <i class="fa-solid fa-boxes-stacked fa-2x"></i>
                     </div>
                 </div>
@@ -60,17 +60,17 @@
     </div>
 
     <div class="col-xl-3 col-md-6">
-        <div class="card shadow-sm border-0 rounded-4 h-100 text-white" style="background: linear-gradient(135deg, #065f46, #10b981);">
+        <div class="card shadow-sm border-0 rounded-4 h-100 bg-success text-white">
             <div class="card-body p-4">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <div class="text-uppercase small fw-bold opacity-75">Giá Trị Tồn (Giá Vốn)</div>
-                        <div class="fs-2 fw-bolder mt-1">@Model.Overview.TotalCostValue.ToString("N0") <span class="fs-6 fw-normal opacity-75">đ</span></div>
-                        <div class="small opacity-75 mt-2">
+                        <div class="text-uppercase small fw-bold text-white-50">Giá Trị Tồn (Giá Vốn)</div>
+                        <div class="fs-2 fw-bolder mt-1">@Model.Overview.TotalCostValue.ToString("N0") <span class="fs-6 fw-normal text-white-50">đ</span></div>
+                        <div class="small text-white-50 mt-2">
                             <i class="fa-solid fa-coins me-1"></i>Vốn hàng tồn kho
                         </div>
                     </div>
-                    <div class="p-3 bg-white bg-opacity-20 rounded-4 shadow-sm">
+                    <div class="p-3 bg-white bg-opacity-25 rounded-4 shadow-sm">
                         <i class="fa-solid fa-vault fa-2x"></i>
                     </div>
                 </div>
@@ -79,17 +79,17 @@
     </div>
 
     <div class="col-xl-3 col-md-6">
-        <div class="card shadow-sm border-0 rounded-4 h-100 text-white" style="background: linear-gradient(135deg, #854d0e, #eab308);">
+        <div class="card shadow-sm border-0 rounded-4 h-100 bg-warning text-dark">
             <div class="card-body p-4">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <div class="text-uppercase small fw-bold opacity-75">Giá Trị Bán Ước Tính</div>
+                        <div class="text-uppercase small fw-bold text-dark opacity-75">Giá Trị Bán Ước Tính</div>
                         <div class="fs-2 fw-bolder mt-1">@Model.Overview.TotalRetailValue.ToString("N0") <span class="fs-6 fw-normal opacity-75">đ</span></div>
                         <div class="small opacity-75 mt-2">
                             <i class="fa-solid fa-tags me-1"></i>Theo niêm yết bán lẻ
                         </div>
                     </div>
-                    <div class="p-3 bg-white bg-opacity-20 rounded-4 shadow-sm">
+                    <div class="p-3 bg-dark bg-opacity-10 rounded-4 shadow-sm">
                         <i class="fa-solid fa-sack-dollar fa-2x"></i>
                     </div>
                 </div>
@@ -98,17 +98,17 @@
     </div>
 
     <div class="col-xl-3 col-md-6">
-        <div class="card shadow-sm border-0 rounded-4 h-100 text-white" style="background: linear-gradient(135deg, #991b1b, #ef4444);">
+        <div class="card shadow-sm border-0 rounded-4 h-100 bg-danger text-white">
             <div class="card-body p-4">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <div class="text-uppercase small fw-bold opacity-75">Cảnh Báo Sắp Hết</div>
-                        <div class="fs-2 fw-bolder mt-1">@Model.Overview.LowStockCount <span class="fs-6 fw-normal opacity-75">đầu sách</span></div>
-                        <div class="small opacity-75 mt-2">
+                        <div class="text-uppercase small fw-bold text-white-50">Cảnh Báo Sắp Hết</div>
+                        <div class="fs-2 fw-bolder mt-1">@Model.Overview.LowStockCount <span class="fs-6 fw-normal text-white-50">đầu sách</span></div>
+                        <div class="small text-white-50 mt-2">
                             <i class="fa-solid fa-triangle-exclamation me-1"></i>Tồn kho &le; 5 cuốn
                         </div>
                     </div>
-                    <div class="p-3 bg-white bg-opacity-20 rounded-4 shadow-sm">
+                    <div class="p-3 bg-white bg-opacity-25 rounded-4 shadow-sm">
                         <i class="fa-solid fa-bell fa-2x"></i>
                     </div>
                 </div>
@@ -127,7 +127,7 @@
                     <h5 class="card-title mb-0 fw-bold text-dark d-flex align-items-center">
                         <i class="fa-solid fa-network-wired text-primary me-2"></i>Thống Kê Tồn Kho Theo Chi Nhánh Toàn Quốc
                     </h5>
-                    <a asp-page="/Admin/Warehouses/Branches" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+                    <a asp-page="/Admin/Warehouses/Branches" class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-semibold">
                         <i class="fa-solid fa-gear me-1"></i> Quản lý kho
                     </a>
                 </div>
@@ -156,9 +156,19 @@
                                             <small class="text-muted">@branch.Address, @branch.City</small>
                                         </td>
                                         <td>
-                                            <span class="badge bg-light text-dark border">
-                                                <i class="fa-solid fa-user-tie text-primary me-1"></i>@(branch.ManagerName ?? "Chưa gán")
-                                            </span>
+                                            <!-- VÁ LỖI UX: Đánh dấu đỏ chi nhánh chưa có Admin để SuperAdmin dễ phát hiện -->
+                                            @if (string.IsNullOrEmpty(branch.ManagerName))
+                                            {
+                                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">
+                                                    <i class="fa-solid fa-user-xmark me-1"></i> Chưa gán quản lý
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-light text-dark border px-2 py-1">
+                                                    <i class="fa-solid fa-user-tie text-primary me-1"></i>@branch.ManagerName
+                                                </span>
+                                            }
                                         </td>
                                         <td class="text-center fw-bold text-primary">@branch.TotalSkus.ToString("N0")</td>
                                         <td class="text-center">
@@ -197,7 +207,8 @@
             <div class="card shadow-sm border-0 rounded-4 h-100 bg-white">
                 <div class="card-header bg-white py-3 border-0 border-bottom">
                     <h5 class="card-title mb-0 fw-bold text-dark d-flex align-items-center">
-                        <i class="fa-solid fa-chart-pie text-warning me-2"></i>Tỷ Trọng Tồn Kho 3 Miền
+                        <!-- VÁ LỖI LOGIC: Tiêu đề biểu đồ động theo số lượng chi nhánh -->
+                        <i class="fa-solid fa-chart-pie text-warning me-2"></i>Tỷ Trọng Tồn Kho @Model.Overview.BranchSummaries.Count Chi Nhánh
                     </h5>
                 </div>
                 <div class="card-body p-4 d-flex flex-column align-items-center justify-content-between">
@@ -221,7 +232,7 @@
 }
 
 <!-- SÁCH CẦN BỔ SUNG & LỊCH SỬ BIẾN ĐỘNG GẦN ĐÂY -->
-<div class="row g-4">
+<div class="row g-4 mb-4">
     <!-- BẢNG CẢNH BÁO SÁCH SẮP HẾT -->
     <div class="col-lg-6">
         <div class="card shadow-sm border-0 rounded-4 h-100 bg-white">
@@ -229,7 +240,7 @@
                 <h5 class="card-title mb-0 fw-bold text-danger d-flex align-items-center">
                     <i class="fa-solid fa-triangle-exclamation me-2"></i>Sách Sắp Hết Hàng (&le; 5 cuốn)
                 </h5>
-                <a asp-page="/Admin/Warehouses/StockMatrix" asp-route-lowStockOnly="true" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                <a asp-page="/Admin/Warehouses/StockMatrix" asp-route-lowStockOnly="true" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-semibold">
                     Xem tất cả (@Model.Overview.LowStockCount)
                 </a>
             </div>
@@ -277,7 +288,7 @@
                                                 </div>
                                             </div>
                                         </td>
-                                        <td><span class="badge bg-light text-dark border">@book.Category?.Name</span></td>
+                                        <td><span class="badge bg-light text-dark border">@(book.Category?.Name ?? "Chung")</span></td>
                                         <td class="text-center">
                                             <span class="badge @(book.StockQuantity == 0 ? "bg-danger" : "bg-warning text-dark") fs-6 fw-bold rounded-pill px-3">
                                                 @book.StockQuantity
@@ -287,7 +298,7 @@
                                             <a asp-page="/Admin/Warehouses/Transfer" asp-route-bookId="@book.Id" class="btn btn-sm btn-outline-warning text-dark rounded-pill px-2" title="Điều chuyển sách này">
                                                 <i class="fa-solid fa-dolly"></i> Chuyển
                                             </a>
-                                            <a asp-page="/Admin/PurchaseOrders/Index" class="btn btn-sm btn-outline-success rounded-pill px-2" title="Nhập hàng">
+                                            <a asp-page="/Admin/PurchaseOrders/Index" class="btn btn-sm btn-outline-success rounded-pill px-2" title="Nhập hàng NCC">
                                                 <i class="fa-solid fa-cart-plus"></i>
                                             </a>
                                         </td>
@@ -308,7 +319,7 @@
                 <h5 class="card-title mb-0 fw-bold text-dark d-flex align-items-center">
                     <i class="fa-solid fa-clock-rotate-left text-primary me-2"></i>Biến Động Tồn Kho Gần Đây
                 </h5>
-                <a asp-page="/Admin/Warehouses/Reports" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                <a asp-page="/Admin/Warehouses/Reports" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold">
                     Xem chi tiết XNT
                 </a>
             </div>
@@ -336,10 +347,10 @@
                                 @foreach (var h in Model.Overview.RecentMovements)
                                 {
                                     <tr>
-                                        <td class="ps-4">@h.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                        <td class="ps-4">@h.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
                                         <td>
-                                            <span class="text-truncate d-inline-block fw-bold" style="max-width: 140px;" title="@h.Book?.Title">
-                                                @h.Book?.Title
+                                            <span class="text-truncate d-inline-block fw-bold text-dark" style="max-width: 140px;" title="@h.Book?.Title">
+                                                @(h.Book?.Title ?? "N/A")
                                             </span>
                                         </td>
                                         <td>
@@ -365,11 +376,21 @@
                                                     break;
                                             }
                                         </td>
-                                        <td class="text-center fw-bold @(h.QuantityChanged >= 0 ? "text-success" : "text-danger")">
+                                        <td class="text-center fw-bold fs-6 @(h.QuantityChanged > 0 ? "text-success" : "text-danger")">
                                             @(h.QuantityChanged > 0 ? "+" + h.QuantityChanged : h.QuantityChanged.ToString())
                                         </td>
                                         <td class="pe-4">
-                                            <small class="text-muted">@(h.CreatedBy?.FullName ?? h.CreatedBy?.UserName ?? "Hệ thống")</small>
+                                            <!-- VÁ LỖI AUDIT LOG: Tách biệt rõ System Auto vs Human Action -->
+                                            @if (h.CreatedBy == null || h.CreatedBy.FullName == "System")
+                                            {
+                                                <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2 py-1">
+                                                    <i class="fa-solid fa-robot me-1"></i>Hệ thống tự động
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted"><i class="fa-solid fa-user-gear me-1 text-primary"></i>@(h.CreatedBy.FullName ?? h.CreatedBy.UserName)</span>
+                                            }
                                         </td>
                                     </tr>
                                 }
@@ -386,7 +407,7 @@
     @if (Model.Overview.IsSuperAdmin)
     {
         <script>
-            document.addEventListener("DOMContentLoaded", function () {
+            document.addEventListener("DOMContentLoaded", function() {
                 const ctx = document.getElementById('branchDistributionChart');
                 if (ctx) {
                     const labels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Overview.BranchSummaries.Select(b => b.BranchName)));

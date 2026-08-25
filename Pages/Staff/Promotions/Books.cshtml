@@ -8,6 +8,22 @@
 
 <div class="container-fluid px-0">
 
+    <!-- THÔNG BÁO HỆ THỐNG -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show py-2 mb-3 small" role="alert">
+            <i class="fa-solid fa-circle-check me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show py-2 mb-3 small" role="alert">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
     <!-- HEADER -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <a asp-page="/Staff/Promotions/Index" class="btn btn-outline-secondary btn-sm shadow-sm">
@@ -19,9 +35,18 @@
             SÁCH TRONG ĐỢT FLASH SALE
         </h4>
 
-        <button type="button" class="btn btn-danger btn-sm shadow-sm fw-bold" data-bs-toggle="modal" data-bs-target="#addBookModal">
-            <i class="fa-solid fa-plus me-1"></i> Thêm Sách Vào Sale
-        </button>
+        @if (Model.PromotionInfo != null && Model.PromotionInfo.IsActive && Model.PromotionInfo.EndDate >= DateTime.UtcNow)
+        {
+            <button type="button" class="btn btn-danger btn-sm shadow-sm fw-bold" data-bs-toggle="modal" data-bs-target="#addBookModal">
+                <i class="fa-solid fa-plus me-1"></i> Thêm Sách Vào Sale
+            </button>
+        }
+        else
+        {
+            <button type="button" class="btn btn-secondary btn-sm shadow-sm fw-bold" disabled title="Chương trình này đã khóa hoặc hết hạn">
+                <i class="fa-solid fa-lock me-1"></i> Sale Đã Đóng
+            </button>
+        }
     </div>
 
     @if (Model.PromotionInfo != null)
@@ -40,7 +65,7 @@
                 </div>
                 <div>
                     <span class="badge bg-primary-subtle text-primary border border-primary-subtle fs-6 px-3 py-2 fw-bold">
-                        @Model.PromotionInfo.PromotionBooks.Count đầu sách tham gia
+                        @(Model.PromotionInfo.PromotionBooks?.Count ?? 0) đầu sách tham gia
                     </span>
                 </div>
             </div>
@@ -62,7 +87,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @if (!Model.PromotionInfo.PromotionBooks.Any())
+                        @if (Model.PromotionInfo.PromotionBooks == null || !Model.PromotionInfo.PromotionBooks.Any())
                         {
                             <tr>
                                 <td colspan="7" class="text-center text-muted py-4">
@@ -76,7 +101,10 @@
                             foreach (var pb in Model.PromotionInfo.PromotionBooks)
                             {
                                 index++;
-                                decimal discountedPrice = (pb.Book?.Price ?? 0) * (100 - Model.PromotionInfo.DiscountPercent) / 100m;
+                                decimal rawDiscountedPrice = (pb.Book?.Price ?? 0) * (100 - Model.PromotionInfo.DiscountPercent) / 100m;
+                                // Test 4: Làm tròn giá tiền tránh số lẻ thập phân
+                                long cleanDiscountedPrice = (long)Math.Round(rawDiscountedPrice);
+
                                 <tr>
                                     <td class="text-center fw-bold text-muted">@index</td>
                                     <td class="text-center">
@@ -97,7 +125,7 @@
                                         @((pb.Book?.Price ?? 0).ToString("N0"))đ
                                     </td>
                                     <td class="text-center fw-bold text-danger fs-6">
-                                        @discountedPrice.ToString("N0")đ
+                                        @cleanDiscountedPrice.ToString("N0")đ
                                     </td>
                                     <td class="text-center">
                                         <form method="post" asp-page-handler="RemoveBook" asp-route-promoId="@Model.PromotionInfo.PromoId" asp-route-bookId="@pb.BookId"
@@ -159,13 +187,32 @@
                                             </div>
                                         </td>
                                         <td class="fw-bold text-dark">@b.Price.ToString("N0")đ</td>
-                                        <td><span class="badge bg-secondary">@b.StockQuantity</span></td>
+                                        <td>
+                                            @if (b.StockQuantity > 0)
+                                            {
+                                                <span class="badge bg-secondary">@b.StockQuantity</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-danger">Hết hàng</span>
+                                            }
+                                        </td>
                                         <td class="text-center">
-                                            <form method="post" asp-page-handler="AddBook" asp-route-promoId="@Model.Id" asp-route-bookId="@b.Id">
-                                                <button type="submit" class="btn btn-sm btn-success rounded-pill px-3 fw-bold">
-                                                    <i class="fa-solid fa-plus me-1"></i> Thêm
+                                            @if (b.StockQuantity > 0)
+                                            {
+                                                <form method="post" asp-page-handler="AddBook" asp-route-promoId="@Model.Id" asp-route-bookId="@b.Id">
+                                                    <button type="submit" class="btn btn-sm btn-success rounded-pill px-3 fw-bold">
+                                                        <i class="fa-solid fa-plus me-1"></i> Thêm
+                                                    </button>
+                                                </form>
+                                            }
+                                            else
+                                            {
+                                                <!-- Test 5: Không cho phép thêm sách hết tồn kho -->
+                                                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-bold" disabled title="Không thể thêm sách đang hết hàng">
+                                                    Hết hàng
                                                 </button>
-                                            </form>
+                                            }
                                         </td>
                                     </tr>
                                 }

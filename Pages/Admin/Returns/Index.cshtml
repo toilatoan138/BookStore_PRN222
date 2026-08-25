@@ -7,89 +7,128 @@
 }
 
 <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+    <!-- THÔNG BÁO HỆ THỐNG -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show py-2 mb-3 small" role="alert">
+            <i class="fa-solid fa-circle-check me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show py-2 mb-3 small" role="alert">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
     <!-- STATUS TABS -->
-    <div class="d-flex gap-2 mb-4">
+    <div class="d-flex flex-wrap gap-2 mb-4">
         <a asp-page="/Admin/Returns/Index" class="btn btn-sm rounded-pill px-3 @(!Model.Status.HasValue ? "btn-danger fw-bold" : "btn-light text-dark border")">
-            Tất cả (@Model.Returns.Count)
+            Tất cả (@Model.TotalCount)
         </a>
         <a asp-page="/Admin/Returns/Index" asp-route-status="0" class="btn btn-sm rounded-pill px-3 @(Model.Status == 0 ? "btn-danger fw-bold" : "btn-light text-dark border")">
-            Chờ duyệt (0)
+            Chờ duyệt (@Model.PendingCount)
         </a>
         <a asp-page="/Admin/Returns/Index" asp-route-status="1" class="btn btn-sm rounded-pill px-3 @(Model.Status == 1 ? "btn-danger fw-bold" : "btn-light text-dark border")">
-            Đã duyệt trả
+            Đã duyệt trả (@Model.ApprovedCount)
         </a>
         <a asp-page="/Admin/Returns/Index" asp-route-status="3" class="btn btn-sm rounded-pill px-3 @(Model.Status == 3 ? "btn-danger fw-bold" : "btn-light text-dark border")">
-            Đã hoàn tiền
+            Đã hoàn tiền (@Model.RefundedCount)
         </a>
         <a asp-page="/Admin/Returns/Index" asp-route-status="2" class="btn btn-sm rounded-pill px-3 @(Model.Status == 2 ? "btn-danger fw-bold" : "btn-light text-dark border")">
-            Từ chối
+            Từ chối (@Model.RejectedCount)
         </a>
     </div>
 
     <!-- RETURNS TABLE -->
     <div class="table-responsive">
-        <table class="table table-hover align-middle small">
+        <table class="table table-hover align-middle small mb-0">
             <thead class="table-light">
                 <tr>
-                    <th>Mã</th>
-                    <th>Đơn hàng</th>
-                    <th>Khách hàng</th>
-                    <th>Sản phẩm trả</th>
-                    <th>Lý do của khách</th>
-                    <th>Hoàn tiền tối đa</th>
-                    <th>Trạng thái</th>
-                    <th class="text-end">Tác vụ</th>
+                    <th style="width: 60px;">Mã</th>
+                    <th style="width: 90px;">Đơn hàng</th>
+                    <th style="width: 160px;">Khách hàng</th>
+                    <th style="min-width: 220px;">Sản phẩm trả</th>
+                    <th style="min-width: 180px;">Lý do của khách</th>
+                    <th style="width: 130px;">Hoàn tiền tối đa</th>
+                    <th style="width: 130px;">Trạng thái</th>
+                    <th style="width: 120px;" class="text-center">Tác vụ</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach (var r in Model.Returns)
+                @if (!Model.Returns.Any())
                 {
                     <tr>
-                        <td class="fw-bold">#@r.ReturnId</td>
-                        <td>
-                            <a asp-page="/Admin/Orders/Detail" asp-route-id="@r.OrderId" class="fw-bold text-danger">
-                                #@r.OrderId
-                            </a>
-                        </td>
-                        <td>
-                            <div>@r.Order?.FullName</div>
-                            <small class="text-muted">@r.Order?.PhoneNumber</small>
-                        </td>
-                        <td>
-                            <div class="fw-semibold">@r.Book?.Title</div>
-                            <small class="text-muted">SL: x@r.Quantity</small>
-                        </td>
-                        <td class="text-muted" style="max-width: 250px;">
-                            @r.CustomerReason
-                        </td>
-                        <td class="fw-bold text-success">@r.MaxRefundableAmount.ToString("N0")đ</td>
-                        <td>
-                            @switch (r.Status)
-                            {
-                                case 0:
-                                    <span class="badge bg-warning text-dark">Chờ duyệt</span>
-                                    break;
-                                case 1:
-                                    <span class="badge bg-info text-dark">Đã duyệt - Chờ nhận sách</span>
-                                    break;
-                                case 3:
-                                    <span class="badge bg-success">Đã hoàn tiền</span>
-                                    break;
-                                case 2:
-                                    <span class="badge bg-secondary">Từ chối</span>
-                                    break;
-                            }
-                        </td>
-                        <td class="text-end">
-                            @if (r.Status == 0)
-                            {
-                                <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3"
-                                        onclick="openReviewModal(@r.ReturnId, @r.OrderId, '@r.Book?.Title', @r.Quantity, @r.MaxRefundableAmount, '@(r.BankName ?? "")', '@(r.AccountNumber ?? "")', '@(r.AccountOwner ?? "")')">
-                                    Xử lý yêu cầu
-                                </button>
-                            }
+                        <td colspan="8" class="text-center text-muted py-4">
+                            <i class="fa-regular fa-folder-open fa-2x mb-2 d-block text-secondary"></i>
+                            Không có yêu cầu trả hàng nào.
                         </td>
                     </tr>
+                }
+                else
+                {
+                    @foreach (var r in Model.Returns)
+                    {
+                        var effectiveMaxRefund = (r.Order != null && r.Order.TotalAmount > 0)
+                            ? r.Order.TotalAmount
+                            : (r.MaxRefundableAmount > 0 ? r.MaxRefundableAmount : ((r.Price > 0 ? r.Price : (r.Book?.Price ?? 0)) * (r.Quantity > 0 ? r.Quantity : 1)));
+
+                        <tr>
+                            <td class="fw-bold">#@r.ReturnId</td>
+                            <td>
+                                <a asp-page="/Admin/Orders/Detail" asp-route-id="@r.OrderId" class="fw-bold text-danger text-decoration-none">
+                                    #@r.OrderId
+                                </a>
+                            </td>
+                            <td>
+                                <div class="fw-semibold">@(r.Order?.FullName ?? "Khách hàng")</div>
+                                <small class="text-muted">@(r.Order?.PhoneNumber ?? "Chưa có SĐT")</small>
+                            </td>
+                            <td>
+                                <div class="fw-semibold text-break">@(r.Book?.Title ?? "Toàn bộ đơn hàng")</div>
+                                <small class="text-muted">SL: x@(r.Quantity > 0 ? r.Quantity : 1)</small>
+                            </td>
+                            <td class="text-break" style="max-width: 220px;">
+                                <span>@r.CustomerReason</span>
+                            </td>
+                            <td class="fw-bold text-success">@effectiveMaxRefund.ToString("N0")đ</td>
+                            <td>
+                                @switch (r.Status)
+                                {
+                                    case 0:
+                                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle">Chờ duyệt</span>
+                                        break;
+                                    case 1:
+                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Đã duyệt trả</span>
+                                        break;
+                                    case 3:
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle">Đã hoàn tiền</span>
+                                        break;
+                                    case 2:
+                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Từ chối</span>
+                                        break;
+                                    default:
+                                        <span class="badge bg-secondary">@r.Status</span>
+                                        break;
+                                }
+                            </td>
+                            <td class="text-center">
+                                @if (r.Status == 0 || r.Status == 1)
+                                {
+                                    <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3"
+                                            onclick="openReviewModal(@r.ReturnId, @r.OrderId, '@r.Book?.Title', @(r.Quantity > 0 ? r.Quantity : 1), @effectiveMaxRefund, '@(r.BankName ?? "")', '@(r.AccountNumber ?? "")', '@(r.AccountOwner ?? "")')">
+                                        Xử lý yêu cầu
+                                    </button>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small"><i class="fa-solid fa-check-double me-1"></i>Hoàn tất</span>
+                                }
+                            </td>
+                        </tr>
+                    }
                 }
             </tbody>
         </table>
@@ -99,43 +138,46 @@
 <!-- REVIEW MODAL -->
 <div class="modal fade" id="reviewModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content rounded-4 border-0">
+        <div class="modal-content rounded-4 border-0 shadow overflow-hidden">
             <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title fw-bold">Xử lý Yêu cầu Trả hàng</h5>
+                <h5 class="modal-title fw-bold fs-6">Xử lý Yêu cầu Trả hàng</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form method="post" asp-page-handler="Review">
+            <form method="post" asp-page-handler="Review" id="formReviewReturn">
                 <input type="hidden" id="reviewReturnId" name="id" />
                 <div class="modal-body p-4">
-                    <div class="p-3 bg-light rounded-3 mb-3 small">
-                        <div><strong>Sản phẩm:</strong> <span id="revBookTitle"></span></div>
-                        <div><strong>Số lượng trả:</strong> <span id="revQty"></span></div>
-                        <div><strong>Tiền hoàn tối đa:</strong> <span id="revMaxAmount" class="text-danger fw-bold"></span></div>
-                        <div class="mt-2 text-muted" id="revBankInfo"></div>
+                    <div class="p-3 bg-light rounded-3 mb-3 small border">
+                        <div class="mb-1"><strong>Sản phẩm:</strong> <span id="revBookTitle"></span></div>
+                        <div class="mb-1"><strong>Số lượng trả:</strong> <span id="revQty"></span></div>
+                        <div class="mb-1"><strong>Tiền hoàn tối đa (Tổng đơn):</strong> <span id="revMaxAmount" class="text-danger fw-bold"></span></div>
+                        <div class="text-muted mt-2" id="revBankInfo"></div>
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label fw-semibold small">Quyết định xử lý</label>
-                        <select name="newStatus" class="form-select" required>
-                            <option value="1">1. Duyệt trả hàng (Chờ nhận lại sách tại kho)</option>
+                        <label class="form-label fw-semibold small">Quyết định xử lý <span class="text-danger">*</span></label>
+                        <select name="newStatus" id="newStatusSelect" class="form-select" onchange="handleStatusChange()" required>
                             <option value="3">3. Duyệt & Hoàn tiền ngay vào Ví BookStore</option>
+                            <option value="1">1. Duyệt trả hàng (Chờ nhận lại sách tại kho)</option>
                             <option value="2">2. Từ chối yêu cầu trả hàng</option>
                         </select>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold small">Số tiền hoàn vào Ví (VNĐ)</label>
-                        <input type="number" id="refundAmountInput" name="refundAmount" class="form-control" />
+                    <div class="mb-3" id="refundGroup">
+                        <label class="form-label fw-semibold small">Số tiền hoàn vào Ví (VNĐ) <span class="text-danger">*</span></label>
+                        <input type="number" id="refundAmountInput" name="refundAmount" class="form-control fw-bold text-danger" placeholder="Nhập số tiền..." required />
+                        <div class="form-text text-muted">Số tiền hoàn phải lớn hơn 0 và không vượt quá tổng giá trị đơn hàng.</div>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label fw-semibold small">Ghi chú phản hồi cho khách hàng</label>
-                        <textarea name="note" rows="3" class="form-control form-control-sm" placeholder="Nhập lý do hoặc hướng dẫn gửi lại sách..."></textarea>
+                        <textarea name="note" rows="3" maxlength="500" class="form-control form-control-sm" placeholder="Nhập lý do hoặc hướng dẫn gửi lại sách..."></textarea>
                     </div>
                 </div>
                 <div class="modal-footer border-0 pt-0">
-                    <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Đóng</button>
-                    <button type="submit" class="btn btn-danger rounded-3 fw-bold px-4">Xác nhận xử lý</button>
+                    <button type="button" class="btn btn-light rounded-pill px-3" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" id="btnSubmitReview" class="btn btn-danger rounded-pill fw-bold px-4">
+                        <i class="fa-solid fa-check me-1"></i>Xác nhận xử lý
+                    </button>
                 </div>
             </form>
         </div>
@@ -143,12 +185,18 @@
 </div>
 
 <script>
+    let globalMaxRefund = 0;
+
     function openReviewModal(id, orderId, bookTitle, qty, maxAmount, bank, accNo, owner) {
+        globalMaxRefund = parseFloat(maxAmount) || 0;
+
         document.getElementById('reviewReturnId').value = id;
-        document.getElementById('revBookTitle').innerText = bookTitle;
+        document.getElementById('revBookTitle').innerText = bookTitle || "Toàn bộ đơn hàng";
         document.getElementById('revQty').innerText = qty;
-        document.getElementById('revMaxAmount').innerText = maxAmount.toLocaleString('vi-VN') + 'đ';
-        document.getElementById('refundAmountInput').value = maxAmount;
+        document.getElementById('revMaxAmount').innerText = globalMaxRefund.toLocaleString('vi-VN') + 'đ';
+
+        const amountInput = document.getElementById('refundAmountInput');
+        amountInput.value = globalMaxRefund > 0 ? globalMaxRefund : "";
 
         let bankInfo = '';
         if (bank && accNo) {
@@ -156,6 +204,52 @@
         }
         document.getElementById('revBankInfo').innerText = bankInfo;
 
+        document.getElementById('newStatusSelect').value = "3";
+        handleStatusChange();
+
         new bootstrap.Modal(document.getElementById('reviewModal')).show();
     }
+
+    function handleStatusChange() {
+        const statusVal = document.getElementById('newStatusSelect').value;
+        const refundGroup = document.getElementById('refundGroup');
+        const refundInput = document.getElementById('refundAmountInput');
+
+        if (statusVal === "3") {
+            refundGroup.style.display = "block";
+            refundInput.setAttribute("required", "required");
+        } else {
+            refundGroup.style.display = "none";
+            refundInput.removeAttribute("required");
+        }
+    }
+
+    // CHẶN ĐUA LỆNH (TEST 3) & BỘ LỌC CLIENT VALIDATION (TEST 1, TEST 2)
+    document.getElementById('formReviewReturn').addEventListener('submit', function(e) {
+        const statusVal = document.getElementById('newStatusSelect').value;
+        const amountInput = document.getElementById('refundAmountInput');
+        const amount = parseFloat(amountInput.value) || 0;
+
+        if (statusVal === "3") {
+            if (amount <= 0) {
+                alert("Số tiền hoàn vào ví phải lớn hơn 0 VNĐ!");
+                e.preventDefault();
+                return;
+            }
+            if (globalMaxRefund > 0 && amount > globalMaxRefund) {
+                alert("Số tiền hoàn (" + amount.toLocaleString('vi-VN') + "đ) không được vượt quá tổng giá trị đơn hàng (" + globalMaxRefund.toLocaleString('vi-VN') + "đ)!");
+                e.preventDefault();
+                return;
+            }
+        }
+
+        const btn = document.getElementById('btnSubmitReview');
+        if (btn.disabled) {
+            e.preventDefault();
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Đang xử lý...';
+    });
 </script>

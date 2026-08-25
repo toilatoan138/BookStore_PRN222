@@ -6,6 +6,23 @@
     ViewData["Subtitle"] = "Thiết lập danh mục chi nhánh, trạng thái hoạt động và bổ nhiệm Admin quản lý từng kho";
 }
 
+<!-- THÔNG BÁO HỆ THỐNG -->
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show py-2 mb-3 small shadow-sm" role="alert">
+        <i class="fa-solid fa-circle-check me-2"></i>@TempData["SuccessMessage"]
+        <button type="button" class="btn-close py-2" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show py-3 mb-3 shadow-sm" role="alert">
+        <i class="fa-solid fa-triangle-exclamation me-2 fs-5"></i>
+        <strong class="me-1">Thao tác bị từ chối:</strong> @TempData["ErrorMessage"]
+        <button type="button" class="btn-close py-3" data-bs-dismiss="alert"></button>
+    </div>
+}
+
 <!-- ACTION BAR -->
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
     <div class="d-flex align-items-center gap-2">
@@ -15,7 +32,8 @@
         <span class="badge bg-light text-dark border p-2">Tổng @Model.Branches.Count chi nhánh</span>
     </div>
     <div>
-        <button type="button" class="btn btn-primary btn-sm fw-bold rounded-pill px-4 shadow-sm" onclick="openBranchModal(0, '', '', '', true)">
+        <button type="button" class="btn btn-primary btn-sm fw-bold rounded-pill px-4 shadow-sm btn-edit-branch"
+                data-id="0" data-name="" data-address="" data-city="">
             <i class="fa-solid fa-plus me-1"></i> Thêm Chi Nhánh Mới
         </button>
     </div>
@@ -51,11 +69,17 @@
                         <div class="p-3 bg-light rounded-4 mb-3 d-flex justify-content-between align-items-center border">
                             <div class="small">
                                 <span class="text-muted d-block" style="font-size: 0.75rem;">Admin Phụ Trách:</span>
-                                <span class="fw-bold text-dark">
-                                    <i class="fa-solid fa-user-tie text-primary me-1"></i>@(br.ManagerName ?? "Chưa bổ nhiệm")
-                                </span>
+                                @if (string.IsNullOrEmpty(br.ManagerName))
+                                {
+                                    <span class="fw-bold text-danger"><i class="fa-solid fa-user-xmark me-1"></i>Chưa bổ nhiệm</span>
+                                }
+                                else
+                                {
+                                    <span class="fw-bold text-dark"><i class="fa-solid fa-user-tie text-primary me-1"></i>@br.ManagerName</span>
+                                }
                             </div>
-                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="openAssignModal(@br.BranchId, '@Html.Raw(br.BranchName.Replace("'", "\\'"))')">
+                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 btn-assign-manager"
+                                    data-id="@br.BranchId" data-name="@br.BranchName">
                                 <i class="fa-solid fa-user-gear me-1"></i> Bổ nhiệm
                             </button>
                         </div>
@@ -71,7 +95,7 @@
                             <div class="col-4">
                                 <div class="p-2 border rounded-3 bg-light">
                                     <div class="text-muted" style="font-size: 0.72rem;">Tổng Tồn</div>
-                                    <div class="fw-bold fs-6 text-dark">@br.TotalStock.ToString("N0")</div>
+                                    <div class="fw-bold fs-6 @(br.TotalStock == 0 ? "text-danger" : "text-dark")">@br.TotalStock.ToString("N0")</div>
                                 </div>
                             </div>
                             <div class="col-4">
@@ -91,10 +115,14 @@
                             <i class="fa-solid fa-boxes-stacked me-1"></i> Xem tồn kho
                         </a>
                         <div class="d-flex gap-1">
-                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle p-2 d-flex align-items-center justify-content-center" onclick="openBranchModal(@br.BranchId, '@Html.Raw(br.BranchName.Replace("'", "\\'"))', '@Html.Raw(br.Address?.Replace("'", "\\'") ?? "")', '@Html.Raw(br.City?.Replace("'", "\\'") ?? "")', @(br.IsActive.ToString().ToLower()))" title="Chỉnh sửa thông tin" style="width: 34px; height: 34px;">
+                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle p-2 d-flex align-items-center justify-content-center btn-edit-branch"
+                                    data-id="@br.BranchId" data-name="@br.BranchName" data-address="@br.Address" data-city="@br.City"
+                                    title="Chỉnh sửa thông tin" style="width: 34px; height: 34px;">
                                 <i class="fa-solid fa-pen"></i>
                             </button>
-                            <form method="post" asp-page-handler="ToggleStatus" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn thay đổi trạng thái hoạt động của chi nhánh này?');">
+
+                            <form method="post" asp-page-handler="ToggleStatus" class="d-inline"
+                                  onsubmit="return confirm('@(br.IsActive && br.TotalStock > 0 ? $"CẢNH BÁO: Kho này đang có {br.TotalStock} cuốn sách. Hành động này sẽ bị hệ thống từ chối. Bạn vẫn muốn thử?" : "Bạn có chắc chắn muốn thay đổi trạng thái hoạt động của chi nhánh này?")');">
                                 <input type="hidden" name="id" value="@br.BranchId" />
                                 @if (br.IsActive)
                                 {
@@ -133,22 +161,22 @@
 
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted">Tên kho / Chi nhánh <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="branchNameInput" name="Name" placeholder="VD: Chi nhánh Cần Thơ..." required />
+                        <input type="text" class="form-control" id="branchNameInput" name="Name" placeholder="VD: Chi nhánh Cần Thơ..." required maxlength="100" />
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted">Tỉnh / Thành phố <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="branchCityInput" name="City" placeholder="VD: Cần Thơ, Hải Phòng..." required />
+                        <input type="text" class="form-control" id="branchCityInput" name="City" placeholder="VD: Cần Thơ, Hải Phòng..." required maxlength="50" />
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label small fw-bold text-muted">Địa chỉ chi tiết</label>
-                        <input type="text" class="form-control" id="branchAddressInput" name="Address" placeholder="VD: Số 123 Đường 3/2, Q. Ninh Kiều..." />
+                        <input type="text" class="form-control" id="branchAddressInput" name="Address" placeholder="VD: Số 123 Đường 3/2, Q. Ninh Kiều..." maxlength="200" />
                     </div>
 
-                    <div class="form-check form-switch mb-0">
-                        <input class="form-check-input" type="checkbox" id="branchIsActiveInput" name="IsActive" value="true" checked />
-                        <label class="form-check-label small fw-bold text-dark" for="branchIsActiveInput">Kích hoạt hoạt động</label>
+                    <div class="alert alert-info small mb-0 rounded-3">
+                        <i class="fa-solid fa-circle-info me-1"></i>
+                        Chi nhánh mới tạo sẽ tự động kích hoạt. Việc đóng cửa kho chỉ thực hiện được khi kho không còn hàng tồn.
                     </div>
                 </div>
                 <div class="modal-footer bg-light">
@@ -187,14 +215,9 @@
                             <option value="">-- Chọn tài khoản nhân sự / Admin --</option>
                             @foreach (var u in Model.AdminUsers)
                             {
-                                <option value="@u.Id">@u.FullName (@u.UserName) - @(u.BranchId == null ? "Super Admin" : $"Đang ở Chi nhánh #{u.BranchId}")</option>
+                                <option value="@u.Id">@u.FullName (@u.UserName) - @(u.BranchId == null ? "Trung tâm điều phối" : $"Chi nhánh #{u.BranchId}")</option>
                             }
                         </select>
-                    </div>
-
-                    <div class="alert alert-info small mb-0 rounded-3">
-                        <i class="fa-solid fa-circle-info me-1"></i>
-                        Sau khi bổ nhiệm, tài khoản này sẽ trở thành <strong>Admin Chi Nhánh</strong> phụ trách quản lý tồn kho và đơn hàng của kho này.
                     </div>
                 </div>
                 <div class="modal-footer bg-light">
@@ -210,21 +233,22 @@
 
 @section Scripts {
     <script>
-        function openBranchModal(id, name, address, city, isActive) {
-            document.getElementById('branchIdInput').value = id;
-            document.getElementById('branchNameInput').value = name;
-            document.getElementById('branchAddressInput').value = address;
-            document.getElementById('branchCityInput').value = city;
-            document.getElementById('branchIsActiveInput').checked = isActive;
-            const modal = new bootstrap.Modal(document.getElementById('branchModal'));
-            modal.show();
-        }
+        document.querySelectorAll('.btn-edit-branch').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.getElementById('branchIdInput').value = this.dataset.id;
+                document.getElementById('branchNameInput').value = this.dataset.name;
+                document.getElementById('branchAddressInput').value = this.dataset.address;
+                document.getElementById('branchCityInput').value = this.dataset.city;
+                new bootstrap.Modal(document.getElementById('branchModal')).show();
+            });
+        });
 
-        function openAssignModal(branchId, branchName) {
-            document.getElementById('assignBranchIdInput').value = branchId;
-            document.getElementById('assignBranchNameInput').value = branchName;
-            const modal = new bootstrap.Modal(document.getElementById('assignModal'));
-            modal.show();
-        }
+        document.querySelectorAll('.btn-assign-manager').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.getElementById('assignBranchIdInput').value = this.dataset.id;
+                document.getElementById('assignBranchNameInput').value = this.dataset.name;
+                new bootstrap.Modal(document.getElementById('assignModal')).show();
+            });
+        });
     </script>
 }

@@ -50,7 +50,8 @@ namespace BookStore.Pages.Admin.Warehouses
         [BindProperty(SupportsGet = true)]
         public string? Keyword { get; set; }
 
-        // Tổng hợp
+        // TỔNG HỢP KPI
+        public int TotalOpeningStockAll { get; set; } = 0; // VÁ LỖI LOGIC: Thêm Tồn Đầu Kỳ
         public int TotalImportAll { get; set; } = 0;
         public int TotalExportAll { get; set; } = 0;
         public int TotalTransferInAll { get; set; } = 0;
@@ -58,10 +59,10 @@ namespace BookStore.Pages.Admin.Warehouses
         public int TotalAdjustmentAll { get; set; } = 0;
         public int TotalCurrentStockAll { get; set; } = 0;
 
-        public async Task OnGetAsync()
+        public async Task<IActionResult> OnGetAsync()
         {
             var user = await _userManager.GetUserAsync(User);
-            if (user == null) return;
+            if (user == null) return RedirectToPage("/Account/Login");
 
             var roleInfo = await _warehouseAdminService.GetUserRoleInfoAsync(user.Id);
             IsSuperAdmin = roleInfo.IsSuperAdmin;
@@ -75,8 +76,21 @@ namespace BookStore.Pages.Admin.Warehouses
                 BranchId = UserBranchId.Value;
             }
 
+            // VÁ LỖI LOGIC: Chặn lọc ngày ngược (Từ ngày lớn hơn Đến ngày)
+            if (FromDate.HasValue && ToDate.HasValue && FromDate > ToDate)
+            {
+                TempData["ErrorMessage"] = "Lỗi bộ lọc: 'Từ ngày' không được lớn hơn 'Đến ngày'!";
+                // Tự động đảo ngược ngày để tránh crash
+                var temp = FromDate;
+                FromDate = ToDate;
+                ToDate = temp;
+            }
+
             ReportItems = await _warehouseAdminService.GetXntReportAsync(user.Id, BranchId, FromDate, ToDate);
 
+            // Tính tổng số liệu cho các thẻ KPI
+            // LƯU Ý: Yêu cầu XntReportItemDto phải có thuộc tính OpeningStock
+            TotalOpeningStockAll = ReportItems.Sum(r => r.OpeningStock);
             TotalImportAll = ReportItems.Sum(r => r.TotalImport);
             TotalExportAll = ReportItems.Sum(r => r.TotalExport);
             TotalTransferInAll = ReportItems.Sum(r => r.TotalTransferIn);
@@ -86,6 +100,8 @@ namespace BookStore.Pages.Admin.Warehouses
 
             HistoryList = await _warehouseAdminService.GetHistoryAsync(
                 user.Id, BranchId, TransactionType, FromDate, ToDate, Keyword, 100);
+
+            return Page();
         }
 
         public async Task<IActionResult> OnGetExportCsvAsync(int? branchId, DateTime? fromDate, DateTime? toDate)
@@ -96,16 +112,16 @@ namespace BookStore.Pages.Admin.Warehouses
             var items = await _warehouseAdminService.GetXntReportAsync(user.Id, branchId, fromDate, toDate);
 
             var sb = new StringBuilder();
-            sb.AppendLine("ID Sách,Tên Sách,Danh Mục,Nhập Kho (PO),Xuất Bán (Orders),Nhận Chuyển Kho,Xuất Chuyển Kho,Điều Chỉnh Kiểm Kê,Tồn Kho Hiện Tại");
+            // VÁ LỖI LOGIC: Bổ sung cột Tồn Đầu Kỳ vào file Excel
+            sb.AppendLine("ID Sách,Tên Sách,Danh Mục,Tồn Đầu Kỳ,Nhập Kho (PO),Xuất Bán (Orders),Nhận Chuyển Kho,Xuất Chuyển Kho,Điều Chỉnh Kiểm Kê,Tồn Kho Cuối Kỳ");
 
             foreach (var item in items)
             {
                 string titleEscaped = $"\"{item.Title.Replace("\"", "\"\"")}\"";
                 string catEscaped = $"\"{item.CategoryName?.Replace("\"", "\"\"") ?? "N/A"}\"";
-                sb.AppendLine($"{item.BookId},{titleEscaped},{catEscaped},{item.TotalImport},{item.TotalExport},{item.TotalTransferIn},{item.TotalTransferOut},{item.TotalAdjustment},{item.CurrentStock}");
+                sb.AppendLine($"{item.BookId},{titleEscaped},{catEscaped},{item.OpeningStock},{item.TotalImport},{item.TotalExport},{item.TotalTransferIn},{item.TotalTransferOut},{item.TotalAdjustment},{item.CurrentStock}");
             }
 
-            // UTF-8 BOM for Excel Vietnamese compatibility
             var preamble = Encoding.UTF8.GetPreamble();
             var data = Encoding.UTF8.GetBytes(sb.ToString());
             var result = new byte[preamble.Length + data.Length];

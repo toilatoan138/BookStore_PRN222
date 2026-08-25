@@ -11,16 +11,14 @@
         <div class="d-flex align-items-center gap-3">
             <div class="border-start ps-3 border-3 border-info">
                 <h4 class="fw-bold text-info m-0"><i class="fa-solid fa-folder-open me-2"></i>QUẢN LÝ DANH MỤC</h4>
-                <small class="text-muted">Xem, thêm mới và quản lý các thể loại sách</small>
+                <small class="text-muted">Xem, thêm mới và tìm kiếm các thể loại sách</small>
             </div>
         </div>
-        <!-- NÚT MỞ CỬA SỔ MODAL THÊM MỚI -->
         <button type="button" class="btn btn-primary fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#createCatModal">
             <i class="fa-solid fa-plus me-1"></i> Thêm Danh Mục
         </button>
     </div>
 
-    <!-- KHU VỰC THÔNG BÁO -->
     @if (TempData["SuccessMessage"] != null)
     {
         <div class="alert alert-success alert-dismissible fade show shadow-sm">
@@ -36,64 +34,83 @@
         </div>
     }
 
+    <!-- BỘ LỌC TÌM KIẾM -->
+    <div class="bg-white p-3 rounded-4 shadow-sm mb-4">
+        <form method="get" class="d-flex gap-2" style="max-width: 500px;">
+            <input type="text" asp-for="SearchKeyword" class="form-control" placeholder="Tìm theo mã hoặc tên danh mục..." />
+            <button type="submit" class="btn btn-dark fw-bold px-4"><i class="fa-solid fa-magnifying-glass"></i></button>
+            @if (!string.IsNullOrEmpty(Model.SearchKeyword))
+            {
+                <a asp-page="/Admin/Categories/Index" class="btn btn-outline-secondary"><i class="fa-solid fa-xmark"></i></a>
+            }
+        </form>
+    </div>
+
     <!-- BẢNG DỮ LIỆU -->
     <div class="bg-white p-4 rounded-4 shadow-sm mb-4">
-        <table class="table table-bordered table-hover align-middle w-100 mb-0">
-            <thead class="table-dark text-center">
-                <tr>
-                    <th style="width: 10%;">Mã</th>
-                    <th style="width: 30%;" class="text-start">Tên Danh Mục</th>
-                    <th style="width: 25%;">Danh Mục Cha</th>
-                    <th style="width: 15%;">Số Sách</th>
-                    <th style="width: 20%;">Thao Tác</th>
-                </tr>
-            </thead>
-            <tbody>
-                @if (!Model.Categories.Any())
-                {
-                    <tr><td colspan="5" class="text-center py-4 text-muted">Không có danh mục nào. Hãy thêm mới!</td></tr>
-                }
-                else
-                {
-                    foreach (var item in Model.Categories)
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle w-100 mb-0">
+                <thead class="table-dark text-center">
+                    <tr>
+                        <th style="width: 8%;">Mã</th>
+                        <th style="width: 32%;" class="text-start">Tên Danh Mục</th>
+                        <th style="width: 20%;">Danh Mục Cha</th>
+                        <th style="width: 15%;">Số Sách</th>
+                        <th style="width: 25%;">Thao Tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Categories.Any())
                     {
-                        <tr>
-                            <td class="text-center fw-bold text-muted">#@item.Id</td>
-                            <td>
-                                <strong class="text-dark">@item.Name</strong>
-                                <br><small class="text-muted">@item.Description</small>
-                            </td>
-                            <td class="text-center">
-                                @if (item.Parent != null)
-                                {
-                                    <span class="badge bg-secondary">@item.Parent.Name</span>
-                                }
-                                else
-                                {
-                                    <span class="text-muted small fst-italic">-- Gốc --</span>
-                                }
-                            </td>
-                            <td class="text-center">
-                                <span class="badge bg-info text-dark rounded-pill px-3 py-1">@item.Books.Count sách</span>
-                            </td>
-                            <td class="text-center">
-                                <!-- Nút Sửa mở Modal -->
-                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 me-1"
-                                        onclick="openEditModal(@item.Id, '@item.Name', '@(item.Description ?? "")', '@(item.ImageUrl ?? "")', @(item.ParentId ?? 0))">
-                                    <i class="fa-solid fa-pen-to-square"></i>
-                                </button>
-                                <!-- Nút Xóa -->
-                                <form method="post" asp-page-handler="Delete" asp-route-id="@item.Id" class="d-inline" onsubmit="return confirm('Cảnh báo: Bạn có chắc chắn muốn xóa danh mục này?');">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </button>
-                                </form>
-                            </td>
-                        </tr>
+                        <tr><td colspan="5" class="text-center py-4 text-muted">Không tìm thấy dữ liệu phù hợp.</td></tr>
                     }
-                }
-            </tbody>
-        </table>
+                    else
+                    {
+                        foreach (var item in Model.Categories)
+                        {
+                            <tr>
+                                <td class="text-center fw-bold text-muted">#@item.Id</td>
+                                <td>
+                                    <strong class="text-dark d-block">@item.Name</strong>
+                                    <!-- VÁ LỖI VỠ GIAO DIỆN: Thêm text-truncate và max-width -->
+                                    <small class="text-muted d-inline-block text-truncate" style="max-width: 300px;" title="@item.Description">
+                                        @(string.IsNullOrEmpty(item.Description) ? "Không có mô tả" : item.Description)
+                                    </small>
+                                </td>
+                                <td class="text-center">
+                                    @if (item.Parent != null)
+                                    {
+                                        <span class="badge bg-secondary">@item.Parent.Name</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted small fst-italic">-- Gốc --</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-info text-dark rounded-pill px-3 py-1">@(item.Books?.Count ?? 0) sách</span>
+                                </td>
+                                <td class="text-center">
+                                    <!-- VÁ LỖI XSS: Sử dụng data-* attributes -->
+                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 me-1 btn-edit-cat"
+                                            data-id="@item.Id"
+                                            data-name="@item.Name"
+                                            data-desc="@item.Description"
+                                            data-parent="@(item.ParentId ?? 0)">
+                                        <i class="fa-solid fa-pen-to-square me-1"></i>Sửa
+                                    </button>
+                                    <form method="post" asp-page-handler="Delete" asp-route-id="@item.Id" class="d-inline" onsubmit="return confirm('Cảnh báo: Bạn có chắc chắn muốn xóa danh mục này?');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3">
+                                            <i class="fa-solid fa-trash me-1"></i>Xóa
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
@@ -109,7 +126,7 @@
                 <div class="modal-body p-4">
                     <div class="mb-3">
                         <label class="form-label fw-bold">Tên danh mục <span class="text-danger">*</span></label>
-                        <input asp-for="Input.Name" class="form-control" placeholder="Ví dụ: Truyện Tranh..." required />
+                        <input asp-for="Input.Name" class="form-control" placeholder="Ví dụ: Truyện Tranh..." required maxlength="100" />
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-bold">Danh mục cha</label>
@@ -122,8 +139,8 @@
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Mô tả (Không bắt buộc)</label>
-                        <textarea asp-for="Input.Description" class="form-control" rows="3" placeholder="Nhập mô tả ngắn..."></textarea>
+                        <label class="form-label fw-bold">Mô tả</label>
+                        <textarea asp-for="Input.Description" class="form-control" rows="3" placeholder="Nhập mô tả ngắn..." maxlength="500"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer bg-light border-0 rounded-bottom-4">
@@ -148,7 +165,7 @@
                 <div class="modal-body p-4">
                     <div class="mb-3">
                         <label class="form-label fw-bold">Tên danh mục <span class="text-danger">*</span></label>
-                        <input id="editCatName" name="Input.Name" class="form-control" required />
+                        <input id="editCatName" name="Input.Name" class="form-control" required maxlength="100" />
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-bold">Danh mục cha</label>
@@ -162,7 +179,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-bold">Mô tả</label>
-                        <textarea id="editCatDesc" name="Input.Description" class="form-control" rows="3"></textarea>
+                        <textarea id="editCatDesc" name="Input.Description" class="form-control" rows="3" maxlength="500"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer bg-light border-0 rounded-bottom-4">
@@ -174,13 +191,25 @@
     </div>
 </div>
 
-<!-- Kịch bản Javascript để bơm dữ liệu vào cửa sổ Sửa -->
-<script>
-    function openEditModal(id, name, desc, img, parentId) {
-        document.getElementById('editCatId').value = id;
-        document.getElementById('editCatName').value = name;
-        document.getElementById('editCatDesc').value = desc;
-        document.getElementById('editCatParent').value = parentId || 0;
-        new bootstrap.Modal(document.getElementById('editCatModal')).show();
-    }
-</script>
+@section Scripts {
+    <script>
+        // Kịch bản Javascript an toàn
+        document.querySelectorAll('.btn-edit-cat').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.getElementById('editCatId').value = this.dataset.id;
+                document.getElementById('editCatName').value = this.dataset.name;
+                document.getElementById('editCatDesc').value = this.dataset.desc;
+
+                let parentVal = this.dataset.parent;
+                // Nếu đang tự trỏ vào chính nó (tránh lỗi vòng lặp cha-con)
+                let selectElem = document.getElementById('editCatParent');
+                Array.from(selectElem.options).forEach(opt => {
+                    opt.disabled = (opt.value === this.dataset.id);
+                });
+
+                selectElem.value = parentVal;
+                new bootstrap.Modal(document.getElementById('editCatModal')).show();
+            });
+        });
+    </script>
+}

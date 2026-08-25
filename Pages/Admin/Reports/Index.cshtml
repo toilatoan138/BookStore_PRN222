@@ -6,6 +6,40 @@
     ViewData["Subtitle"] = "Phân tích doanh số theo danh mục sách và phương thức thanh toán";
 }
 
+<!-- THÔNG BÁO HỆ THỐNG -->
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show py-2 mb-3 small" role="alert">
+        <i class="fa-solid fa-triangle-exclamation me-2"></i>@TempData["ErrorMessage"]
+        <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<!-- BỘ LỌC THỜI GIAN (TỪ NGÀY - ĐẾN NGÀY) -->
+<div class="card border-0 shadow-sm rounded-4 p-3 bg-white mb-4">
+    <form method="get" id="reportFilterForm" class="row g-2 align-items-end">
+        <div class="col-md-3 col-sm-6">
+            <label class="form-label small fw-bold text-muted mb-1">Từ ngày</label>
+            <input type="date" asp-for="FromDate" id="fromDateInput" class="form-control form-control-sm" />
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <label class="form-label small fw-bold text-muted mb-1">Đến ngày</label>
+            <input type="date" asp-for="ToDate" id="toDateInput" class="form-control form-control-sm" />
+        </div>
+        <div class="col-md-6 col-sm-12 d-flex gap-2 justify-content-md-end mt-3 mt-md-0">
+            <button type="submit" class="btn btn-sm btn-danger px-3 rounded-pill fw-bold">
+                <i class="fa-solid fa-filter me-1"></i>Lọc dữ liệu
+            </button>
+            <a asp-page="./Index" class="btn btn-sm btn-outline-secondary px-3 rounded-pill">
+                <i class="fa-solid fa-rotate-left me-1"></i>Tất cả
+            </a>
+            <button type="button" class="btn btn-sm btn-light border rounded-pill px-2" onclick="setQuickDate(0)">Hôm nay</button>
+            <button type="button" class="btn btn-sm btn-light border rounded-pill px-2" onclick="setQuickDate(30)">Tháng này</button>
+        </div>
+    </form>
+</div>
+
+<!-- THẺ CHỈ SỐ TỔNG QUAN -->
 <div class="row g-3 mb-4">
     <div class="col-md-4">
         <div class="card border-0 shadow-sm rounded-4 p-4 bg-white text-center">
@@ -33,9 +67,9 @@
         <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
             <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-layer-group text-danger me-2"></i>Doanh số theo Thể loại sách</h5>
 
-            @if (!Model.CategoryRevenues.Any())
+            @if (!Model.CategoryRevenues.Any() || Model.TotalDeliveredOrders == 0)
             {
-                <p class="text-muted small py-4 text-center">Chưa có dữ liệu đơn hàng hoàn tất.</p>
+                <p class="text-muted small py-4 text-center">Chưa có dữ liệu đơn hàng trong khoảng thời gian này.</p>
             }
             else
             {
@@ -69,9 +103,9 @@
         <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
             <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-chart-pie text-primary me-2"></i>Tỷ trọng Phương thức thanh toán</h5>
 
-            @if (!Model.PaymentShares.Any())
+            @if (!Model.PaymentShares.Any() || Model.TotalDeliveredOrders == 0)
             {
-                <p class="text-muted small py-4 text-center">Chưa có dữ liệu.</p>
+                <p class="text-muted small py-4 text-center">Chưa có dữ liệu giao dịch trong khoảng thời gian này.</p>
             }
             else
             {
@@ -94,3 +128,41 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        // TEST 2 (Client-side validation): Chặn đảo ngược ngày tháng
+        document.getElementById('reportFilterForm').addEventListener('submit', function(e) {
+            const fromDateVal = document.getElementById('fromDateInput').value;
+            const toDateVal = document.getElementById('toDateInput').value;
+
+            if (fromDateVal && toDateVal) {
+                const fromDate = new Date(fromDateVal);
+                const toDate = new Date(toDateVal);
+
+                if (fromDate > toDate) {
+                    alert("Ngày kết thúc phải lớn hơn hoặc bằng ngày bắt đầu!");
+                    e.preventDefault();
+                    return;
+                }
+            }
+        });
+
+        // Hàm chọn nhanh ngày
+        function setQuickDate(days) {
+            const today = new Date();
+            const toDateStr = today.toISOString().split('T')[0];
+            let fromDateStr = toDateStr;
+
+            if (days > 0) {
+                const pastDate = new Date();
+                pastDate.setDate(today.getDate() - days);
+                fromDateStr = pastDate.toISOString().split('T')[0];
+            }
+
+            document.getElementById('fromDateInput').value = fromDateStr;
+            document.getElementById('toDateInput').value = toDateStr;
+            document.getElementById('reportFilterForm').submit();
+        }
+    </script>
+}

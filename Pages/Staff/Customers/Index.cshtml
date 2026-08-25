@@ -6,33 +6,31 @@
     ViewData["Subtitle"] = "Theo dõi, phân khúc khách hàng theo hạng thẻ và chăm sóc cá nhân hóa";
 }
 
-@section Styles {
-    <style>
-        .avatar-circle {
-            width: 42px;
-            height: 42px;
-            background: linear-gradient(135deg, #e2e8f0, #cbd5e1);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: #334155;
-            font-size: 16px;
-        }
-    </style>
-}
-
 <div class="container-fluid px-0">
+    <!-- THÔNG BÁO HỆ THỐNG -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show py-2 mb-3 small" role="alert">
+            <i class="fa-solid fa-circle-check me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show py-2 mb-3 small" role="alert">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
 
-    <!-- TOP HEADER -->
+    <!-- HEADER -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div class="d-flex align-items-center gap-3">
             <a asp-page="/Staff/Index" class="btn btn-outline-secondary btn-sm shadow-sm">
                 <i class="fa-solid fa-chart-line me-1"></i> Dashboard
             </a>
             <div class="border-start ps-3">
-                <h4 class="fw-bold text-danger m-0">
+                <h4 class="fw-bold m-0 text-danger">
                     <i class="fa-solid fa-users-viewfinder me-2"></i>
                     QUẢN LÝ KHÁCH HÀNG
                 </h4>
@@ -45,150 +43,108 @@
         </a>
     </div>
 
-    <!-- FORM LỌC & BULK ACTIONS -->
-    <div class="bg-white p-4 rounded-4 shadow-sm mb-4">
-        <form method="get" class="row g-3 align-items-end mb-4">
-            <div class="col-md-12">
-                <div class="fw-bold text-danger"><i class="fa-solid fa-filter me-2"></i>Bộ lọc Khách hàng VIP:</div>
-            </div>
-
+    <!-- BỘ LỌC KHÁCH HÀNG VIP -->
+    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4">
+        <h6 class="fw-bold text-danger mb-3"><i class="fa-solid fa-filter me-2"></i>Bộ lọc Khách hàng VIP:</h6>
+        <form method="get" id="filterForm" class="row g-3 align-items-end">
             <div class="col-md-3">
-                <label class="form-label small text-muted mb-1">Hạng thành viên</label>
-                <select asp-for="MemberTier" class="form-select">
-                    <option value="all">-- Tất cả hạng --</option>
-                    <option value="diamond">💎 Kim Cương (&ge; 5.000 điểm)</option>
-                    <option value="gold">🥇 Vàng (2.000 - 4.999 điểm)</option>
-                    <option value="silver">🥈 Bạc (500 - 1.999 điểm)</option>
-                    <option value="bronze">🥉 Đồng (< 500 điểm)</option>
+                <label class="form-label small fw-bold text-muted">Hạng thành viên</label>
+                <select name="tier" class="form-select">
+                    <option value="">-- Tất cả hạng --</option>
+                    <option value="Đồng" selected="@(Model.Tier == "Đồng")">🥉 Đồng</option>
+                    <option value="Bạc" selected="@(Model.Tier == "Bạc")">🥈 Bạc</option>
+                    <option value="Vàng" selected="@(Model.Tier == "Vàng")">🥇 Vàng</option>
+                    <option value="Kim Cương" selected="@(Model.Tier == "Kim Cương")">💎 Kim Cương</option>
                 </select>
             </div>
-
             <div class="col-md-2">
-                <label class="form-label small text-muted mb-1">F-Point (Từ):</label>
-                <input type="number" asp-for="MinPoint" class="form-control" placeholder="VD: 500" />
+                <label class="form-label small fw-bold text-muted">F-Point (Từ):</label>
+                <input type="number" name="fromPoints" id="fromPointsInput" class="form-control" min="0" placeholder="VD: 500" value="@Model.FromPoints" />
             </div>
-
             <div class="col-md-2">
-                <label class="form-label small text-muted mb-1">F-Point (Đến):</label>
-                <input type="number" asp-for="MaxPoint" class="form-control" placeholder="VD: 5000" />
+                <label class="form-label small fw-bold text-muted">F-Point (Đến):</label>
+                <input type="number" name="toPoints" id="toPointsInput" class="form-control" min="0" placeholder="VD: 5000" value="@Model.ToPoints" />
             </div>
-
             <div class="col-md-3">
-                <label class="form-label small text-muted mb-1">Tìm kiếm</label>
-                <input type="text" asp-for="Keyword" class="form-control" placeholder="Nhập ID, Tên, Email, SĐT..." />
+                <label class="form-label small fw-bold text-muted">Tìm kiếm</label>
+                <input type="text" name="keyword" class="form-control" placeholder="Nhập ID, Tên, Email, SĐT..." value="@Model.Keyword" />
             </div>
-
             <div class="col-md-2 d-flex gap-2">
-                <button type="submit" class="btn btn-danger w-50 fw-semibold">Lọc</button>
-                <a asp-page="/Staff/Customers/Index" class="btn btn-outline-secondary w-50">Mặc định</a>
+                <button type="submit" class="btn btn-danger px-4 fw-bold w-100">
+                    <i class="fa-solid fa-filter me-1"></i>Lọc
+                </button>
+                <a asp-page="./Index" class="btn btn-outline-secondary">Mặc định</a>
             </div>
         </form>
+    </div>
 
-        <!-- BULK BUTTONS BAR -->
-        <div class="d-flex justify-content-between align-items-center mb-3 pt-3 border-top">
-            <div class="d-flex gap-2">
-                <button type="button" class="btn btn-sm btn-outline-info rounded-pill px-3 fw-semibold" onclick="openTagModal()">
-                    <i class="fa-solid fa-tags me-1"></i> Gắn nhãn phân loại
-                </button>
-                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-semibold" onclick="openNoteModal()">
-                    <i class="fa-solid fa-clipboard-user me-1"></i> Thêm ghi chú nội bộ
-                </button>
-            </div>
-            <button type="button" class="btn btn-sm btn-warning text-dark rounded-pill px-3 fw-bold shadow-sm" onclick="openMarketingModal()">
-                <i class="fa-solid fa-envelopes-bulk me-1"></i> Gửi Thông Báo Ưu Đãi
-            </button>
-        </div>
-
-        <!-- TABLE -->
+    <!-- TABLE -->
+    <div class="bg-white p-4 rounded-4 shadow-sm mb-4">
         <div class="table-responsive">
-            <table class="table table-bordered table-hover align-middle w-100 mb-0">
+            <table class="table table-bordered table-hover align-middle w-100 mb-0 small">
                 <thead class="table-light">
                     <tr>
-                        <th class="text-center" style="width: 4%;">
-                            <input type="checkbox" id="checkAllCustomers" class="form-check-input" onchange="toggleAllCustomers(this)" />
-                        </th>
-                        <th style="width: 25%;">Khách Hàng</th>
-                        <th style="width: 12%;">Ngày Tham Gia</th>
-                        <th class="text-center" style="width: 15%;">Hạng & F-Point</th>
-                        <th class="text-end" style="width: 14%;">Tổng Chi Tiêu</th>
-                        <th style="width: 18%;">Nhãn CRM & Ghi Chú</th>
-                        <th class="text-center" style="width: 12%;">Hành Động</th>
+                        <th>Khách Hàng</th>
+                        <th class="text-center" style="width: 140px;">Ngày Tham Gia</th>
+                        <th class="text-center" style="width: 150px;">Hạng & F-Point</th>
+                        <th class="text-center" style="width: 150px;">Tổng Chi Tiêu</th>
+                        <th>Nhãn CRM & Ghi Chú</th>
+                        <th class="text-center" style="width: 160px;">Hành Động</th>
                     </tr>
                 </thead>
                 <tbody>
                     @if (!Model.Customers.Any())
                     {
                         <tr>
-                            <td colspan="7" class="text-center text-muted py-4">Không tìm thấy khách hàng nào phù hợp bộ lọc.</td>
+                            <td colspan="6" class="text-center text-muted py-5">
+                                <i class="fa-solid fa-user-slash fa-2x mb-2 d-block text-secondary"></i>
+                                Không tìm thấy khách hàng nào phù hợp bộ lọc.
+                            </td>
                         </tr>
                     }
                     else
                     {
-                        foreach (var u in Model.Customers)
+                        @foreach (var c in Model.Customers)
                         {
                             <tr>
-                                <td class="text-center">
-                                    <input type="checkbox" class="form-check-input customer-cb" value="@u.Id" />
-                                </td>
                                 <td>
-                                    <div class="d-flex align-items-center gap-3">
-                                        <div class="avatar-circle">
-                                            @(string.IsNullOrEmpty(u.FullName) ? "U" : u.FullName.Substring(0, 1).ToUpper())
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="rounded-circle bg-light d-flex align-items-center justify-content-center fw-bold border text-secondary" style="width: 38px; height: 38px; min-width: 38px;">
+                                            @(string.IsNullOrEmpty(c.FullName) ? "K" : c.FullName.Substring(0, 1).ToUpper())
                                         </div>
                                         <div>
-                                            <strong class="text-dark d-block">@u.FullName</strong>
-                                            <small class="text-muted d-block">@u.Email</small>
-                                            <small class="text-muted"><i class="fa-solid fa-phone me-1"></i>@(u.PhoneNumber ?? "Chưa có SĐT")</small>
+                                            <div class="fw-bold text-dark">@(string.IsNullOrEmpty(c.FullName) ? "Khách hàng" : c.FullName)</div>
+                                            <div class="small text-muted">@c.Email</div>
+                                            <small class="text-muted d-block">
+                                                <i class="fa-solid fa-phone me-1"></i>@(string.IsNullOrEmpty(c.PhoneNumber) ? "Chưa có SĐT" : c.PhoneNumber)
+                                            </small>
                                         </div>
                                     </div>
                                 </td>
-                                <td class="small text-muted">@u.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")</td>
+                                <td class="text-center text-muted">@c.CreatedAt.ToString("dd/MM/yyyy")</td>
                                 <td class="text-center">
-                                    @switch (u.RankName)
-                                    {
-                                        case "Kim Cương":
-                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1 fw-bold">💎 Kim Cương</span>
-                                            break;
-                                        case "Vàng":
-                                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2 py-1 fw-bold">🥇 Vàng</span>
-                                            break;
-                                        case "Bạc":
-                                            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2 py-1 fw-bold">🥈 Bạc</span>
-                                            break;
-                                        default:
-                                            <span class="badge bg-light text-dark border px-2 py-1">🥉 Đồng</span>
-                                            break;
-                                    }
-                                    <div class="small fw-bold text-warning-emphasis mt-1">
-                                        <i class="fa-solid fa-coins me-1 text-warning"></i>@u.FPoints.ToString("N0") pts
+                                    <span class="badge @(c.MembershipTier == "Kim Cương" ? "bg-info text-dark" : c.MembershipTier == "Vàng" ? "bg-warning text-dark" : c.MembershipTier == "Bạc" ? "bg-secondary text-white" : "bg-light text-dark border") px-2 py-1 mb-1">
+                                        <i class="fa-solid fa-medal me-1"></i>@c.MembershipTier
+                                    </span>
+                                    <div class="fw-bold text-warning small">
+                                        <i class="fa-solid fa-coins me-1"></i>@c.FPoints pts
                                     </div>
                                 </td>
-                                <td class="text-end fw-bold text-danger fs-6">
-                                    @u.TotalSpend.ToString("N0")đ
+                                <td class="text-center fw-bold @(c.TotalSpent > 0 ? "text-danger" : "text-muted")">
+                                    @c.TotalSpent.ToString("N0")đ
                                 </td>
                                 <td>
-                                    @if (!string.IsNullOrEmpty(u.Tags))
+                                    @if (!string.IsNullOrEmpty(c.CrmTags))
                                     {
-                                        <div class="d-flex flex-wrap gap-1 mb-1">
-                                            @foreach (var tag in u.Tags.Split(',', StringSplitOptions.RemoveEmptyEntries))
-                                            {
-                                                <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle small">@tag.Trim()</span>
-                                            }
-                                        </div>
-                                    }
-                                    @if (u.CustomerNotes.Any())
-                                    {
-                                        <small class="text-muted fst-italic d-block text-truncate" style="max-width: 200px;" title="@u.CustomerNotes.Last().NoteContent">
-                                            <i class="fa-solid fa-note-sticky text-warning me-1"></i>@u.CustomerNotes.Last().NoteContent
-                                        </small>
+                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle me-1">@c.CrmTags</span>
                                     }
                                 </td>
                                 <td class="text-center text-nowrap">
-                                    <a asp-page="/Staff/Customers/Detail" asp-route-id="@u.Id" class="btn btn-sm btn-outline-danger rounded-pill px-2 me-1" title="Chi tiết">
+                                    <a asp-page="/Staff/Customers/Detail" asp-route-id="@c.Id" class="btn btn-sm btn-outline-danger rounded-pill px-2 me-1" title="Hồ sơ">
                                         <i class="fa-solid fa-id-card me-1"></i>Hồ sơ
                                     </a>
-                                    <a asp-page="/Staff/Chat" asp-route-userId="@u.Id" class="btn btn-sm btn-outline-success rounded-pill px-2" title="Chat">
-                                        <i class="fa-solid fa-comments"></i>
+                                    <a asp-page="/Staff/Chat" asp-route-userId="@c.Id" class="btn btn-sm btn-outline-success rounded-circle" title="Nhắn tin với khách">
+                                        <i class="fa-solid fa-comment-dots"></i>
                                     </a>
                                 </td>
                             </tr>
@@ -200,145 +156,29 @@
     </div>
 </div>
 
-<!-- ======================= MODAL GẮN NHÃN ======================= -->
-<div class="modal fade" id="tagModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content rounded-4 border-0 shadow">
-            <div class="modal-header bg-info text-white">
-                <h5 class="modal-title fw-bold"><i class="fa-solid fa-tags me-2"></i>Gắn Nhãn Phân Loại Khách Hàng</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <form method="post" asp-page-handler="ApplyTag" id="tagForm">
-                <div class="modal-body p-4">
-                    <div id="tagUserIdsContainer"></div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold small text-muted">Chọn hoặc nhập nhãn (Tag):</label>
-                        <input type="text" name="tag" class="form-control" list="tagOptions" placeholder="VD: Khách thân thiết, VIP Tiềm Năng..." required />
-                        <datalist id="tagOptions">
-                            <option value="VIP Kim Cương"></option>
-                            <option value="Khách Mua Nhiều"></option>
-                            <option value="Hay Khiếu Nại"></option>
-                            <option value="Khách Săn Sale"></option>
-                            <option value="Tiềm Năng"></option>
-                        </datalist>
-                    </div>
-                </div>
-                <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-secondary rounded-pill px-3" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-info text-white rounded-pill px-4 fw-bold">Áp Dụng Nhãn</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- ======================= MODAL THÊM GHI CHÚ NỘI BỘ ======================= -->
-<div class="modal fade" id="noteModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content rounded-4 border-0 shadow">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title fw-bold"><i class="fa-solid fa-clipboard-user me-2"></i>Thêm Ghi Chú Nội Bộ</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <form method="post" asp-page-handler="AddNote" id="noteForm">
-                <div class="modal-body p-4">
-                    <div id="noteUserIdsContainer"></div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold small text-muted">Nội dung ghi chú CSKH:</label>
-                        <textarea name="note" class="form-control" rows="3" placeholder="Nhập ghi chú sở thích, thói quen mua sắm..." required></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-secondary rounded-pill px-3" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">Lưu Ghi Chú</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- ======================= MODAL GỬI MAIL MARKETING / THÔNG BÁO ======================= -->
-<div class="modal fade" id="marketingModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content rounded-4 border-0 shadow">
-            <div class="modal-header bg-warning text-dark">
-                <h5 class="modal-title fw-bold"><i class="fa-solid fa-envelopes-bulk me-2"></i>Gửi Thông Báo Ưu Đãi / Marketing</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form method="post" asp-page-handler="SendMarketing" id="marketingForm">
-                <div class="modal-body p-4">
-                    <div id="marketingUserIdsContainer"></div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold small text-muted">Tiêu đề thông báo / Email:</label>
-                        <input type="text" name="subject" class="form-control" placeholder="VD: Tặng bạn Voucher giảm 20% tháng này!" required />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold small text-muted">Nội dung chi tiết:</label>
-                        <textarea name="content" class="form-control" rows="4" placeholder="Nhập nội dung thông điệp gửi tới khách hàng..." required></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-secondary rounded-pill px-3" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-warning rounded-pill px-4 fw-bold text-dark">Gửi Thông Báo</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
 @section Scripts {
     <script>
-        function toggleAllCustomers(master) {
-            document.querySelectorAll('.customer-cb').forEach(cb => cb.checked = master.checked);
-        }
+        document.getElementById('filterForm').addEventListener('submit', function(e) {
+            const fromVal = document.getElementById('fromPointsInput').value;
+            const toVal = document.getElementById('toPointsInput').value;
 
-        function getSelectedUserIds() {
-            const checked = document.querySelectorAll('.customer-cb:checked');
-            const ids = [];
-            checked.forEach(cb => ids.push(cb.value));
-            return ids;
-        }
-
-        function openTagModal() {
-            const ids = getSelectedUserIds();
-            if (ids.length === 0) {
-                alert("Vui lòng tích chọn ít nhất 1 khách hàng từ danh sách!");
+            if (fromVal !== '' && parseInt(fromVal) < 0) {
+                alert('Điểm F-Point bắt đầu không được là số âm!');
+                e.preventDefault();
                 return;
             }
-            const container = document.getElementById('tagUserIdsContainer');
-            container.innerHTML = '';
-            ids.forEach(id => {
-                container.innerHTML += `<input type="hidden" name="selectedUserIds" value="${id}" />`;
-            });
-            new bootstrap.Modal(document.getElementById('tagModal')).show();
-        }
 
-        function openNoteModal() {
-            const ids = getSelectedUserIds();
-            if (ids.length === 0) {
-                alert("Vui lòng tích chọn ít nhất 1 khách hàng từ danh sách!");
+            if (toVal !== '' && parseInt(toVal) < 0) {
+                alert('Điểm F-Point kết thúc không được là số âm!');
+                e.preventDefault();
                 return;
             }
-            const container = document.getElementById('noteUserIdsContainer');
-            container.innerHTML = '';
-            ids.forEach(id => {
-                container.innerHTML += `<input type="hidden" name="selectedUserIds" value="${id}" />`;
-            });
-            new bootstrap.Modal(document.getElementById('noteModal')).show();
-        }
 
-        function openMarketingModal() {
-            const ids = getSelectedUserIds();
-            if (ids.length === 0) {
-                alert("Vui lòng tích chọn ít nhất 1 khách hàng từ danh sách!");
+            if (fromVal !== '' && toVal !== '' && parseInt(fromVal) > parseInt(toVal)) {
+                alert('Điểm F-Point bắt đầu phải nhỏ hơn hoặc bằng điểm kết thúc!');
+                e.preventDefault();
                 return;
             }
-            const container = document.getElementById('marketingUserIdsContainer');
-            container.innerHTML = '';
-            ids.forEach(id => {
-                container.innerHTML += `<input type="hidden" name="selectedUserIds" value="${id}" />`;
-            });
-            new bootstrap.Modal(document.getElementById('marketingModal')).show();
-        }
+        });
     </script>
 }

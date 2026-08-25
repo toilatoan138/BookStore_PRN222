@@ -40,9 +40,17 @@ namespace BookStore.Pages.Staff.Tickets
 
         public async Task<IActionResult> OnPostReplyTicketAsync(int ticketId, string adminReply, string newStatus)
         {
+            // VÁ LỖI LOGIC: Bắt buộc phải có nội dung nếu đóng/phản hồi ticket
             if (string.IsNullOrWhiteSpace(adminReply))
             {
                 TempData["ErrorMessage"] = "Vui lòng nhập nội dung phản hồi ticket.";
+                return RedirectToPage(new { tab = "ticket" });
+            }
+
+            // VÁ BẢO MẬT: Chống lỗi tràn Database (Giả sử DB tối đa 500 ký tự)
+            if (adminReply.Length > 500)
+            {
+                TempData["ErrorMessage"] = "Nội dung phản hồi không được vượt quá 500 ký tự.";
                 return RedirectToPage(new { tab = "ticket" });
             }
 
@@ -50,7 +58,8 @@ namespace BookStore.Pages.Staff.Tickets
             if (ticket != null)
             {
                 ticket.AdminReply = adminReply.Trim();
-                ticket.Status = string.IsNullOrWhiteSpace(newStatus) ? "Replied" : newStatus;
+                // Bảo vệ thao tác đổi trạng thái bậy bạ
+                ticket.Status = (newStatus == "Closed") ? "Closed" : "Replied";
 
                 if (!string.IsNullOrEmpty(ticket.UserId))
                 {
@@ -75,9 +84,24 @@ namespace BookStore.Pages.Staff.Tickets
             var ret = await _context.ReturnRequests.FindAsync(returnId);
             if (ret != null)
             {
+                // VÁ LỖI LOGIC NGHIỆP VỤ: Chống lừa đảo, duyệt trùng lặp đơn đổi trả
+                // Kiểm tra xem cuốn sách trong đơn hàng này đã từng được duyệt (Status 1) hoặc Nhập kho (Status 3) ở một yêu cầu khác chưa
+                bool isDuplicateApproved = await _context.ReturnRequests.AnyAsync(r =>
+                    r.OrderId == ret.OrderId
+                    && r.BookId == ret.BookId
+                    && r.ReturnId != returnId
+                    && (r.Status == 1 || r.Status == 3));
+
+                if (isDuplicateApproved)
+                {
+                    TempData["ErrorMessage"] = "CẢNH BÁO: Cuốn sách này thuộc đơn hàng này đã được duyệt hoàn trả trong một yêu cầu khác!";
+                    return RedirectToPage(new { tab = "return" });
+                }
+
                 ret.Status = 1; // Approved - Awaiting Item & QC
                 ret.AdminNote = note?.Trim() ?? "Đã duyệt yêu cầu. Khách hàng vui lòng gửi lại sách để kho kiểm hàng.";
                 ret.ApprovedAt = DateTime.UtcNow;
+
                 await _context.SaveChangesAsync();
                 TempData["SuccessMessage"] = $"Đã duyệt đơn trả hàng #RET-{returnId}. Đơn đã chuyển sang kho để kiểm định QC!";
             }

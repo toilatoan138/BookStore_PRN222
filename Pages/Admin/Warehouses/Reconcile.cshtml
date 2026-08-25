@@ -6,6 +6,22 @@
     ViewData["Subtitle"] = "Tự động phát hiện và cân chỉnh chênh lệch số lượng giữa bảng tổng Books và các kho chi nhánh";
 }
 
+<!-- THÔNG BÁO HỆ THỐNG (Đã được bổ sung để hiển thị kết quả đồng bộ) -->
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show py-2 mb-3 small shadow-sm" role="alert">
+        <i class="fa-solid fa-circle-check me-2"></i>@TempData["SuccessMessage"]
+        <button type="button" class="btn-close py-2" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show py-2 mb-3 small shadow-sm" role="alert">
+        <i class="fa-solid fa-triangle-exclamation me-2"></i>@TempData["ErrorMessage"]
+        <button type="button" class="btn-close py-2" data-bs-dismiss="alert"></button>
+    </div>
+}
+
 <!-- ACTION BAR -->
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
     <div class="d-flex align-items-center gap-2">
@@ -16,7 +32,7 @@
     <div>
         @if (Model.Discrepancies.Any())
         {
-            <form method="post" asp-page-handler="ReconcileAll" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn tự động đồng bộ lại toàn bộ số lượng tồn kho của các đầu sách bị lệch?');">
+            <form method="post" asp-page-handler="ReconcileAll" class="d-inline" onsubmit="return confirm('CẢNH BÁO KẾ TOÁN:\n\nHệ thống sẽ tự động đồng bộ lại toàn bộ số lượng tồn kho của @Model.Discrepancies.Count đầu sách lệch về mức khớp với các kho chi nhánh.\n\nBạn có chắc chắn muốn thực hiện?');">
                 <button type="submit" class="btn btn-danger btn-sm fw-bold rounded-pill px-4 shadow-sm">
                     <i class="fa-solid fa-wrench me-1"></i> Tự Động Đồng Bộ Toàn Bộ (@Model.Discrepancies.Count đầu sách)
                 </button>
@@ -68,9 +84,9 @@
             <span class="badge bg-danger rounded-pill px-3">@Model.Discrepancies.Count đầu sách</span>
         </div>
         <div class="card-body p-0">
-            <div class="table-responsive">
+            <div class="table-responsive" style="max-height: 700px; overflow-y: auto;">
                 <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
+                    <thead class="table-light position-sticky top-0 shadow-sm" style="z-index: 10;">
                         <tr>
                             <th class="ps-4">ID Sách</th>
                             <th>Tên Sách</th>

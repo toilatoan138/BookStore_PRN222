@@ -1,3 +1,7 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using BookStore.Data;
 using BookStore.Models.Entities;
 using Microsoft.AspNetCore.Authorization;
@@ -24,7 +28,6 @@ namespace BookStore.Pages.Admin.Users
         public class UserViewModel : ApplicationUser
         {
             public string Role { get; set; } = "Customer";
-            // Inherits BranchId from ApplicationUser
         }
 
         public List<UserViewModel> Users { get; set; } = new();
@@ -33,9 +36,13 @@ namespace BookStore.Pages.Admin.Users
         [BindProperty(SupportsGet = true)]
         public string? Keyword { get; set; }
 
+        public string? CurrentUserId { get; set; }
+
         public async Task OnGetAsync()
         {
+            CurrentUserId = _userManager.GetUserId(User);
             Branches = await _context.Branches.OrderBy(b => b.Name).ToListAsync();
+
             var query = _context.Users.Include(u => u.Branch).AsNoTracking().AsQueryable();
 
             // Tìm kiếm thông minh theo Tên, Email hoặc Username
@@ -73,14 +80,21 @@ namespace BookStore.Pages.Admin.Users
             }
         }
 
-        // 1. Xử lý đổi trạng thái Khóa / Mở khóa tài khoản
+        // 1. TEST 1 (Backend): Xử lý đổi trạng thái Khóa / Mở khóa (Chặn tự khóa chính mình)
         public async Task<IActionResult> OnPostToggleStatusAsync(string userId)
         {
+            var currentUserId = _userManager.GetUserId(User);
+            if (userId == currentUserId)
+            {
+                TempData["ErrorMessage"] = "Bạn không thể tự khóa tài khoản của chính mình để tránh mất quyền truy cập hệ thống!";
+                return RedirectToPage(new { keyword = Keyword });
+            }
+
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
             {
                 TempData["ErrorMessage"] = "Không tìm thấy người dùng!";
-                return RedirectToPage();
+                return RedirectToPage(new { keyword = Keyword });
             }
 
             // Đảo ngược trạng thái Active <-> Banned
@@ -88,14 +102,34 @@ namespace BookStore.Pages.Admin.Users
             await _userManager.UpdateAsync(user);
 
             TempData["SuccessMessage"] = $"Đã cập nhật trạng thái tài khoản '{user.FullName}' thành công!";
-            return RedirectToPage();
+            return RedirectToPage(new { keyword = Keyword });
         }
 
-        // 2. Xử lý đổi Vai trò (Role) trực tiếp từ dropdown
+        // 2. TEST 1 & TEST 2 (Backend): Xử lý đổi Vai trò (Role)
         public async Task<IActionResult> OnPostChangeRoleAsync(string userId, string newRole)
         {
+            var currentUserId = _userManager.GetUserId(User);
+
+            // TEST 1 (Backend): Chặn Admin tự tước quyền hoặc hạ vai trò của chính mình
+            if (userId == currentUserId)
+            {
+                TempData["ErrorMessage"] = "Bạn không thể tự thay đổi hoặc tước quyền quản trị của chính mình!";
+                return RedirectToPage(new { keyword = Keyword });
+            }
+
             var user = await _userManager.FindByIdAsync(userId);
-            if (user == null) return RedirectToPage();
+            if (user == null)
+            {
+                TempData["ErrorMessage"] = "Không tìm thấy người dùng!";
+                return RedirectToPage(new { keyword = Keyword });
+            }
+
+            // TEST 2 (Backend): Chặn chuyển sang Staff hoặc Warehouse nếu chưa có chi nhánh
+            if ((newRole == "Staff" || newRole == "Warehouse") && (user.BranchId == null || user.BranchId == 0))
+            {
+                TempData["ErrorMessage"] = $"Không thể gán vai trò '{newRole}' vì tài khoản chưa có Chi nhánh trực thuộc. Vui lòng chọn Chi nhánh trước!";
+                return RedirectToPage(new { keyword = Keyword });
+            }
 
             var currentRoles = await _userManager.GetRolesAsync(user);
 
@@ -104,23 +138,37 @@ namespace BookStore.Pages.Admin.Users
             await _userManager.AddToRoleAsync(user, newRole);
 
             TempData["SuccessMessage"] = $"Đã chuyển vai trò của '{user.FullName}' sang {newRole}!";
-            return RedirectToPage();
+            return RedirectToPage(new { keyword = Keyword });
         }
 
-        // 3. Xử lý đổi Chi nhánh (Branch)
+        // 3. TEST 2 (Backend): Xử lý đổi Chi nhánh (Branch)
         public async Task<IActionResult> OnPostChangeBranchAsync(string userId, int? newBranchId)
         {
             var user = await _userManager.FindByIdAsync(userId);
-            if (user == null) return RedirectToPage();
+            if (user == null)
+            {
+                TempData["ErrorMessage"] = "Không tìm thấy người dùng!";
+                return RedirectToPage(new { keyword = Keyword });
+            }
 
-            if (newBranchId == 0) newBranchId = null; // 0 = Không có chi nhánh (Customer / SuperAdmin)
+            if (newBranchId == 0) newBranchId = null; // 0 = Không có chi nhánh
+
+            var roles = await _userManager.GetRolesAsync(user);
+            var primaryRole = roles.FirstOrDefault() ?? "Customer";
+
+            // TEST 2: Nếu là Staff hoặc Warehouse mà chọn gỡ bỏ chi nhánh -> Chặn lại
+            if ((primaryRole == "Staff" || primaryRole == "Warehouse") && !newBranchId.HasValue)
+            {
+                TempData["ErrorMessage"] = $"Tài khoản có vai trò '{primaryRole}' bắt buộc phải trực thuộc một Chi nhánh cụ thể!";
+                return RedirectToPage(new { keyword = Keyword });
+            }
 
             user.BranchId = newBranchId;
             await _userManager.UpdateAsync(user);
 
             var branchName = newBranchId.HasValue ? (await _context.Branches.FindAsync(newBranchId))?.Name : "Toàn hệ thống / Không có";
             TempData["SuccessMessage"] = $"Đã chuyển chi nhánh của '{user.FullName}' thành {branchName}!";
-            return RedirectToPage();
+            return RedirectToPage(new { keyword = Keyword });
         }
     }
 }

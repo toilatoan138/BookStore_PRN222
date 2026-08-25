@@ -8,6 +8,15 @@
 
 <div class="container-fluid px-0">
 
+    <!-- HIỂN THỊ LỖI NẾU CÓ -->
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show py-2 mb-3 small" role="alert">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
     <!-- HEADER -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div class="d-flex align-items-center gap-3">
@@ -53,25 +62,27 @@
     <!-- STATS SUMMARY CARDS -->
     <div class="row g-3 mb-4">
         <div class="col-md-3">
-            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white border-top border-4 border-success">
-                <small class="text-muted d-block">Tổng Doanh Thu</small>
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white border-top border-4 border-success h-100">
+                <small class="text-muted d-block">Doanh Thu Thực Tế</small>
                 <h3 class="fw-bold text-success mb-0 mt-1">@Model.TotalRevenue.ToString("N0")đ</h3>
+                <small class="text-muted" style="font-size: 11px;">(Đã trừ đơn hủy/trả)</small>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white border-top border-4 border-primary">
-                <small class="text-muted d-block">Đơn Hoàn Thành / Giao</small>
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white border-top border-4 border-primary h-100">
+                <small class="text-muted d-block">Đơn Đã Xử Lý / Giao</small>
                 <h3 class="fw-bold text-primary mb-0 mt-1">@Model.CompletedOrdersCount đơn</h3>
+                <small class="text-muted" style="font-size: 11px;">(Trừ Pending & Cancelled)</small>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white border-top border-4 border-warning">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white border-top border-4 border-warning h-100">
                 <small class="text-muted d-block">Sách Tiêu Thụ</small>
                 <h3 class="fw-bold text-warning-emphasis mb-0 mt-1">@Model.TotalBooksSold.ToString("N0") quyển</h3>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white border-top border-4 border-info">
+            <div class="card border-0 shadow-sm rounded-4 p-3 bg-white border-top border-4 border-info h-100">
                 <small class="text-muted d-block">Giá Trị Đơn Trung Bình (AOV)</small>
                 <h3 class="fw-bold text-info mb-0 mt-1">@Model.AverageOrderValue.ToString("N0")đ</h3>
             </div>
