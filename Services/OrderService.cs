@@ -434,15 +434,40 @@ namespace BookStore.Services
             }
 
             // Refund to wallet if paid via WALLET or VNPAY
-            if (order.PaymentMethod == "WALLET" || order.PaymentMethod == "VNPAY")
+            if ((order.PaymentMethod == "WALLET" || order.PaymentMethod == "VNPAY") && !string.IsNullOrEmpty(order.UserId))
             {
                 await _userService.UpdateWalletBalanceAsync(
-                    userId,
+                    order.UserId,
                     order.TotalAmount,
                     "REFUND",
                     $"Hoàn tiền đơn hàng #{order.Id} do hủy đơn",
                     order.Id
                 );
+            }
+
+            // Deduct earned F-Points and TotalSpend to prevent loyalty fraud
+            if (!string.IsNullOrEmpty(order.UserId))
+            {
+                var user = await _context.Users.FindAsync(order.UserId);
+                if (user != null)
+                {
+                    int pointsToDeduct = (int)(order.TotalAmount / 10000);
+                    if (pointsToDeduct > 0)
+                    {
+                        user.FPoints = Math.Max(0, user.FPoints - pointsToDeduct);
+                        user.TotalSpend = Math.Max(0, user.TotalSpend - order.TotalAmount);
+
+                        _context.FPointHistories.Add(new FPointHistory
+                        {
+                            UserId = order.UserId,
+                            Amount = pointsToDeduct,
+                            ActionType = "sub",
+                            Reason = $"Thu hồi điểm thưởng do hủy đơn hàng #{order.Id}",
+                            CustomerInfo = user.FullName,
+                            CreatedAt = DateTime.UtcNow
+                        });
+                    }
+                }
             }
 
             await _context.SaveChangesAsync();

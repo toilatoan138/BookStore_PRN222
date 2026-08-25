@@ -1,4 +1,4 @@
-using BookStore.Data;
+   using BookStore.Data;
 using BookStore.Models.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -59,14 +59,19 @@ namespace BookStore.Services
             int totalStock = book?.StockQuantity ?? 0;
             string zone = book?.Location?.Zone?.ToUpper() ?? "A";
 
-            // Đọc tồn kho thực tế từ bảng BranchInventories
+            // Đọc tồn kho thực tế từ bảng BranchInventories theo chi nhánh động
+            var branches = await _context.Branches.ToListAsync();
+            var branchHN = branches.FirstOrDefault(b => b.City.Contains("Hà Nội") || b.Name.Contains("Hà Nội"));
+            var branchDN = branches.FirstOrDefault(b => b.City.Contains("Đà Nẵng") || b.Name.Contains("Đà Nẵng"));
+            var branchHCM = branches.FirstOrDefault(b => b.City.Contains("Hồ Chí Minh") || b.City.Contains("TP.HCM") || b.City.Contains("TP HCM") || b.Name.Contains("HCM"));
+
             var branchInventories = await _context.BranchInventories
                 .Where(bi => bi.BookId == bookId)
                 .ToListAsync();
 
-            int stockHN = branchInventories.FirstOrDefault(bi => bi.BranchId == 1)?.StockQuantity ?? 0;
-            int stockHCM = branchInventories.FirstOrDefault(bi => bi.BranchId == 2)?.StockQuantity ?? 0;
-            int stockDN = branchInventories.FirstOrDefault(bi => bi.BranchId == 3)?.StockQuantity ?? 0;
+            int stockHN = branchHN != null ? (branchInventories.FirstOrDefault(bi => bi.BranchId == branchHN.Id)?.StockQuantity ?? 0) : 0;
+            int stockDN = branchDN != null ? (branchInventories.FirstOrDefault(bi => bi.BranchId == branchDN.Id)?.StockQuantity ?? 0) : 0;
+            int stockHCM = branchHCM != null ? (branchInventories.FirstOrDefault(bi => bi.BranchId == branchHCM.Id)?.StockQuantity ?? 0) : 0;
 
             bool isNorth = userRegion.Contains("Bắc") || userRegion.Contains("Hà Nội");
             bool isCentral = userRegion.Contains("Trung") || userRegion.Contains("Đà Nẵng");
