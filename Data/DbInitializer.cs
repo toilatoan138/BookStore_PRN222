@@ -65,6 +65,81 @@ namespace BookStore.Data
             {
                 logger.LogWarning(ex, "Lỗi khi khởi tạo roles: {Message}", ex.Message);
             }
+            // 3. Seed Chi nhánh (Branches)
+            try
+            {
+                if (!await context.Branches.AnyAsync())
+                {
+                    context.Branches.AddRange(
+                        new Branch { Name = "Chi nhánh Hà Nội", Address = "Đống Đa, Hà Nội", City = "Hà Nội", IsActive = true },
+                        new Branch { Name = "Chi nhánh Đà Nẵng", Address = "Sơn Trà, Đà Nẵng", City = "Đà Nẵng", IsActive = true },
+                        new Branch { Name = "Chi nhánh TP.HCM", Address = "Quận 1, TP.HCM", City = "TP.HCM", IsActive = true }
+                    );
+                    await context.SaveChangesAsync();
+                    logger.LogInformation("Created 3 initial branches.");
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Lỗi khi khởi tạo chi nhánh: {Message}", ex.Message);
+            }
+
+            // 4. Seed Tài khoản (Users)
+            try
+            {
+                var branchHn = await context.Branches.FirstOrDefaultAsync(b => b.Name.Contains("Hà Nội"));
+                var branchDn = await context.Branches.FirstOrDefaultAsync(b => b.Name.Contains("Đà Nẵng"));
+                var branchHcm = await context.Branches.FirstOrDefaultAsync(b => b.Name.Contains("TP.HCM"));
+
+                int? hnId = branchHn?.Id;
+                int? dnId = branchDn?.Id;
+                int? hcmId = branchHcm?.Id;
+
+                var usersToSeed = new List<(string UserName, string Email, string FullName, string Role, int? BranchId)>
+                {
+                    ("superadmin", "admin@bookstore.com", "Nguyễn Nhật Anh (Tổng GĐ)", "Admin", null),
+                    ("admin_hn", "admin_hn@bookstore.com", "Trưởng Khoa (Admin HN)", "Admin", hnId),
+                    ("admin_dn", "admin_dn@bookstore.com", "Lê Hải (Admin ĐN)", "Admin", dnId),
+                    ("admin_hcm", "admin_hcm@bookstore.com", "Trần Khắc (Admin HCM)", "Admin", hcmId),
+                    
+                    ("warehouse_hn", "warehouse_hn@bookstore.com", "Nguyễn Văn Kho (Kho HN)", "Warehouse", hnId),
+                    ("warehouse_dn", "warehouse_dn@bookstore.com", "Lê Văn Kho (Kho ĐN)", "Warehouse", dnId),
+                    ("warehouse_hcm", "warehouse_hcm@bookstore.com", "Trần Văn Kho (Kho HCM)", "Warehouse", hcmId),
+                    
+                    ("staff_hn", "staff_hn@bookstore.com", "Phạm Thị Bán (Staff HN)", "Staff", hnId),
+                    ("staff_dn", "staff_dn@bookstore.com", "Ngô Thị Bán (Staff ĐN)", "Staff", dnId),
+                    ("staff_hcm", "staff_hcm@bookstore.com", "Vũ Thị Bán (Staff HCM)", "Staff", hcmId)
+                };
+
+                foreach (var u in usersToSeed)
+                {
+                    if (await userManager.FindByNameAsync(u.UserName) == null && await userManager.FindByEmailAsync(u.Email) == null)
+                    {
+                        var newUser = new ApplicationUser
+                        {
+                            UserName = u.UserName,
+                            Email = u.Email,
+                            FullName = u.FullName,
+                            EmailConfirmed = true,
+                            Status = true,
+                            FPoints = 0,
+                            WalletBalance = 0,
+                            BranchId = u.BranchId
+                        };
+
+                        var result = await userManager.CreateAsync(newUser, "Password@123");
+                        if (result.Succeeded)
+                        {
+                            await userManager.AddToRoleAsync(newUser, u.Role);
+                            logger.LogInformation("Created user {UserName} with role {Role} and BranchId {BranchId}", u.UserName, u.Role, u.BranchId);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Lỗi khi khởi tạo tài khoản mồi: {Message}", ex.Message);
+            }
         }
     }
 }

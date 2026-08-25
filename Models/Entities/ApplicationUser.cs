@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.AspNetCore.Identity;
 
@@ -37,6 +37,10 @@ namespace BookStore.Models.Entities
         public decimal WalletBalance { get; set; } = 0;
 
         // --- Navigation Properties ---
+        public int? BranchId { get; set; }
+        [ForeignKey("BranchId")]
+        public virtual Branch? Branch { get; set; }
+
         public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
         public virtual ICollection<Address> Addresses { get; set; } = new List<Address>();
         public virtual ICollection<Review> Reviews { get; set; } = new List<Review>();

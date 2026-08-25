@@ -51,8 +51,17 @@ namespace BookStore.Pages.Warehouse.Inventory
         public int PageSize { get; set; } = 10;
         public List<Branch> Branches { get; set; } = new();
 
+        public bool IsBranchBound { get; set; } = false;
+
         public async Task OnGetAsync()
         {
+            var sessionBranchId = HttpContext.Session.GetInt32("SessionBranchId");
+            if (sessionBranchId.HasValue && sessionBranchId.Value > 0)
+            {
+                FilterBranchId = sessionBranchId.Value;
+                IsBranchBound = true;
+            }
+
             Categories = await _context.Categories.OrderBy(c => c.Name).ToListAsync();
             Branches = await _context.Branches.OrderBy(b => b.Name).ToListAsync();
             Authors = await _context.Books

@@ -24,5 +24,6 @@ namespace BookStore.Models.Entities
         // Navigation properties
         public ICollection<BranchInventory> Inventories { get; set; } = new List<BranchInventory>();
         public ICollection<Order> Orders { get; set; } = new List<Order>();
+        public ICollection<ApplicationUser> Users { get; set; } = new List<ApplicationUser>();
     }
 }

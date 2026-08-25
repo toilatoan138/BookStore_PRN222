@@ -59,8 +59,17 @@ namespace BookStore.Pages.Warehouse.PurchaseOrders
         [BindProperty(SupportsGet = true)]
         public int? PrefillBranchId { get; set; }
 
+        public bool IsBranchBound { get; set; } = false;
+
         public async Task OnGetAsync()
         {
+            var sessionBranchId = HttpContext.Session.GetInt32("SessionBranchId");
+            if (sessionBranchId.HasValue && sessionBranchId.Value > 0)
+            {
+                Input.BranchId = sessionBranchId.Value;
+                IsBranchBound = true;
+            }
+
             Suppliers = await _warehouseService.GetSuppliersAsync();
             Books = await _context.Books.OrderBy(b => b.Title).ToListAsync();
             Branches = await _context.Branches.ToListAsync();

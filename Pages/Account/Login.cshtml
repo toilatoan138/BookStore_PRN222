@@ -1,4 +1,4 @@
-﻿@page
+@page
 @model BookStore.Pages.Account.LoginModel
 @{
     ViewData["Title"] = "Đăng nhập";
@@ -13,7 +13,21 @@
                     <p class="mb-0 text-white-50">Đăng nhập tài khoản của bạn</p>
                 </div>
                 <div class="card-body p-4 p-md-5 bg-white">
+                    <ul class="nav nav-pills nav-fill mb-4 p-1 bg-light rounded-pill" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active rounded-pill fw-bold" id="customer-tab" data-bs-toggle="pill" type="button" role="tab" onclick="setLoginType('Customer')">
+                                <i class="fa-solid fa-user me-1"></i> Khách hàng
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link rounded-pill fw-bold" id="staff-tab" data-bs-toggle="pill" type="button" role="tab" onclick="setLoginType('Staff')">
+                                <i class="fa-solid fa-user-tie me-1"></i> Cán bộ nhân viên
+                            </button>
+                        </li>
+                    </ul>
+
                     <form method="post">
+                        <input type="hidden" asp-for="Input.LoginType" id="loginType" />
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2 mb-3" role="alert"></div>
 
                         <div class="mb-3">
@@ -37,6 +51,24 @@
                             <span asp-validation-for="Input.Password" class="text-danger small"></span>
                         </div>
 
+                        <div class="mb-3" id="branchSelectGroup" style="display: none;">
+                            <label asp-for="Input.BranchId" class="form-label fw-semibold">Chi nhánh làm việc</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-warehouse text-muted"></i></span>
+                                <select asp-for="Input.BranchId" class="form-select border-start-0 ps-0">
+                                    <option value="">-- Chọn chi nhánh (Bắt buộc) --</option>
+                                    @if(Model.Branches != null)
+                                    {
+                                        foreach (var br in Model.Branches)
+                                        {
+                                            <option value="@br.Id">@br.Name</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+                            <span asp-validation-for="Input.BranchId" class="text-danger small"></span>
+                        </div>
+
                         <div class="form-check mb-4">
                             <input asp-for="Input.RememberMe" class="form-check-input" />
                             <label asp-for="Input.RememberMe" class="form-check-label text-muted small">Ghi nhớ đăng nhập</label>
@@ -55,3 +87,31 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        function setLoginType(type) {
+            document.getElementById('loginType').value = type;
+            if (type === 'Staff') {
+                document.getElementById('branchSelectGroup').style.display = 'block';
+            } else {
+                document.getElementById('branchSelectGroup').style.display = 'none';
+            }
+        }
+        
+        // Preserve state on validation error
+        document.addEventListener('DOMContentLoaded', () => {
+            var loginType = document.getElementById('loginType').value;
+            if (!loginType) {
+                document.getElementById('loginType').value = 'Customer';
+                loginType = 'Customer';
+            }
+            if (loginType === 'Staff') {
+                var staffBtn = document.getElementById('staff-tab');
+                var tab = new bootstrap.Tab(staffBtn);
+                tab.show();
+                document.getElementById('branchSelectGroup').style.display = 'block';
+            }
+        });
+    </script>
+}

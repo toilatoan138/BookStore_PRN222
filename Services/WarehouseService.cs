@@ -157,7 +157,7 @@ namespace BookStore.Services
             return true;
         }
 
-        public async Task<List<PurchaseOrder>> GetPurchaseOrdersAsync(int? status = null)
+        public async Task<List<PurchaseOrder>> GetPurchaseOrdersAsync(int? status = null, int? branchId = null)
         {
             var query = _context.PurchaseOrders
                 .Include(po => po.Supplier)
@@ -170,6 +170,11 @@ namespace BookStore.Services
             if (status.HasValue)
             {
                 query = query.Where(po => po.Status == status.Value);
+            }
+
+            if (branchId.HasValue && branchId.Value > 0)
+            {
+                query = query.Where(po => po.BranchId == branchId.Value);
             }
 
             return await query.OrderByDescending(po => po.OrderDate).ToListAsync();

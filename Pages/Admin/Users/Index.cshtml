@@ -1,4 +1,4 @@
-﻿@page
+@page
 @model BookStore.Pages.Admin.Users.IndexModel
 @{
     Layout = "_AdminLayout";
@@ -27,6 +27,7 @@
                     <th>Người dùng</th>
                     <th>Email & SĐT</th>
                     <th>Vai trò (Role)</th>
+                    <th>Chi nhánh</th>
                     <th>F-Points</th>
                     <th>Số dư ví</th>
                     <th>Trạng thái</th>
@@ -59,6 +60,18 @@
                                     <option value="Staff" selected="@(user.Role == "Staff")">Staff</option>
                                     <option value="Warehouse" selected="@(user.Role == "Warehouse")">Warehouse</option>
                                     <option value="Admin" selected="@(user.Role == "Admin")">Admin</option>
+                                </select>
+                            </form>
+                        </td>
+                        <td>
+                            <form method="post" asp-page-handler="ChangeBranch" class="d-inline">
+                                <input type="hidden" name="userId" value="@user.Id" />
+                                <select name="newBranchId" class="form-select form-select-sm rounded-pill d-inline-block w-auto" onchange="this.form.submit()">
+                                    <option value="0" selected="@(user.BranchId == null)">-- (Không có) --</option>
+                                    @foreach(var branch in Model.Branches)
+                                    {
+                                        <option value="@branch.Id" selected="@(user.BranchId == branch.Id)">@branch.Name</option>
+                                    }
                                 </select>
                             </form>
                         </td>

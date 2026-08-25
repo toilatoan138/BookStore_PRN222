@@ -24,16 +24,19 @@ namespace BookStore.Pages.Admin.Users
         public class UserViewModel : ApplicationUser
         {
             public string Role { get; set; } = "Customer";
+            // Inherits BranchId from ApplicationUser
         }
 
         public List<UserViewModel> Users { get; set; } = new();
+        public List<Branch> Branches { get; set; } = new();
 
         [BindProperty(SupportsGet = true)]
         public string? Keyword { get; set; }
 
         public async Task OnGetAsync()
         {
-            var query = _context.Users.AsNoTracking().AsQueryable();
+            Branches = await _context.Branches.OrderBy(b => b.Name).ToListAsync();
+            var query = _context.Users.Include(u => u.Branch).AsNoTracking().AsQueryable();
 
             // Tìm kiếm thông minh theo Tên, Email hoặc Username
             if (!string.IsNullOrWhiteSpace(Keyword))
@@ -63,7 +66,9 @@ namespace BookStore.Pages.Admin.Users
                     TotalSpend = user.TotalSpend,
                     FPoints = user.FPoints,
                     WalletBalance = user.WalletBalance,
-                    Role = roles.FirstOrDefault() ?? "Customer"
+                    Role = roles.FirstOrDefault() ?? "Customer",
+                    BranchId = user.BranchId,
+                    Branch = user.Branch
                 });
             }
         }
@@ -99,6 +104,22 @@ namespace BookStore.Pages.Admin.Users
             await _userManager.AddToRoleAsync(user, newRole);
 
             TempData["SuccessMessage"] = $"Đã chuyển vai trò của '{user.FullName}' sang {newRole}!";
+            return RedirectToPage();
+        }
+
+        // 3. Xử lý đổi Chi nhánh (Branch)
+        public async Task<IActionResult> OnPostChangeBranchAsync(string userId, int? newBranchId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) return RedirectToPage();
+
+            if (newBranchId == 0) newBranchId = null; // 0 = Không có chi nhánh (Customer / SuperAdmin)
+
+            user.BranchId = newBranchId;
+            await _userManager.UpdateAsync(user);
+
+            var branchName = newBranchId.HasValue ? (await _context.Branches.FindAsync(newBranchId))?.Name : "Toàn hệ thống / Không có";
+            TempData["SuccessMessage"] = $"Đã chuyển chi nhánh của '{user.FullName}' thành {branchName}!";
             return RedirectToPage();
         }
     }

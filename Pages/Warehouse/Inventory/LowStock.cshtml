@@ -34,13 +34,22 @@
                 </div>
                 <div class="col-md-4">
                     <label class="form-label fw-bold small text-muted">Chi nhánh</label>
-                    <select asp-for="FilterBranchId" class="form-select">
-                        <option value="0">-- Tất cả chi nhánh --</option>
-                        @foreach (var br in Model.Branches)
-                        {
-                            <option value="@br.Id">@br.Name</option>
-                        }
-                    </select>
+                    @if (Model.IsBranchBound)
+                    {
+                        var boundBranch = Model.Branches.FirstOrDefault(b => b.Id == Model.FilterBranchId);
+                        <input type="text" class="form-control bg-light" value="@(boundBranch?.Name)" readonly />
+                        <input type="hidden" asp-for="FilterBranchId" />
+                    }
+                    else
+                    {
+                        <select asp-for="FilterBranchId" class="form-select">
+                            <option value="0">-- Tất cả chi nhánh --</option>
+                            @foreach (var br in Model.Branches)
+                            {
+                                <option value="@br.Id">@br.Name</option>
+                            }
+                        </select>
+                    }
                 </div>
                 <div class="col-md-4">
                     <label class="form-label fw-bold small text-muted">Thể loại</label>

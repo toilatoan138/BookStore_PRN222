@@ -13,13 +13,22 @@
         <div class="row mb-4">
             <div class="col-md-6">
                 <label class="form-label fw-bold">Chi nhánh nhập hàng <span class="text-danger">*</span></label>
-                <select asp-for="Input.BranchId" class="form-select" onchange="onBranchChange()">
-                    <option value="">-- Chọn kho nhận hàng --</option>
-                    @foreach (var branch in Model.Branches)
-                    {
-                        <option value="@branch.Id">@branch.Name</option>
-                    }
-                </select>
+                @if (Model.IsBranchBound)
+                {
+                    var boundBranch = Model.Branches.FirstOrDefault(b => b.Id == Model.Input.BranchId);
+                    <input type="text" class="form-control bg-light" value="@(boundBranch?.Name)" readonly />
+                    <input type="hidden" asp-for="Input.BranchId" />
+                }
+                else
+                {
+                    <select asp-for="Input.BranchId" class="form-select" onchange="onBranchChange()">
+                        <option value="">-- Chọn kho nhận hàng --</option>
+                        @foreach (var branch in Model.Branches)
+                        {
+                            <option value="@branch.Id">@branch.Name</option>
+                        }
+                    </select>
+                }
                 <span asp-validation-for="Input.BranchId" class="text-danger small"></span>
             </div>
             <div class="col-md-6" id="supplierBlock" style="display: none;">

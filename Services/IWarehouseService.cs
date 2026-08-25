@@ -32,7 +32,7 @@ namespace BookStore.Services
         Task<Supplier> CreateSupplierAsync(Supplier supplier);
         Task<Supplier?> GetSupplierByIdAsync(int id);
         Task<bool> UpdateSupplierAsync(Supplier supplier);
-        Task<List<PurchaseOrder>> GetPurchaseOrdersAsync(int? status = null);
+        Task<List<PurchaseOrder>> GetPurchaseOrdersAsync(int? status = null, int? branchId = null);
         Task<PurchaseOrder?> GetPurchaseOrderByIdAsync(int id);
         Task<List<PurchaseOrder>> CreatePurchaseOrdersAsync(string userId, List<PoItemInput> items, int branchId);
         Task<bool> ReceivePurchaseOrderGoodsAsync(int poId, string warehouseUserId);

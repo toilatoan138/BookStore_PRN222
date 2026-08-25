@@ -1,4 +1,4 @@
-﻿using BookStore.Models.Entities;
+using BookStore.Models.Entities;
 using BookStore.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -23,7 +23,8 @@ namespace BookStore.Pages.Warehouse.PurchaseOrders
 
         public async Task OnGetAsync()
         {
-            PurchaseOrders = await _warehouseService.GetPurchaseOrdersAsync(Status);
+            var sessionBranchId = HttpContext.Session.GetInt32("SessionBranchId");
+            PurchaseOrders = await _warehouseService.GetPurchaseOrdersAsync(Status, sessionBranchId);
         }
     }
 }
