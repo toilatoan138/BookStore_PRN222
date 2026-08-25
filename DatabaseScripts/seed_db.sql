@@ -1,3 +1,100 @@
+BEGIN TRANSACTION;
+GO
+
+INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+VALUES (N'20260821152747_InitialIdentity', N'8.0.14');
+GO
+
+COMMIT;
+GO
+
+BEGIN TRANSACTION;
+GO
+
+ALTER TABLE [Orders] ADD [branch_id] int NULL;
+GO
+
+ALTER TABLE [Orders] ADD [order_group_id] nvarchar(50) NULL;
+GO
+
+CREATE TABLE [Branches] (
+    [Id] int NOT NULL IDENTITY,
+    [Name] nvarchar(200) NOT NULL,
+    [Address] nvarchar(500) NULL,
+    [City] nvarchar(100) NULL,
+    [IsActive] bit NOT NULL,
+    CONSTRAINT [PK_Branches] PRIMARY KEY ([Id])
+);
+GO
+
+CREATE TABLE [Branch_Inventory] (
+    [Id] int NOT NULL IDENTITY,
+    [BranchId] int NOT NULL,
+    [BookId] int NOT NULL,
+    [StockQuantity] int NOT NULL,
+    CONSTRAINT [PK_Branch_Inventory] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_Branch_Inventory_Books_BookId] FOREIGN KEY ([BookId]) REFERENCES [Books] ([book_id]) ON DELETE CASCADE,
+    CONSTRAINT [FK_Branch_Inventory_Branches_BranchId] FOREIGN KEY ([BranchId]) REFERENCES [Branches] ([Id]) ON DELETE CASCADE
+);
+GO
+
+CREATE INDEX [IX_Orders_branch_id] ON [Orders] ([branch_id]);
+GO
+
+CREATE INDEX [IX_Branch_Inventory_BookId] ON [Branch_Inventory] ([BookId]);
+GO
+
+CREATE INDEX [IX_Branch_Inventory_BranchId] ON [Branch_Inventory] ([BranchId]);
+GO
+
+ALTER TABLE [Orders] ADD CONSTRAINT [FK_Orders_Branches_branch_id] FOREIGN KEY ([branch_id]) REFERENCES [Branches] ([Id]);
+GO
+
+INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+VALUES (N'20260823075428_AddMultiBranch', N'8.0.14');
+GO
+
+COMMIT;
+GO
+
+BEGIN TRANSACTION;
+GO
+
+ALTER TABLE [Purchase_Orders] ADD [branch_id] int NOT NULL DEFAULT 1;
+GO
+
+CREATE INDEX [IX_Purchase_Orders_branch_id] ON [Purchase_Orders] ([branch_id]);
+GO
+
+ALTER TABLE [Purchase_Orders] ADD CONSTRAINT [FK_Purchase_Orders_Branches_branch_id] FOREIGN KEY ([branch_id]) REFERENCES [Branches] ([Id]) ON DELETE CASCADE;
+GO
+
+INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+VALUES (N'20260823084239_AddBranchToPO', N'8.0.14');
+GO
+
+COMMIT;
+GO
+
+BEGIN TRANSACTION;
+GO
+
+ALTER TABLE [AspNetUsers] ADD [BranchId] int NULL;
+GO
+
+CREATE INDEX [IX_AspNetUsers_BranchId] ON [AspNetUsers] ([BranchId]);
+GO
+
+ALTER TABLE [AspNetUsers] ADD CONSTRAINT [FK_AspNetUsers_Branches_BranchId] FOREIGN KEY ([BranchId]) REFERENCES [Branches] ([Id]);
+GO
+
+INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+VALUES (N'20260825020627_AddBranchIdToUser', N'8.0.14');
+GO
+
+COMMIT;
+GO
+
 -- ====================================================================
 -- SEED DATA SCRIPT: BOOKSTORE PRN222
 -- ====================================================================
