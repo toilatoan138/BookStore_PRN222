@@ -12,12 +12,12 @@
 
         <div class="row g-3 mb-3">
             <div class="col-md-8">
-                <label asp-for="Input.Title" class="form-label fw-semibold">Tiêu đề sách</label>
-                <input asp-for="Input.Title" class="form-control" placeholder="VD: Đắc Nhân Tâm" autofocus />
+                <label asp-for="Input.Title" class="form-label fw-semibold">Tiêu đề sách <span class="text-danger">*</span></label>
+                <input asp-for="Input.Title" class="form-control" maxlength="300" placeholder="VD: Đắc Nhân Tâm" autofocus />
                 <span asp-validation-for="Input.Title" class="text-danger small"></span>
             </div>
             <div class="col-md-4">
-                <label asp-for="Input.CategoryId" class="form-label fw-semibold">Danh mục</label>
+                <label asp-for="Input.CategoryId" class="form-label fw-semibold">Danh mục <span class="text-danger">*</span></label>
                 <select asp-for="Input.CategoryId" class="form-select">
                     <option value="">-- Chọn danh mục --</option>
                     @foreach (var c in Model.Categories)
@@ -32,26 +32,29 @@
         <div class="row g-3 mb-3">
             <div class="col-md-6">
                 <label asp-for="Input.Author" class="form-label fw-semibold">Tác giả</label>
-                <input asp-for="Input.Author" class="form-control" placeholder="Dale Carnegie" />
+                <input asp-for="Input.Author" class="form-control" maxlength="200" placeholder="VD: Dale Carnegie" />
+                <span asp-validation-for="Input.Author" class="text-danger small"></span>
             </div>
             <div class="col-md-6">
                 <label asp-for="Input.Publisher" class="form-label fw-semibold">Nhà xuất bản</label>
-                <input asp-for="Input.Publisher" class="form-control" placeholder="NXB Trẻ" />
+                <input asp-for="Input.Publisher" class="form-control" maxlength="200" placeholder="VD: NXB Trẻ" />
+                <span asp-validation-for="Input.Publisher" class="text-danger small"></span>
             </div>
         </div>
 
         <div class="row g-3 mb-3">
             <div class="col-md-4">
-                <label asp-for="Input.Price" class="form-label fw-semibold">Giá bán (VNĐ)</label>
-                <input asp-for="Input.Price" type="number" step="1000" class="form-control fw-bold text-danger" placeholder="85000" />
+                <label asp-for="Input.Price" class="form-label fw-semibold">Giá bán (VNĐ) <span class="text-danger">*</span></label>
+                <input asp-for="Input.Price" type="number" step="1000" min="1000" max="500000000" class="form-control fw-bold text-danger" placeholder="85000" />
                 <span asp-validation-for="Input.Price" class="text-danger small"></span>
             </div>
             <div class="col-md-4">
                 <label asp-for="Input.ImportPrice" class="form-label fw-semibold">Giá nhập (VNĐ)</label>
-                <input asp-for="Input.ImportPrice" type="number" step="1000" class="form-control" placeholder="50000" />
+                <input asp-for="Input.ImportPrice" type="number" step="1000" min="0" max="500000000" class="form-control" placeholder="50000" />
+                <span asp-validation-for="Input.ImportPrice" class="text-danger small"></span>
             </div>
             <div class="col-md-4">
-                <label asp-for="Input.SupplierId" class="form-label fw-semibold">Nhà cung cấp</label>
+                <label asp-for="Input.SupplierId" class="form-label fw-semibold">Nhà cung cấp <span class="text-danger">*</span></label>
                 <select asp-for="Input.SupplierId" class="form-select">
                     <option value="">-- Chọn Nhà cung cấp --</option>
                     @foreach (var s in Model.Suppliers)
@@ -66,37 +69,43 @@
         <div class="row g-3 mb-3">
             <div class="col-md-8">
                 <label asp-for="Input.ImageUrl" class="form-label fw-semibold">URL Ảnh bìa sách</label>
-                <input asp-for="Input.ImageUrl" class="form-control" placeholder="https://example.com/cover.jpg" />
+                <input asp-for="Input.ImageUrl" type="url" class="form-control" maxlength="500" placeholder="https://example.com/cover.jpg" />
+                <span asp-validation-for="Input.ImageUrl" class="text-danger small"></span>
             </div>
             <div class="col-md-4">
                 <label asp-for="Input.LocationCode" class="form-label fw-semibold">Mã vị trí kho</label>
-                <input asp-for="Input.LocationCode" class="form-control" placeholder="A-01-01" />
+                <input asp-for="Input.LocationCode" class="form-control text-uppercase" maxlength="50" placeholder="VD: A-01-01" />
+                <span asp-validation-for="Input.LocationCode" class="text-danger small"></span>
             </div>
         </div>
 
         <div class="row g-3 mb-3">
             <div class="col-md-4">
                 <label asp-for="Input.Isbn" class="form-label fw-semibold">Mã ISBN</label>
-                <input asp-for="Input.Isbn" class="form-control" placeholder="978-604-1-12345-6" />
+                <input asp-for="Input.Isbn" class="form-control text-uppercase" maxlength="20" placeholder="VD: 978-604-1-12345-6" />
+                <span asp-validation-for="Input.Isbn" class="text-danger small"></span>
             </div>
             <div class="col-md-4">
                 <label asp-for="Input.YearOfPublish" class="form-label fw-semibold">Năm xuất bản</label>
-                <input asp-for="Input.YearOfPublish" type="number" class="form-control" placeholder="2024" />
+                <input asp-for="Input.YearOfPublish" type="number" min="1800" max="2100" class="form-control" placeholder="2024" />
+                <span asp-validation-for="Input.YearOfPublish" class="text-danger small"></span>
             </div>
             <div class="col-md-4">
                 <label asp-for="Input.NumberOfPages" class="form-label fw-semibold">Số trang</label>
-                <input asp-for="Input.NumberOfPages" type="number" class="form-control" placeholder="320" />
+                <input asp-for="Input.NumberOfPages" type="number" min="1" max="50000" class="form-control" placeholder="320" />
+                <span asp-validation-for="Input.NumberOfPages" class="text-danger small"></span>
             </div>
         </div>
 
         <div class="mb-3">
             <label asp-for="Input.Description" class="form-label fw-semibold">Mô tả tóm tắt nội dung sách</label>
-            <textarea asp-for="Input.Description" rows="5" class="form-control" placeholder="Giới thiệu nội dung sách..."></textarea>
+            <textarea asp-for="Input.Description" rows="5" maxlength="4000" class="form-control" placeholder="Giới thiệu nội dung sách..."></textarea>
+            <span asp-validation-for="Input.Description" class="text-danger small"></span>
         </div>
 
         <div class="form-check mb-4">
-            <input asp-for="Input.IsActive" class="form-check-input" />
-            <label asp-for="Input.IsActive" class="form-check-label fw-semibold">Hiển thị và mở bán trên cửa hàng ngay</label>
+            <input asp-for="Input.IsActive" class="form-check-input" id="isActiveInput" />
+            <label class="form-check-label fw-semibold" for="isActiveInput">Hiển thị và mở bán trên cửa hàng ngay</label>
         </div>
 
         <div class="d-flex gap-2">

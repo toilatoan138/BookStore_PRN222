@@ -18,40 +18,47 @@
             </div>
             <div class="col-md-6">
                 <label asp-for="Input.UsageLimit" class="form-label fw-semibold">Số lượt dùng tối đa</label>
-                <input asp-for="Input.UsageLimit" type="number" class="form-control" />
+                <input asp-for="Input.UsageLimit" type="number" min="1" max="100000" class="form-control" />
+                <span asp-validation-for="Input.UsageLimit" class="text-danger small"></span>
             </div>
         </div>
 
         <div class="row g-3 mb-3">
             <div class="col-md-6">
                 <label asp-for="Input.DiscountPercent" class="form-label fw-semibold">Phần trăm giảm (%)</label>
-                <input asp-for="Input.DiscountPercent" type="number" class="form-control" placeholder="VD: 15 (Nếu giảm theo %)" />
+                <input asp-for="Input.DiscountPercent" type="number" min="0" max="100" class="form-control" placeholder="VD: 15 (Nếu giảm theo %)" />
+                <span asp-validation-for="Input.DiscountPercent" class="text-danger small"></span>
             </div>
             <div class="col-md-6">
                 <label asp-for="Input.DiscountAmount" class="form-label fw-semibold">Số tiền giảm cố định (VNĐ)</label>
-                <input asp-for="Input.DiscountAmount" type="number" step="1000" class="form-control" placeholder="VD: 50000 (Nếu giảm cố định)" />
+                <input asp-for="Input.DiscountAmount" type="number" step="1000" min="0" max="500000000" class="form-control" placeholder="VD: 50000 (Nếu giảm cố định)" />
+                <span asp-validation-for="Input.DiscountAmount" class="text-danger small"></span>
             </div>
         </div>
 
         <div class="row g-3 mb-3">
             <div class="col-md-6">
                 <label asp-for="Input.MinOrderValue" class="form-label fw-semibold">Giá trị đơn hàng tối thiểu (VNĐ)</label>
-                <input asp-for="Input.MinOrderValue" type="number" step="10000" class="form-control" />
+                <input asp-for="Input.MinOrderValue" type="number" step="10000" min="0" max="500000000" class="form-control" />
+                <span asp-validation-for="Input.MinOrderValue" class="text-danger small"></span>
             </div>
             <div class="col-md-6">
                 <label asp-for="Input.MaxDiscount" class="form-label fw-semibold">Số tiền giảm tối đa (VNĐ)</label>
-                <input asp-for="Input.MaxDiscount" type="number" step="10000" class="form-control" placeholder="Để trống nếu không giới hạn" />
+                <input asp-for="Input.MaxDiscount" type="number" step="10000" min="0" max="500000000" class="form-control" placeholder="Để trống nếu không giới hạn" />
+                <span asp-validation-for="Input.MaxDiscount" class="text-danger small"></span>
             </div>
         </div>
 
         <div class="row g-3 mb-4">
             <div class="col-md-6">
                 <label asp-for="Input.StartDate" class="form-label fw-semibold">Ngày bắt đầu áp dụng</label>
-                <input asp-for="Input.StartDate" type="date" class="form-control" />
+                <input asp-for="Input.StartDate" type="date" min="2024-01-01" max="2099-12-31" class="form-control" />
+                <span asp-validation-for="Input.StartDate" class="text-danger small"></span>
             </div>
             <div class="col-md-6">
                 <label asp-for="Input.EndDate" class="form-label fw-semibold">Ngày kết thúc hiệu lực</label>
-                <input asp-for="Input.EndDate" type="date" class="form-control" />
+                <input asp-for="Input.EndDate" type="date" min="2024-01-01" max="2099-12-31" class="form-control" />
+                <span asp-validation-for="Input.EndDate" class="text-danger small"></span>
             </div>
         </div>
 

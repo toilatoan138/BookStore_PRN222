@@ -7,10 +7,26 @@
 }
 
 <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
-    <!-- HEADER CONTROLS -->
+    <!-- THÔNG BÁO HỆ THỐNG -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show py-2 mb-3 small" role="alert">
+            <i class="fa-solid fa-circle-check me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show py-2 mb-3 small" role="alert">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- THANH CÔNG CỤ & TÌM KIẾM -->
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
         <form method="get" class="d-flex flex-wrap gap-2 flex-grow-1" style="max-width: 600px;">
-            <input asp-for="Keyword" type="text" class="form-control form-control-sm" placeholder="Tìm theo tên sách, tác giả..." />
+            <input asp-for="Keyword" type="text" class="form-control form-control-sm" placeholder="Tìm theo tên sách, tác giả, ISBN..." />
             <select asp-for="CategoryId" class="form-select form-select-sm" style="max-width: 200px;">
                 <option value="">-- Tất cả danh mục --</option>
                 @foreach (var c in Model.Categories)
@@ -21,6 +37,12 @@
             <button type="submit" class="btn btn-sm btn-danger px-3">
                 <i class="fa-solid fa-magnifying-glass"></i>
             </button>
+            @if (!string.IsNullOrWhiteSpace(Model.Keyword) || Model.CategoryId.HasValue)
+            {
+                <a asp-page="./Index" class="btn btn-sm btn-outline-secondary px-2" title="Xóa bộ lọc">
+                    <i class="fa-solid fa-rotate-left"></i>
+                </a>
+            }
         </form>
 
         <a asp-page="/Admin/Products/Create" class="btn btn-danger btn-sm rounded-pill px-4 fw-bold shadow-sm">
@@ -28,79 +50,152 @@
         </a>
     </div>
 
-    <!-- BOOKS TABLE -->
+    <!-- BẢNG DỮ LIỆU SÁCH -->
     <div class="table-responsive">
-        <table class="table table-hover align-middle small">
+        <table class="table table-hover align-middle small mb-0">
             <thead class="table-light">
                 <tr>
-                    <th>Mã</th>
-                    <th>Ảnh & Tiêu đề</th>
-                    <th>Danh mục</th>
-                    <th>Giá bán</th>
-                    <th>Tồn kho</th>
-                    <th>Đã bán</th>
-                    <th>Trạng thái</th>
-                    <th class="text-end">Tác vụ</th>
+                    <th style="width: 70px;">Mã</th>
+                    <th style="min-width: 280px; max-width: 350px;">Ảnh & Tiêu đề</th>
+                    <th style="width: 140px;">Danh mục</th>
+                    <th style="width: 110px;">Giá bán</th>
+                    <th style="width: 110px;">Tồn kho</th>
+                    <th style="width: 80px;">Đã bán</th>
+                    <th style="width: 110px;">Trạng thái</th>
+                    <th style="width: 130px;" class="text-center">Tác vụ</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach (var book in Model.Books)
+                @if (!Model.Books.Any())
                 {
                     <tr>
-                        <td class="fw-bold">#@book.Id</td>
-                        <td>
-                            <div class="d-flex align-items-center gap-3">
-                                <img src="@(string.IsNullOrEmpty(book.ImageUrl) ? "https://via.placeholder.com/40x55" : book.ImageUrl)"
-                                     alt="@book.Title" class="rounded border" style="width: 40px; height: 55px; object-fit: cover;" />
-                                <div>
-                                    <a asp-page="/Products/Detail" asp-route-id="@book.Id" target="_blank" class="fw-bold text-dark text-decoration-none">
-                                        @book.Title
-                                    </a>
-                                    <div class="text-muted small">Tác giả: @(book.Author ?? "N/A")</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td>
-                            <span class="badge bg-light text-dark border">@book.Category?.Name</span>
-                        </td>
-                        <td class="fw-bold text-danger">@book.Price.ToString("N0")đ</td>
-                        <td>
-                            @if (book.StockQuantity <= 5)
-                            {
-                                <span class="badge bg-danger">@book.StockQuantity (Sắp hết)</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-success">@book.StockQuantity</span>
-                            }
-                        </td>
-                        <td>@book.SoldQuantity</td>
-                        <td>
-                            @if (book.IsActive)
-                            {
-                                <span class="badge bg-success-subtle text-success border border-success-subtle">Đang bán</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-secondary-subtle text-secondary border">Đã ẩn</span>
-                            }
-                        </td>
-                        <td class="text-end">
-                            <div class="d-flex justify-content-end gap-1">
-                                <a asp-page="/Admin/Products/Edit" asp-route-id="@book.Id" class="btn btn-sm btn-outline-primary rounded-pill px-2" title="Chỉnh sửa">
-                                    <i class="fa-regular fa-pen-to-square"></i>
-                                </a>
-                                <form method="post" asp-page-handler="ToggleStatus" asp-route-id="@book.Id" class="d-inline">
-                                    <button type="submit" class="btn btn-sm @(book.IsActive ? "btn-outline-warning" : "btn-outline-success") rounded-pill px-2"
-                                            title="@(book.IsActive ? "Ẩn khỏi cửa hàng" : "Hiện lại trên cửa hàng")">
-                                        <i class="fa-solid @(book.IsActive ? "fa-eye-slash" : "fa-eye")"></i>
-                                    </button>
-                                </form>
-                            </div>
+                        <td colspan="8" class="text-center text-muted py-4">
+                            <i class="fa-regular fa-folder-open fa-2x mb-2 d-block text-secondary"></i>
+                            Không tìm thấy cuốn sách nào phù hợp.
                         </td>
                     </tr>
+                }
+                else
+                {
+                    @foreach (var book in Model.Books)
+                    {
+                        <tr>
+                            <td class="fw-bold">#@book.Id</td>
+                            <td style="max-width: 350px;">
+                                <div class="d-flex align-items-center gap-3">
+                                    <img src="@(string.IsNullOrEmpty(book.ImageUrl) ? "https://via.placeholder.com/40x55?text=MindBook" : book.ImageUrl)"
+                                         alt="@book.Title" class="rounded border flex-shrink-0"
+                                         style="width: 40px; height: 55px; object-fit: cover;"
+                                         onerror="this.src='https://via.placeholder.com/40x55?text=MindBook'" />
+                                    <div class="text-break" style="min-width: 0; word-break: break-word;">
+                                        <a asp-page="/Products/Detail" asp-route-id="@book.Id" target="_blank" class="fw-bold text-dark text-decoration-none d-block">
+                                            @book.Title
+                                        </a>
+                                        <div class="text-muted small">Tác giả: @(string.IsNullOrWhiteSpace(book.Author) ? "Chưa rõ" : book.Author)</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border text-truncate d-inline-block" style="max-width: 130px;">
+                                    @(book.Category?.Name ?? "N/A")
+                                </span>
+                            </td>
+                            <td class="fw-bold text-danger">@book.Price.ToString("N0")đ</td>
+                            <td>
+                                @if (book.StockQuantity <= 5)
+                                {
+                                    <span class="badge bg-danger">@book.StockQuantity (Sắp hết)</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-success">@book.StockQuantity</span>
+                                }
+                            </td>
+                            <td>@book.SoldQuantity</td>
+                            <td>
+                                @if (book.IsActive)
+                                {
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle">Đang bán</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary-subtle text-secondary border">Đã ẩn</span>
+                                }
+                            </td>
+                            <td class="text-center">
+                                <div class="d-flex justify-content-center gap-1">
+                                    <!-- Nút Chỉnh sửa -->
+                                    <a asp-page="/Admin/Products/Edit" asp-route-id="@book.Id" class="btn btn-sm btn-outline-primary rounded-pill px-2" title="Chỉnh sửa">
+                                        <i class="fa-regular fa-pen-to-square"></i>
+                                    </a>
+                                    <!-- Nút Ẩn / Hiện -->
+                                    <form method="post" asp-page-handler="ToggleStatus" asp-route-id="@book.Id" class="d-inline">
+                                        <button type="submit" class="btn btn-sm @(book.IsActive ? "btn-outline-warning" : "btn-outline-success") rounded-pill px-2"
+                                                title="@(book.IsActive ? "Ẩn khỏi cửa hàng" : "Mở bán lại trên cửa hàng")">
+                                            <i class="fa-solid @(book.IsActive ? "fa-eye-slash" : "fa-eye")"></i>
+                                        </button>
+                                    </form>
+                                    <!-- Nút Xóa vĩnh viễn -->
+                                    <form method="post" asp-page-handler="Delete" asp-route-id="@book.Id" class="d-inline"
+                                          onsubmit="return confirm('Bạn có chắc chắn muốn xóa vĩnh viễn cuốn sách này không? Thao tác này không thể hoàn tác!');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2" title="Xóa vĩnh viễn">
+                                            <i class="fa-regular fa-trash-can"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
                 }
             </tbody>
         </table>
     </div>
+
+    <!-- PHÂN TRANG -->
+    @if (Model.TotalPages > 1)
+    {
+        <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+            <span class="text-muted small">
+                Trang <strong>@Model.CurrentPage</strong> / <strong>@Model.TotalPages</strong>
+            </span>
+            <nav aria-label="Page navigation">
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item @(Model.CurrentPage <= 1 ? "disabled" : "")">
+                        <a class="page-link" asp-page="./Index"
+                           asp-route-CurrentPage="@(Model.CurrentPage - 1)"
+                           asp-route-Keyword="@Model.Keyword"
+                           asp-route-CategoryId="@Model.CategoryId">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </a>
+                    </li>
+
+                    @for (int i = 1; i <= Model.TotalPages; i++)
+                    {
+                        if (i == 1 || i == Model.TotalPages || (i >= Model.CurrentPage - 2 && i <= Model.CurrentPage + 2))
+                        {
+                            <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                <a class="page-link" asp-page="./Index"
+                                   asp-route-CurrentPage="@i"
+                                   asp-route-Keyword="@Model.Keyword"
+                                   asp-route-CategoryId="@Model.CategoryId">@i</a>
+                            </li>
+                        }
+                        else if (i == Model.CurrentPage - 3 || i == Model.CurrentPage + 3)
+                        {
+                            <li class="page-item disabled"><span class="page-link">...</span></li>
+                        }
+                    }
+
+                    <li class="page-item @(Model.CurrentPage >= Model.TotalPages ? "disabled" : "")">
+                        <a class="page-link" asp-page="./Index"
+                           asp-route-CurrentPage="@(Model.CurrentPage + 1)"
+                           asp-route-Keyword="@Model.Keyword"
+                           asp-route-CategoryId="@Model.CategoryId">
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    }
 </div>
