@@ -65,6 +65,10 @@ namespace BookStore.Pages.Products
             CurrentRegion = _fulfillmentService.GetUserSelectedRegion(HttpContext, user?.Addresses?.FirstOrDefault(a => a.IsDefaultShipping)?.City);
             WarehouseStocks = await _fulfillmentService.GetWarehouseStocksForBookAsync(book.Id, CurrentRegion);
 
+            // Đồng bộ tồn kho chính xác theo thời gian thực từ các kho chi nhánh
+            int realTotalStock = WarehouseStocks.Sum(w => w.StockQuantity);
+            Book.StockQuantity = realTotalStock;
+
             return Page();
         }
 
@@ -78,6 +82,30 @@ namespace BookStore.Pages.Products
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return RedirectToPage("/Account/Login");
 
+            var book = await _bookService.GetBookByIdAsync(id);
+            if (book == null || !book.IsActive)
+            {
+                TempData["ErrorMessage"] = "Sản phẩm không tồn tại hoặc đã ngừng kinh doanh.";
+                return RedirectToPage(new { id });
+            }
+
+            // Kiểm tra tồn kho thực tế toàn hệ thống
+            var userRegion = _fulfillmentService.GetUserSelectedRegion(HttpContext);
+            var stocks = await _fulfillmentService.GetWarehouseStocksForBookAsync(id, userRegion);
+            int availableStock = stocks.Sum(w => w.StockQuantity);
+
+            if (availableStock <= 0)
+            {
+                TempData["ErrorMessage"] = "Sản phẩm này hiện đã hết hàng trên toàn bộ các chi nhánh.";
+                return RedirectToPage(new { id });
+            }
+
+            if (quantity > availableStock)
+            {
+                TempData["ErrorMessage"] = $"Số lượng yêu cầu ({quantity} cuốn) vượt quá tồn kho thực tế ({availableStock} cuốn). Hệ thống đã tự động thêm tối đa {availableStock} cuốn vào giỏ hàng.";
+                quantity = availableStock;
+            }
+
             bool success = await _cartService.AddToCartAsync(user.Id, id, quantity > 0 ? quantity : 1);
             if (!success)
             {
@@ -90,7 +118,7 @@ namespace BookStore.Pages.Products
                 return RedirectToPage("/Cart/Index");
             }
 
-            TempData["SuccessMessage"] = "Đã thêm vào giỏ hàng thành công!";
+            TempData["SuccessMessage"] = $"Đã thêm {quantity} cuốn vào giỏ hàng thành công!";
             return RedirectToPage(new { id });
         }
 

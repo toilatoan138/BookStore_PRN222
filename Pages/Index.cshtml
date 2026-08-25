@@ -1,4 +1,4 @@
-﻿@page
+@page
 @model BookStore.Pages.IndexModel
 @{
     ViewData["Title"] = "Trang chủ - Nhà Sách Trực Tuyến";
@@ -116,9 +116,12 @@
                                     <span class="price-current">@book.Price.ToString("N0")đ</span>
                                     <span class="price-old">@((book.Price * 1.25m).ToString("N0"))đ</span>
                                 </div>
-                                <form method="post" asp-page-handler="AddToCart" asp-route-bookId="@book.Id" class="mt-2">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger w-100 rounded-pill fw-semibold">
+                                <form method="post" asp-page-handler="AddToCart" asp-route-bookId="@book.Id" class="mt-auto pt-2 d-flex flex-column gap-1">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger w-100 rounded-pill fw-semibold py-1" style="font-size: 0.82rem;">
                                         <i class="fa-solid fa-cart-plus me-1"></i>Thêm giỏ
+                                    </button>
+                                    <button type="submit" name="buyNow" value="true" class="btn btn-sm btn-danger w-100 rounded-pill fw-bold text-white shadow-sm py-1" style="font-size: 0.82rem;">
+                                        <i class="fa-solid fa-bolt me-1"></i>Mua ngay
                                     </button>
                                 </form>
                             </div>
@@ -157,9 +160,12 @@
                                 <span class="price-current">@book.Price.ToString("N0")đ</span>
                                 <small class="text-muted ms-auto">Đã bán @book.SoldQuantity</small>
                             </div>
-                            <form method="post" asp-page-handler="AddToCart" asp-route-bookId="@book.Id" class="mt-2">
-                                <button type="submit" class="btn btn-sm btn-outline-danger w-100 rounded-pill fw-semibold">
+                            <form method="post" asp-page-handler="AddToCart" asp-route-bookId="@book.Id" class="mt-auto pt-2 d-flex flex-column gap-1">
+                                <button type="submit" class="btn btn-sm btn-outline-danger w-100 rounded-pill fw-semibold py-1" style="font-size: 0.82rem;">
                                     <i class="fa-solid fa-cart-plus me-1"></i>Thêm giỏ
+                                </button>
+                                <button type="submit" name="buyNow" value="true" class="btn btn-sm btn-danger w-100 rounded-pill fw-bold text-white shadow-sm py-1" style="font-size: 0.82rem;">
+                                    <i class="fa-solid fa-bolt me-1"></i>Mua ngay
                                 </button>
                             </form>
                         </div>
@@ -196,9 +202,12 @@
                             <div class="product-price-box">
                                 <span class="price-current">@book.Price.ToString("N0")đ</span>
                             </div>
-                            <form method="post" asp-page-handler="AddToCart" asp-route-bookId="@book.Id" class="mt-2">
-                                <button type="submit" class="btn btn-sm btn-outline-danger w-100 rounded-pill fw-semibold">
+                            <form method="post" asp-page-handler="AddToCart" asp-route-bookId="@book.Id" class="mt-auto pt-2 d-flex flex-column gap-1">
+                                <button type="submit" class="btn btn-sm btn-outline-danger w-100 rounded-pill fw-semibold py-1" style="font-size: 0.82rem;">
                                     <i class="fa-solid fa-cart-plus me-1"></i>Thêm giỏ
+                                </button>
+                                <button type="submit" name="buyNow" value="true" class="btn btn-sm btn-danger w-100 rounded-pill fw-bold text-white shadow-sm py-1" style="font-size: 0.82rem;">
+                                    <i class="fa-solid fa-bolt me-1"></i>Mua ngay
                                 </button>
                             </form>
                         </div>

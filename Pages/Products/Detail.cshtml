@@ -162,10 +162,10 @@
                             <label class="form-label mb-0 fw-semibold">Số lượng:</label>
                             <div class="input-group" style="width: 130px;">
                                 <button type="button" class="btn btn-outline-secondary btn-sm" onclick="changeQty(-1)">-</button>
-                                <input type="number" id="qtyInput" name="quantity" value="1" min="1" max="@Model.Book.StockQuantity" oninput="checkCrossWarehouseStock(this.value)" class="form-control form-control-sm text-center fw-bold" />
+                                <input type="number" id="qtyInput" name="quantity" value="1" min="1" oninput="handleQuantityInput(this)" class="form-control form-control-sm text-center fw-bold" />
                                 <button type="button" class="btn btn-outline-secondary btn-sm" onclick="changeQty(1)">+</button>
                             </div>
-                            <span class="text-muted small">Tổng tồn toàn hệ thống: <strong>@Model.Book.StockQuantity</strong> cuốn</span>
+                            <span class="text-muted small">Tổng tồn toàn hệ thống: <strong class="text-danger">@Model.Book.StockQuantity</strong> cuốn</span>
                         </div>
 
                         <div class="d-flex flex-wrap gap-3">
@@ -420,16 +420,31 @@
 </style>
 
 <script>
+    const totalMaxStock = @Model.Book.StockQuantity;
+
     function changeQty(delta) {
         const input = document.getElementById('qtyInput');
         if (!input) return;
         let current = parseInt(input.value) || 1;
-        let max = parseInt(input.max) || 999;
         let next = current + delta;
-        if (next >= 1 && next <= max) {
-            input.value = next;
-            checkCrossWarehouseStock(next);
+        if (next < 1) next = 1;
+        if (totalMaxStock > 0 && next > totalMaxStock) {
+            next = totalMaxStock;
         }
+        input.value = next;
+        checkCrossWarehouseStock(next);
+    }
+
+    function handleQuantityInput(input) {
+        let val = parseInt(input.value);
+        if (isNaN(val) || val < 1) {
+            return;
+        }
+        if (totalMaxStock > 0 && val > totalMaxStock) {
+            input.value = totalMaxStock;
+            val = totalMaxStock;
+        }
+        checkCrossWarehouseStock(val);
     }
 
     function checkCrossWarehouseStock(val) {

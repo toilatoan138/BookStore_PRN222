@@ -1,4 +1,4 @@
-﻿using BookStore.Models.Entities;
+using BookStore.Models.Entities;
 using BookStore.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -44,7 +44,7 @@ namespace BookStore.Pages
             }
         }
 
-        public async Task<IActionResult> OnPostAddToCartAsync(int bookId, int quantity = 1)
+        public async Task<IActionResult> OnPostAddToCartAsync(int bookId, int quantity = 1, bool buyNow = false)
         {
             if (User.Identity?.IsAuthenticated != true)
             {
@@ -54,9 +54,13 @@ namespace BookStore.Pages
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return RedirectToPage("/Account/Login");
 
-            bool success = await _cartService.AddToCartAsync(user.Id, bookId, quantity);
+            bool success = await _cartService.AddToCartAsync(user.Id, bookId, quantity > 0 ? quantity : 1);
             if (success)
             {
+                if (buyNow)
+                {
+                    return RedirectToPage("/Cart/Index");
+                }
                 TempData["SuccessMessage"] = "Đã thêm sản phẩm vào giỏ hàng!";
             }
             else
