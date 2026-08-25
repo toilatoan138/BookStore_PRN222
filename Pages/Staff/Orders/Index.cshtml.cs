@@ -1,6 +1,7 @@
-﻿using BookStore.Data;
+using BookStore.Data;
 using BookStore.Models.Entities;
 using BookStore.Models.Enums;
+using BookStore.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -12,10 +13,12 @@ namespace BookStore.Pages.Staff.Orders
     public class IndexModel : PageModel
     {
         private readonly ApplicationDbContext _context;
+        private readonly IOrderService _orderService;
 
-        public IndexModel(ApplicationDbContext context)
+        public IndexModel(ApplicationDbContext context, IOrderService orderService)
         {
             _context = context;
+            _orderService = orderService;
         }
 
         public List<Order> Orders { get; set; } = new();
@@ -87,10 +90,15 @@ namespace BookStore.Pages.Staff.Orders
             var order = await _context.Orders.FindAsync(orderId);
             if (order != null && (order.Status == OrderStatus.Pending || order.Status == OrderStatus.Processing))
             {
-                order.Status = OrderStatus.Cancelled;
-                order.StatusNote = cancelReason?.Trim() ?? "Nhân viên đã hủy đơn hàng";
-                await _context.SaveChangesAsync();
-                TempData["SuccessMessage"] = $"Đã hủy đơn hàng #{orderId}!";
+                bool success = await _orderService.CancelOrderAsync(orderId, order.UserId ?? string.Empty, cancelReason?.Trim() ?? "Nhân viên đã hủy đơn hàng");
+                if (success)
+                {
+                    TempData["SuccessMessage"] = $"Đã hủy đơn hàng #{orderId} và tự động hoàn tồn kho, tiền ví & thu hồi điểm thưởng tương ứng!";
+                }
+                else
+                {
+                    TempData["ErrorMessage"] = $"Không thể hủy đơn hàng #{orderId}.";
+                }
             }
             return RedirectToPage(new { Keyword, Status, CurrentPage });
         }

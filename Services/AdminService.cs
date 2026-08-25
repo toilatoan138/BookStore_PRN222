@@ -1,4 +1,4 @@
-﻿using BookStore.Data;
+using BookStore.Data;
 using BookStore.Models.Entities;
 using BookStore.Models.Enums;
 using Microsoft.AspNetCore.Identity;
@@ -227,6 +227,28 @@ namespace BookStore.Services
                     ProcessedAt = DateTime.UtcNow,
                     AdminNote = adminNote
                 });
+
+                // Deduct earned F-Points & TotalSpend for refunded amount
+                var user = await _context.Users.FindAsync(req.Order.UserId);
+                if (user != null)
+                {
+                    int pointsToDeduct = (int)(refundAmount.Value / 10000);
+                    if (pointsToDeduct > 0)
+                    {
+                        user.FPoints = Math.Max(0, user.FPoints - pointsToDeduct);
+                        user.TotalSpend = Math.Max(0, user.TotalSpend - refundAmount.Value);
+
+                        _context.FPointHistories.Add(new FPointHistory
+                        {
+                            UserId = user.Id,
+                            Amount = pointsToDeduct,
+                            ActionType = "sub",
+                            Reason = $"Thu hồi điểm do hoàn tiền trả hàng đơn #{req.OrderId} (Yêu cầu #{req.ReturnId})",
+                            CustomerInfo = user.FullName,
+                            CreatedAt = DateTime.UtcNow
+                        });
+                    }
+                }
             }
 
             await _context.SaveChangesAsync();
