@@ -123,22 +123,27 @@ namespace BookStore.Pages.Account
                     return Page();
                 }
 
-                if (Input.BranchId == null || Input.BranchId <= 0)
-                {
-                    ModelState.AddModelError("Input.BranchId", "Vui lòng chọn chi nhánh làm việc.");
-                    return Page();
-                }
+                bool isAdmin = await _userManager.IsInRoleAsync(user, "Admin");
 
-                if (user.BranchId == null && !await _userManager.IsInRoleAsync(user, "Admin"))
-                {
-                    ModelState.AddModelError(string.Empty, "Tài khoản của bạn chưa được cấp quyền quản lý chi nhánh nào. Vui lòng liên hệ Admin!");
-                    return Page();
-                }
+                // Nếu không phải là SuperAdmin (Admin không thuộc nhánh nào), thì bắt buộc phải chọn chi nhánh
+                bool isSuperAdmin = isAdmin && user.BranchId == null;
 
-                // If user is tied to a branch, verify it matches
-                if (user.BranchId.HasValue)
+                if (!isSuperAdmin)
                 {
-                    if (user.BranchId.Value != Input.BranchId)
+                    if (Input.BranchId == null || Input.BranchId <= 0)
+                    {
+                        ModelState.AddModelError("Input.BranchId", "Vui lòng chọn chi nhánh làm việc.");
+                        return Page();
+                    }
+
+                    if (user.BranchId == null && !isAdmin)
+                    {
+                        ModelState.AddModelError(string.Empty, "Tài khoản của bạn chưa được cấp quyền quản lý chi nhánh nào. Vui lòng liên hệ Admin!");
+                        return Page();
+                    }
+
+                    // Kiểm tra xem chi nhánh chọn có đúng với chi nhánh của tài khoản không
+                    if (user.BranchId.HasValue && user.BranchId.Value != Input.BranchId)
                     {
                         ModelState.AddModelError(string.Empty, "Tài khoản của bạn không có quyền truy cập vào chi nhánh này.");
                         return Page();
